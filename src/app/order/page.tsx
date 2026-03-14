@@ -21,7 +21,15 @@ interface CartItem {
 export default function OrderPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = sessionStorage.getItem("jamforlove-cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -33,9 +41,17 @@ export default function OrderPage() {
   useEffect(() => {
     fetch("/api/products")
       .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch(() => setError("Failed to load products"));
+      .then((data) => {
+        if (Array.isArray(data)) setProducts(data);
+      })
+      .catch(() => setError("無法載入產品，請稍後再試"));
   }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("jamforlove-cart", JSON.stringify(cart));
+    } catch { /* storage full */ }
+  }, [cart]);
 
   function updateQuantity(product: Product, quantity: number) {
     setCart((prev) => {
@@ -230,10 +246,11 @@ export default function OrderPage() {
           </h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-warm-brown mb-2">
+              <label htmlFor="order-name" className="block text-sm font-medium text-warm-brown mb-2">
                 收件人姓名
               </label>
               <input
+                id="order-name"
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -242,10 +259,11 @@ export default function OrderPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-warm-brown mb-2">
+              <label htmlFor="order-phone" className="block text-sm font-medium text-warm-brown mb-2">
                 聯絡電話
               </label>
               <input
+                id="order-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -254,10 +272,11 @@ export default function OrderPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-warm-brown mb-2">
+              <label htmlFor="order-address" className="block text-sm font-medium text-warm-brown mb-2">
                 收件地址
               </label>
               <input
+                id="order-address"
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -266,10 +285,11 @@ export default function OrderPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-warm-brown mb-2">
+              <label htmlFor="order-notes" className="block text-sm font-medium text-warm-brown mb-2">
                 備註
               </label>
               <textarea
+                id="order-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}

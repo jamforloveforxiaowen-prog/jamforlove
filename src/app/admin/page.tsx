@@ -90,6 +90,7 @@ export default function AdminPage() {
 
 function ProductManager() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
@@ -99,9 +100,15 @@ function ProductManager() {
   const [error, setError] = useState("");
 
   async function loadProducts() {
-    const res = await fetch("/api/admin/products");
-    const data = await res.json();
-    if (Array.isArray(data)) setProducts(data);
+    try {
+      const res = await fetch("/api/admin/products");
+      const data = await res.json();
+      if (Array.isArray(data)) setProducts(data);
+    } catch {
+      setError("無法載入產品列表");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -172,6 +179,12 @@ function ProductManager() {
 
   const inputClass =
     "w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition";
+
+  if (loading) {
+    return (
+      <p className="text-warm-brown-light text-center py-12">載入中...</p>
+    );
+  }
 
   return (
     <div>
@@ -342,12 +355,18 @@ function ProductManager() {
 function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function loadOrders() {
-    const res = await fetch("/api/admin/orders");
-    const data = await res.json();
-    if (Array.isArray(data)) setOrders(data.reverse());
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/orders");
+      const data = await res.json();
+      if (Array.isArray(data)) setOrders(data.reverse());
+    } catch {
+      setError("無法載入訂單列表");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -355,12 +374,16 @@ function OrderManager() {
   }, []);
 
   async function updateStatus(orderId: number, status: string) {
-    await fetch(`/api/admin/orders/${orderId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    loadOrders();
+    try {
+      await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      loadOrders();
+    } catch {
+      setError("更新狀態失敗，請重試");
+    }
   }
 
   if (loading) {
@@ -374,6 +397,7 @@ function OrderManager() {
       <h2 className="font-serif text-xl font-bold text-warm-brown mb-6">
         訂單列表
       </h2>
+      {error && <p className="text-berry text-sm mb-4">{error}</p>}
 
       {orders.length === 0 ? (
         <div className="text-center py-20">

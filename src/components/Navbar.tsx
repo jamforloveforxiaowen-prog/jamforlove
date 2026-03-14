@@ -102,6 +102,7 @@ export default function Navbar() {
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5"
           aria-label="選單"
+          aria-expanded={menuOpen}
         >
           <span
             className={`block w-5 h-0.5 bg-warm-brown transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2" : ""}`}

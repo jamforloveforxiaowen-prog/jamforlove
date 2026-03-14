@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "fallback");
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "");
 
 const protectedPaths = ["/order", "/my-orders"];
 const adminPaths = ["/admin"];

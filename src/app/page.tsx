@@ -39,7 +39,7 @@ export default async function HomePage() {
             Jam For Love
           </h1>
           <p
-            className="text-cream/70 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light animate-fade-up"
+            className="text-cream/90 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light animate-fade-up"
             style={{ animationDelay: "0.4s" }}
           >
             嚴選當季新鮮水果，不添加人工色素與防腐劑。

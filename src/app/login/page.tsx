@@ -48,10 +48,11 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-warm-brown mb-2">
+            <label htmlFor="login-username" className="block text-sm font-medium text-warm-brown mb-2">
               帳號
             </label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -60,10 +61,11 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-warm-brown mb-2">
+            <label htmlFor="login-password" className="block text-sm font-medium text-warm-brown mb-2">
               密碼
             </label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
