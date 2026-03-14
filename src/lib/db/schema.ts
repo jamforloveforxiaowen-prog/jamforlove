@@ -21,6 +21,7 @@ export const products = sqliteTable("products", {
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   price: integer("price").notNull(),
+  imageUrl: text("image_url").notNull().default(""),
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at")
     .notNull()

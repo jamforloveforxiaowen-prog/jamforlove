@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { name, description, price, isActive } = await req.json();
+  const { name, description, price, imageUrl, isActive } = await req.json();
 
   if (!name || price == null) {
     return NextResponse.json(
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       name,
       description: description || "",
       price,
+      imageUrl: imageUrl || "",
       isActive: isActive ?? true,
     })
     .returning()

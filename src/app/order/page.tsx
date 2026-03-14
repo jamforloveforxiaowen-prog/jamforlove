@@ -8,6 +8,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  imageUrl: string;
 }
 
 interface CartItem {
@@ -139,9 +140,20 @@ export default function OrderPage() {
             {products.map((product) => (
               <div
                 key={product.id}
-                className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between"
+                className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4"
               >
-                <div className="flex-1">
+                {product.imageUrl ? (
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-16 h-16 rounded-lg object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-amber-100 flex items-center justify-center text-2xl shrink-0">
+                    🍓
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-amber-900">
                     {product.name}
                   </h3>

@@ -7,6 +7,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  imageUrl: string;
   isActive: boolean;
 }
 
@@ -85,6 +86,7 @@ function ProductManager() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
 
   async function loadProducts() {
@@ -101,6 +103,7 @@ function ProductManager() {
     setName("");
     setDescription("");
     setPrice("");
+    setImageUrl("");
     setEditingId(null);
     setShowForm(false);
     setError("");
@@ -110,6 +113,7 @@ function ProductManager() {
     setName(product.name);
     setDescription(product.description);
     setPrice(String(product.price));
+    setImageUrl(product.imageUrl || "");
     setEditingId(product.id);
     setShowForm(true);
     setError("");
@@ -125,7 +129,7 @@ function ProductManager() {
       return;
     }
 
-    const body = { name, description, price: priceNum };
+    const body = { name, description, price: priceNum, imageUrl };
 
     const url = editingId
       ? `/api/admin/products/${editingId}`
@@ -209,6 +213,26 @@ function ProductManager() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              圖片網址
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder="https://example.com/jam.jpg"
+            />
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="預覽"
+                className="mt-2 w-24 h-24 object-cover rounded-lg border border-gray-200"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               說明
             </label>
             <textarea
@@ -245,21 +269,34 @@ function ProductManager() {
               !product.isActive ? "opacity-50" : ""
             }`}
           >
-            <div>
-              <h3 className="font-semibold text-amber-900">
-                {product.name}
-                {!product.isActive && (
-                  <span className="ml-2 text-xs text-red-500 font-normal">
-                    (已下架)
-                  </span>
-                )}
-              </h3>
-              <p className="text-sm text-gray-500 line-clamp-1">
-                {product.description}
-              </p>
-              <p className="text-amber-700 font-medium">
-                NT$ {product.price}
-              </p>
+            <div className="flex items-center gap-3">
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-12 h-12 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-xl shrink-0">
+                  🍓
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold text-amber-900">
+                  {product.name}
+                  {!product.isActive && (
+                    <span className="ml-2 text-xs text-red-500 font-normal">
+                      (已下架)
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-500 line-clamp-1">
+                  {product.description}
+                </p>
+                <p className="text-amber-700 font-medium">
+                  NT$ {product.price}
+                </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <button

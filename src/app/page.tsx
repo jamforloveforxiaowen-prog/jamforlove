@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import Image from "next/image";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -39,17 +40,34 @@ export default async function HomePage() {
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition block"
+                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition block group"
               >
-                <h3 className="text-xl font-semibold text-amber-900 mb-2">
-                  {product.name}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {product.description}
-                </p>
-                <p className="text-amber-700 font-bold text-lg">
-                  NT$ {product.price}
-                </p>
+                {product.imageUrl ? (
+                  <div className="relative aspect-square overflow-hidden">
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-square bg-amber-100 flex items-center justify-center text-amber-300 text-6xl">
+                    🍓
+                  </div>
+                )}
+                <div className="p-5">
+                  <h3 className="text-xl font-semibold text-amber-900 mb-1">
+                    {product.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <p className="text-amber-700 font-bold text-lg">
+                    NT$ {product.price}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>

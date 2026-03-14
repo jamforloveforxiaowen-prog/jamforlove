@@ -20,7 +20,7 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
   }
 
-  const { name, description, price, isActive } = await req.json();
+  const { name, description, price, imageUrl, isActive } = await req.json();
 
   const existing = await db
     .select()
@@ -38,6 +38,7 @@ export async function PUT(
       name: name ?? existing.name,
       description: description ?? existing.description,
       price: price ?? existing.price,
+      imageUrl: imageUrl ?? existing.imageUrl,
       isActive: isActive ?? existing.isActive,
       updatedAt: sql`(datetime('now'))`,
     })
