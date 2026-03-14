@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   const { username, password, name } = await req.json();
 
   if (!username || !password || !name) {
-    return NextResponse.json({ error: "請填寫所有欄位" }, { status: 400 });
+    return NextResponse.json({ error: "請填寫帳號、密碼和姓名" }, { status: 400 });
   }
 
   if (username.length < 3 || username.length > 20) {

@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   for (const item of items as OrderItemInput[]) {
     if (!item.productId || !item.quantity || item.quantity < 1) {
       return NextResponse.json(
-        { error: "Invalid item data" },
+        { error: "商品資料有誤，請重新選擇" },
         { status: 400 }
       );
     }
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     if (!product) {
       return NextResponse.json(
-        { error: `Product ID ${item.productId} not found` },
+        { error: "部分商品已下架，請重新選擇" },
         { status: 400 }
       );
     }

@@ -126,9 +126,9 @@ export default function OrderPage() {
             訂單已送出！
           </h1>
           <p className="text-warm-brown-light mb-10 leading-relaxed animate-fade-up" style={{ animationDelay: "0.35s" }}>
-            感謝您的訂購！我們正用滿滿的愛心為您準備果醬，
+            感謝你的訂購！我們正用滿滿的愛心為你準備果醬，
             <br className="hidden sm:block" />
-            請期待甜蜜的包裹送到您手中。
+            請期待甜蜜的包裹送到你手中。
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-up" style={{ animationDelay: "0.5s" }}>
             <button
@@ -215,9 +215,12 @@ export default function OrderPage() {
               );
             })}
             {products.length === 0 && (
-              <p className="text-warm-brown-light text-center py-12">
-                目前沒有可訂購的產品
-              </p>
+              <div className="text-center py-12">
+                <p className="text-2xl mb-3 animate-gentle-float">🍓</p>
+                <p className="text-warm-brown-light">
+                  新口味正在熬煮中，請稍後再來逛逛
+                </p>
+              </div>
             )}
           </div>
 
@@ -249,7 +252,7 @@ export default function OrderPage() {
             收件資料
           </h2>
           <p className="text-warm-brown-light/60 text-xs mb-5">
-            我們會小心包裝，讓果醬安全到你手中
+            我們會用心包裝，讓果醬安全送到你手中
           </p>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

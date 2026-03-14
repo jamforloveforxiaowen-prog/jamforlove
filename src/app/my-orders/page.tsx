@@ -54,7 +54,7 @@ export default function MyOrdersPage() {
     return (
       <div className="max-w-3xl mx-auto px-5 py-20 text-center">
         <p className="text-2xl mb-3 animate-gentle-float">🍓</p>
-        <p className="text-warm-brown-light text-sm">正在翻找您的訂單...</p>
+        <p className="text-warm-brown-light text-sm">正在翻找你的訂單...</p>
       </div>
     );
   }

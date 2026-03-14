@@ -160,7 +160,7 @@ function ProductManager() {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error || "操作失敗");
+      setError(data.error || "儲存失敗，請檢查資料後重試");
       return;
     }
 
@@ -402,7 +402,7 @@ function OrderManager() {
       {orders.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-4">📦</p>
-          <p className="text-warm-brown-light text-lg">目前沒有訂單</p>
+          <p className="text-warm-brown-light text-lg">還沒有訂單，等待第一位客人上門</p>
         </div>
       ) : (
         <div className="space-y-4">

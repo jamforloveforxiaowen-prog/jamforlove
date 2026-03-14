@@ -58,7 +58,7 @@ export default async function ProductPage({
             {product.name}
           </h1>
           <p className="text-warm-brown-light leading-loose text-lg whitespace-pre-wrap mb-8">
-            {product.description || "暫無詳細說明"}
+            {product.description || "用心手作的好味道，等你來品嚐。"}
           </p>
           <p className="font-serif text-4xl font-bold text-berry mb-10">
             NT$ {product.price}
