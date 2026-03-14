@@ -30,10 +30,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  completed: "bg-green-100 text-green-800",
+  pending: "bg-honey/20 text-honey border-honey/30",
+  confirmed: "bg-leaf/10 text-leaf border-leaf/30",
+  shipped: "bg-berry/10 text-berry border-berry/30",
+  completed: "bg-leaf/20 text-leaf border-leaf/40",
 };
 
 export default function MyOrdersPage() {
@@ -52,67 +52,71 @@ export default function MyOrdersPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center text-gray-500">
+      <div className="max-w-3xl mx-auto px-5 py-20 text-center text-warm-brown-light">
         載入中...
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-amber-900 mb-8">我的訂單</h1>
+    <div className="max-w-3xl mx-auto px-5 py-12">
+      <h1 className="font-serif text-4xl font-bold text-warm-brown mb-10">
+        我的訂單
+      </h1>
 
       {orders.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">
-          目前沒有訂單紀錄
-        </p>
+        <div className="text-center py-20">
+          <p className="text-4xl mb-4">📦</p>
+          <p className="text-warm-brown-light text-lg">
+            目前沒有訂單紀錄
+          </p>
+        </div>
       ) : (
         <div className="space-y-6">
           {orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-xl shadow-md p-6"
+              className="bg-white rounded-2xl border-2 border-cream-dark p-6"
             >
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <span className="text-sm text-gray-500">
-                    訂單 #{order.id}
+                <div className="flex items-center gap-3">
+                  <span className="font-serif font-bold text-warm-brown">
+                    #{order.id}
                   </span>
-                  <span className="text-sm text-gray-400 ml-3">
+                  <span className="text-sm text-warm-brown-light">
                     {order.createdAt}
                   </span>
                 </div>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[order.status] || "bg-gray-100 text-gray-800"}`}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.status] || "bg-cream-dark text-warm-brown-light"}`}
                 >
                   {STATUS_LABELS[order.status] || order.status}
                 </span>
               </div>
 
-              <div className="border-t border-gray-100 pt-4 space-y-2">
+              <div className="border-t border-cream-dark pt-4 space-y-1.5">
                 {order.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex justify-between text-sm text-gray-700"
+                    className="flex justify-between text-sm"
                   >
-                    <span>
-                      {item.productName || `產品 #${item.productId}`} x{" "}
-                      {item.quantity}
+                    <span className="text-warm-brown-light">
+                      {item.productName || `產品 #${item.productId}`} × {item.quantity}
                     </span>
-                    <span>NT$ {item.price * item.quantity}</span>
+                    <span className="font-medium text-warm-brown">
+                      NT$ {item.price * item.quantity}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between">
-                <div className="text-sm text-gray-500">
+              <div className="border-t border-cream-dark mt-4 pt-4 flex items-start justify-between">
+                <div className="text-xs text-warm-brown-light space-y-0.5">
                   <p>{order.customerName} / {order.phone}</p>
                   <p>{order.address}</p>
-                  {order.notes && (
-                    <p className="text-gray-400 mt-1">備註：{order.notes}</p>
-                  )}
+                  {order.notes && <p className="opacity-60">備註：{order.notes}</p>}
                 </div>
-                <p className="font-bold text-amber-900 text-lg">
+                <p className="font-serif font-bold text-berry text-xl">
                   NT$ {order.total}
                 </p>
               </div>

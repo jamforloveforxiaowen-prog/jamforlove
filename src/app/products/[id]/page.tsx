@@ -26,49 +26,49 @@ export default async function ProductPage({
   if (!product) notFound();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-5 py-12">
       <Link
         href="/"
-        className="text-amber-700 hover:text-amber-900 text-sm mb-6 inline-block"
+        className="inline-flex items-center gap-2 text-warm-brown-light hover:text-berry text-sm font-medium transition-colors mb-8"
       >
-        &larr; 回到首頁
+        <span>&larr;</span>
+        <span>回到首頁</span>
       </Link>
 
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        <div className="relative aspect-square rounded-2xl overflow-hidden">
           {product.imageUrl ? (
-            <div className="relative aspect-square">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
-            </div>
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+            />
           ) : (
-            <div className="aspect-square bg-amber-100 flex items-center justify-center text-amber-300 text-8xl">
+            <div className="absolute inset-0 bg-cream-dark flex items-center justify-center text-8xl">
               🍓
             </div>
           )}
-          <div className="p-8 flex flex-col justify-center">
-            <h1 className="text-3xl font-bold text-amber-900 mb-4">
-              {product.name}
-            </h1>
-            <p className="text-gray-600 leading-relaxed mb-6 whitespace-pre-wrap">
-              {product.description || "暫無詳細說明"}
-            </p>
-            <p className="text-3xl font-bold text-amber-700 mb-8">
-              NT$ {product.price}
-            </p>
-            <Link
-              href="/order"
-              className="inline-block bg-amber-600 text-white px-8 py-3 rounded-lg hover:bg-amber-700 transition font-medium text-center"
-            >
-              前往訂購
-            </Link>
-          </div>
+        </div>
+
+        <div className="py-4">
+          <h1 className="font-serif text-4xl md:text-5xl font-black text-warm-brown leading-tight mb-6">
+            {product.name}
+          </h1>
+          <p className="text-warm-brown-light leading-loose text-lg whitespace-pre-wrap mb-8">
+            {product.description || "暫無詳細說明"}
+          </p>
+          <p className="font-serif text-4xl font-bold text-berry mb-10">
+            NT$ {product.price}
+          </p>
+          <Link
+            href="/order"
+            className="inline-block bg-berry text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-berry-dark transition-colors"
+          >
+            前往訂購
+          </Link>
         </div>
       </div>
     </div>

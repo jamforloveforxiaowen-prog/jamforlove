@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Noto_Serif_TC, Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const serif = Noto_Serif_TC({
+  variable: "--font-serif",
   subsets: ["latin"],
+  weight: ["400", "700", "900"],
+});
+
+const sans = Outfit({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "JamForLove - 手工果醬",
-  description: "用愛製作的手工果醬，天然健康好滋味",
+  title: "Jam For Love — 手工果醬",
+  description: "用愛製作的手工果醬，嚴選當季新鮮水果，天然健康好滋味",
 };
 
 export default function RootLayout({
@@ -20,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <body className={`${geistSans.variable} antialiased bg-amber-50 min-h-screen`}>
+      <body className={`${serif.variable} ${sans.variable} min-h-screen`}>
         <Navbar />
         <main>{children}</main>
       </body>

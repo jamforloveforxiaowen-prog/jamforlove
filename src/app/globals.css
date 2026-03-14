@@ -1,26 +1,33 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-cream: #faf6f0;
+  --color-cream-dark: #f0e8da;
+  --color-warm-brown: #5c3d2e;
+  --color-warm-brown-light: #7a5a4a;
+  --color-berry: #a23b5a;
+  --color-berry-light: #c75b7a;
+  --color-berry-dark: #7a2040;
+  --color-leaf: #4a7c59;
+  --color-leaf-light: #6a9c72;
+  --color-honey: #d4a04a;
+  --color-honey-light: #e8c47a;
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-warm-brown);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-serif), serif;
+}
+
+::selection {
+  background: var(--color-honey-light);
+  color: var(--color-warm-brown);
 }
