@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -36,11 +37,17 @@ export default function Navbar() {
       <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
         <Link
           href="/"
-          className="group/logo font-serif text-2xl font-bold text-warm-brown tracking-tight hover:text-berry transition-colors"
+          className="flex items-center gap-2.5 group/logo"
         >
-          Jam For{" "}
-          <span className="inline-block group-hover/logo:scale-110 transition-transform duration-200">
-            Love
+          <Image
+            src="/logo.jpg"
+            alt="Jam For Love"
+            width={40}
+            height={40}
+            className="rounded-full group-hover/logo:scale-105 transition-transform duration-200"
+          />
+          <span className="font-serif text-xl font-bold text-warm-brown tracking-tight group-hover/logo:text-berry transition-colors">
+            Jam For Love
           </span>
         </Link>
 

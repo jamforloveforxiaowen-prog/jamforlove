@@ -18,6 +18,12 @@ const sans = Outfit({
 export const metadata: Metadata = {
   title: "Jam For Love — 手工果醬",
   description: "用愛製作的手工果醬，嚴選當季新鮮水果，天然健康好滋味",
+  icons: { icon: "/logo.jpg", apple: "/logo.jpg" },
+  openGraph: {
+    title: "Jam For Love — 手工果醬",
+    description: "用愛製作的手工果醬，嚴選當季新鮮水果，天然健康好滋味",
+    images: ["/logo.jpg"],
+  },
 };
 
 export default function RootLayout({

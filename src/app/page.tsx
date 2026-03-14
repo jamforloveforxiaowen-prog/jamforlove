@@ -21,26 +21,36 @@ export default async function HomePage() {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 20% 50%, #d4a04a 0%, transparent 50%), radial-gradient(circle at 80% 20%, #a23b5a 0%, transparent 50%)",
+                "radial-gradient(circle at 20% 50%, #d4a04a 0%, transparent 50%), radial-gradient(circle at 80% 20%, #c4506a 0%, transparent 50%)",
             }}
           />
         </div>
         <div className="max-w-5xl mx-auto px-5 relative z-10 text-center">
-          <p
-            className="text-honey-light font-sans text-sm font-semibold tracking-[0.3em] uppercase mb-6 animate-fade-up"
-            style={{ animationDelay: "0.1s" }}
-          >
-            Handmade with Love
-          </p>
+          <div className="animate-fade-up" style={{ animationDelay: "0.1s" }}>
+            <Image
+              src="/logo.jpg"
+              alt="Jam For Love"
+              width={120}
+              height={120}
+              className="mx-auto rounded-full shadow-lg shadow-black/20 mb-8 md:w-[150px] md:h-[150px]"
+              priority
+            />
+          </div>
           <h1
-            className="font-serif text-4xl md:text-6xl lg:text-8xl font-black text-cream leading-tight mb-8 animate-fade-up"
+            className="font-serif text-4xl md:text-6xl lg:text-8xl font-black text-cream leading-tight mb-4 animate-fade-up"
             style={{ animationDelay: "0.25s" }}
           >
             Jam For Love
           </h1>
           <p
+            className="text-honey-light font-sans text-sm font-semibold tracking-[0.3em] uppercase mb-6 animate-fade-up"
+            style={{ animationDelay: "0.35s" }}
+          >
+            Handmade with Love
+          </p>
+          <p
             className="text-cream/90 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light animate-fade-up"
-            style={{ animationDelay: "0.4s" }}
+            style={{ animationDelay: "0.45s" }}
           >
             嚴選當季新鮮水果，不添加人工色素與防腐劑。
             <br className="hidden md:block" />
@@ -49,7 +59,7 @@ export default async function HomePage() {
           <Link
             href="/order"
             className="inline-block mt-10 bg-berry text-white px-8 py-4 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200 text-lg animate-fade-up"
-            style={{ animationDelay: "0.55s" }}
+            style={{ animationDelay: "0.6s" }}
           >
             立即訂購
           </Link>
@@ -128,6 +138,13 @@ export default async function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-cream-dark py-12 text-center">
+        <Image
+          src="/logo.jpg"
+          alt="Jam For Love"
+          width={56}
+          height={56}
+          className="mx-auto rounded-full mb-4"
+        />
         <p className="font-serif text-warm-brown text-lg font-bold mb-2">
           Jam For Love
         </p>
