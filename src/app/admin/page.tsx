@@ -42,32 +42,41 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_OPTIONS = ["pending", "confirmed", "shipped", "completed"];
 
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-honey/20 text-honey",
+  confirmed: "bg-leaf/10 text-leaf",
+  shipped: "bg-berry/10 text-berry",
+  completed: "bg-leaf/20 text-leaf",
+};
+
 type Tab = "products" | "orders";
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-amber-900 mb-6">後台管理</h1>
+    <div className="max-w-5xl mx-auto px-5 py-10">
+      <h1 className="font-serif text-4xl font-bold text-warm-brown mb-8">
+        後台管理
+      </h1>
 
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-2 mb-10">
         <button
           onClick={() => setTab("products")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
+          className={`px-5 py-2.5 rounded-full font-medium text-sm transition-colors ${
             tab === "products"
-              ? "bg-amber-600 text-white"
-              : "bg-white text-amber-700 hover:bg-amber-50"
+              ? "bg-warm-brown text-cream"
+              : "text-warm-brown-light hover:text-warm-brown border-2 border-cream-dark"
           }`}
         >
           產品管理
         </button>
         <button
           onClick={() => setTab("orders")}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
+          className={`px-5 py-2.5 rounded-full font-medium text-sm transition-colors ${
             tab === "orders"
-              ? "bg-amber-600 text-white"
-              : "bg-white text-amber-700 hover:bg-amber-50"
+              ? "bg-warm-brown text-cream"
+              : "text-warm-brown-light hover:text-warm-brown border-2 border-cream-dark"
           }`}
         >
           訂單管理
@@ -161,99 +170,106 @@ function ProductManager() {
     loadProducts();
   }
 
+  const inputClass =
+    "w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition";
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-amber-800">產品列表</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-xl font-bold text-warm-brown">
+          產品列表
+        </h2>
         <button
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition text-sm"
+          className="bg-berry text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-berry-dark transition-colors"
         >
-          新增產品
+          + 新增產品
         </button>
       </div>
 
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-md p-6 mb-6 space-y-4"
+          className="bg-white rounded-2xl border-2 border-cream-dark p-6 mb-8 space-y-5"
         >
-          <h3 className="font-bold text-amber-900">
+          <h3 className="font-serif font-bold text-warm-brown text-lg">
             {editingId ? "編輯產品" : "新增產品"}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-warm-brown mb-2">
                 名稱
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={inputClass}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-warm-brown mb-2">
                 價格 (NT$)
               </label>
               <input
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className={inputClass}
                 min="0"
                 required
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-warm-brown mb-2">
               圖片網址
             </label>
             <input
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className={inputClass}
               placeholder="https://example.com/jam.jpg"
             />
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt="預覽"
-                className="mt-2 w-24 h-24 object-cover rounded-lg border border-gray-200"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                className="mt-3 w-24 h-24 object-cover rounded-xl border-2 border-cream-dark"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
               />
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-warm-brown mb-2">
               說明
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className={inputClass}
             />
           </div>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <div className="flex gap-2">
+          {error && <p className="text-berry text-sm">{error}</p>}
+          <div className="flex gap-3">
             <button
               type="submit"
-              className="bg-amber-600 text-white px-6 py-2 rounded-lg hover:bg-amber-700 transition"
+              className="bg-berry text-white px-6 py-2.5 rounded-full font-semibold hover:bg-berry-dark transition-colors"
             >
               {editingId ? "儲存" : "新增"}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="border border-gray-300 px-6 py-2 rounded-lg hover:bg-gray-50 transition"
+              className="border-2 border-cream-dark text-warm-brown-light px-6 py-2.5 rounded-full hover:border-warm-brown hover:text-warm-brown transition-colors"
             >
               取消
             </button>
@@ -265,52 +281,52 @@ function ProductManager() {
         {products.map((product) => (
           <div
             key={product.id}
-            className={`bg-white rounded-xl shadow-sm p-4 flex items-center justify-between ${
-              !product.isActive ? "opacity-50" : ""
+            className={`bg-white rounded-2xl border-2 border-cream-dark p-4 flex items-center justify-between transition-opacity ${
+              !product.isActive ? "opacity-40" : ""
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-12 h-12 rounded-lg object-cover shrink-0"
+                  className="w-14 h-14 rounded-xl object-cover shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-xl shrink-0">
+                <div className="w-14 h-14 rounded-xl bg-cream-dark flex items-center justify-center text-2xl shrink-0">
                   🍓
                 </div>
               )}
               <div>
-                <h3 className="font-semibold text-amber-900">
+                <h3 className="font-serif font-bold text-warm-brown">
                   {product.name}
                   {!product.isActive && (
-                    <span className="ml-2 text-xs text-red-500 font-normal">
-                      (已下架)
+                    <span className="ml-2 text-xs text-berry font-sans font-normal">
+                      已下架
                     </span>
                   )}
                 </h3>
-                <p className="text-sm text-gray-500 line-clamp-1">
+                <p className="text-sm text-warm-brown-light line-clamp-1">
                   {product.description}
                 </p>
-                <p className="text-amber-700 font-medium">
+                <p className="text-berry font-semibold">
                   NT$ {product.price}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => startEdit(product)}
-                className="text-sm text-amber-700 hover:text-amber-900 px-3 py-1 border border-amber-300 rounded-lg hover:bg-amber-50 transition"
+                className="text-sm text-warm-brown-light hover:text-warm-brown px-3 py-1.5 border-2 border-cream-dark rounded-full hover:border-warm-brown transition-colors"
               >
                 編輯
               </button>
               <button
                 onClick={() => toggleActive(product)}
-                className={`text-sm px-3 py-1 rounded-lg border transition ${
+                className={`text-sm px-3 py-1.5 rounded-full border-2 transition-colors ${
                   product.isActive
-                    ? "text-red-600 border-red-300 hover:bg-red-50"
-                    : "text-green-600 border-green-300 hover:bg-green-50"
+                    ? "text-berry border-berry/30 hover:bg-berry/5"
+                    : "text-leaf border-leaf/30 hover:bg-leaf/5"
                 }`}
               >
                 {product.isActive ? "下架" : "上架"}
@@ -348,38 +364,50 @@ function OrderManager() {
   }
 
   if (loading) {
-    return <p className="text-gray-500 text-center py-8">載入中...</p>;
+    return (
+      <p className="text-warm-brown-light text-center py-12">載入中...</p>
+    );
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-amber-800 mb-4">訂單列表</h2>
+      <h2 className="font-serif text-xl font-bold text-warm-brown mb-6">
+        訂單列表
+      </h2>
 
       {orders.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">目前沒有訂單</p>
+        <div className="text-center py-20">
+          <p className="text-4xl mb-4">📦</p>
+          <p className="text-warm-brown-light text-lg">目前沒有訂單</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-xl shadow-md p-6"
+              className="bg-white rounded-2xl border-2 border-cream-dark p-6"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <span className="font-bold text-amber-900">
-                    訂單 #{order.id}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="font-serif font-bold text-warm-brown">
+                    #{order.id}
                   </span>
-                  <span className="text-sm text-gray-400 ml-3">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[order.status] || ""}`}
+                  >
+                    {STATUS_LABELS[order.status]}
+                  </span>
+                  <span className="text-xs text-warm-brown-light">
                     {order.createdAt}
                   </span>
-                  <span className="text-sm text-gray-500 ml-3">
-                    會員：{order.username || `#${order.userId}`}
+                  <span className="text-xs text-warm-brown-light">
+                    {order.username || `#${order.userId}`}
                   </span>
                 </div>
                 <select
                   value={order.status}
                   onChange={(e) => updateStatus(order.id, e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="border-2 border-cream-dark rounded-xl px-3 py-1.5 text-sm text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
@@ -389,22 +417,22 @@ function OrderManager() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">收件人：</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="text-sm space-y-1">
+                  <p className="text-warm-brown">
+                    <span className="text-warm-brown-light">收件人</span>{" "}
                     {order.customerName}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">電話：</span>
+                  <p className="text-warm-brown">
+                    <span className="text-warm-brown-light">電話</span>{" "}
                     {order.phone}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">地址：</span>
+                  <p className="text-warm-brown">
+                    <span className="text-warm-brown-light">地址</span>{" "}
                     {order.address}
                   </p>
                   {order.notes && (
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-warm-brown-light opacity-60">
                       備註：{order.notes}
                     </p>
                   )}
@@ -413,18 +441,20 @@ function OrderManager() {
                   {order.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex justify-between text-sm text-gray-700"
+                      className="flex justify-between text-sm py-0.5"
                     >
-                      <span>
-                        {item.productName || `產品 #${item.productId}`} x{" "}
+                      <span className="text-warm-brown-light">
+                        {item.productName || `產品 #${item.productId}`} ×{" "}
                         {item.quantity}
                       </span>
-                      <span>NT$ {item.price * item.quantity}</span>
+                      <span className="text-warm-brown font-medium">
+                        NT$ {item.price * item.quantity}
+                      </span>
                     </div>
                   ))}
-                  <div className="border-t border-gray-100 mt-2 pt-2 flex justify-between font-bold text-amber-900">
-                    <span>總計</span>
-                    <span>NT$ {order.total}</span>
+                  <div className="border-t border-cream-dark mt-2 pt-2 flex justify-between font-bold">
+                    <span className="text-warm-brown">總計</span>
+                    <span className="text-berry">NT$ {order.total}</span>
                   </div>
                 </div>
               </div>

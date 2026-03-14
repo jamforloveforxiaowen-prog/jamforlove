@@ -26,20 +26,30 @@ export default async function HomePage() {
           />
         </div>
         <div className="max-w-5xl mx-auto px-5 relative z-10 text-center">
-          <p className="text-honey-light font-sans text-sm font-semibold tracking-[0.3em] uppercase mb-6">
+          <p
+            className="text-honey-light font-sans text-sm font-semibold tracking-[0.3em] uppercase mb-6 animate-fade-up"
+            style={{ animationDelay: "0.1s" }}
+          >
             Handmade with Love
           </p>
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-black text-cream leading-tight mb-8">
+          <h1
+            className="font-serif text-5xl md:text-7xl lg:text-8xl font-black text-cream leading-tight mb-8 animate-fade-up"
+            style={{ animationDelay: "0.25s" }}
+          >
             Jam For Love
           </h1>
-          <p className="text-cream/70 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light">
+          <p
+            className="text-cream/70 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light animate-fade-up"
+            style={{ animationDelay: "0.4s" }}
+          >
             嚴選當季新鮮水果，不添加人工色素與防腐劑。
             <br className="hidden md:block" />
             每一口，都是用愛熬出的幸福滋味。
           </p>
           <Link
             href="/order"
-            className="inline-block mt-10 bg-berry text-white px-8 py-4 rounded-full font-semibold hover:bg-berry-dark transition-colors text-lg"
+            className="inline-block mt-10 bg-berry text-white px-8 py-4 rounded-full font-semibold hover:bg-berry-dark transition-colors text-lg animate-fade-up"
+            style={{ animationDelay: "0.55s" }}
           >
             立即訂購
           </Link>
@@ -47,7 +57,7 @@ export default async function HomePage() {
       </section>
 
       {/* 品牌故事 */}
-      <section className="max-w-3xl mx-auto px-5 py-20 text-center">
+      <section className="max-w-3xl mx-auto px-5 py-20 text-center animate-fade-up" style={{ animationDelay: "0.2s" }}>
         <h2 className="font-serif text-3xl md:text-4xl font-bold text-warm-brown mb-6">
           用愛製作，用心傳遞
         </h2>
@@ -77,11 +87,12 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {allProducts.map((product) => (
+            {allProducts.map((product, i) => (
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="group block"
+                className="group block animate-fade-up"
+                style={{ animationDelay: `${0.1 + i * 0.1}s` }}
               >
                 <div className="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4">
                   {product.imageUrl ? (
