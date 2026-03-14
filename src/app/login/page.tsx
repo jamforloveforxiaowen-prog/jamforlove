@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-5">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm animate-fade-up">
         <div className="text-center mb-10">
           <h1 className="font-serif text-3xl font-bold text-warm-brown mb-2">
             歡迎回來
@@ -77,7 +77,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-berry text-white py-3 rounded-full font-semibold hover:bg-berry-dark disabled:opacity-50 transition-colors"
+            className="w-full bg-berry text-white py-3 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
           >
             {loading ? "登入中..." : "登入"}
           </button>

@@ -37,7 +37,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-5">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm animate-fade-up">
         <div className="text-center mb-10">
           <h1 className="font-serif text-3xl font-bold text-warm-brown mb-2">
             加入我們
@@ -93,7 +93,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-berry text-white py-3 rounded-full font-semibold hover:bg-berry-dark disabled:opacity-50 transition-colors"
+            className="w-full bg-berry text-white py-3 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
           >
             {loading ? "註冊中..." : "註冊"}
           </button>

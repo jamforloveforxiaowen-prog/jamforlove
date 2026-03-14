@@ -60,29 +60,30 @@ export default function MyOrdersPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-5 py-12">
-      <h1 className="font-serif text-4xl font-bold text-warm-brown mb-10">
+      <h1 className="font-serif text-4xl font-bold text-warm-brown mb-10 animate-fade-up">
         我的訂單
       </h1>
 
       {orders.length === 0 ? (
         <div className="text-center py-20 animate-fade-up">
-          <p className="text-5xl mb-5">📦</p>
+          <p className="text-5xl mb-5 animate-gentle-float">📦</p>
           <p className="text-warm-brown-light text-lg mb-6">
             目前沒有訂單紀錄
           </p>
           <a
             href="/order"
-            className="inline-block bg-berry text-white px-6 py-3 rounded-full font-semibold hover:bg-berry-dark transition-colors"
+            className="inline-block bg-berry text-white px-6 py-3 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200"
           >
             去逛逛果醬
           </a>
         </div>
       ) : (
         <div className="space-y-6">
-          {orders.map((order) => (
+          {orders.map((order, i) => (
             <div
               key={order.id}
-              className="bg-white rounded-2xl border-2 border-cream-dark p-6"
+              className="bg-white rounded-2xl border-2 border-cream-dark p-6 animate-fade-up"
+              style={{ animationDelay: `${0.1 + i * 0.08}s` }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">

@@ -48,7 +48,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/order"
-            className="inline-block mt-10 bg-berry text-white px-8 py-4 rounded-full font-semibold hover:bg-berry-dark transition-colors text-lg animate-fade-up"
+            className="inline-block mt-10 bg-berry text-white px-8 py-4 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200 text-lg animate-fade-up"
             style={{ animationDelay: "0.55s" }}
           >
             立即訂購
@@ -80,7 +80,7 @@ export default async function HomePage() {
 
         {allProducts.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">🍓</p>
+            <p className="text-4xl mb-4 animate-gentle-float">🍓</p>
             <p className="text-warm-brown-light text-lg">
               新口味正在熬煮中，敬請期待...
             </p>
@@ -91,7 +91,7 @@ export default async function HomePage() {
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="group block animate-fade-up"
+                className="group block animate-fade-up hover:-translate-y-1 transition-transform duration-300"
                 style={{ animationDelay: `${0.1 + i * 0.1}s` }}
               >
                 <div className="relative aspect-[4/5] rounded-2xl overflow-hidden mb-4">

@@ -118,7 +118,7 @@ export default function Navbar() {
 
       {/* 手機版展開選單 */}
       {menuOpen && (
-        <div className="md:hidden border-t border-cream-dark bg-cream px-5 py-4 space-y-3">
+        <div className="md:hidden border-t border-cream-dark bg-cream px-5 py-4 space-y-3 animate-slide-down">
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}

@@ -36,7 +36,7 @@ export default async function ProductPage({
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-        <div className="relative aspect-square rounded-2xl overflow-hidden">
+        <div className="relative aspect-square rounded-2xl overflow-hidden animate-scale-in">
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
@@ -53,7 +53,7 @@ export default async function ProductPage({
           )}
         </div>
 
-        <div className="py-4">
+        <div className="py-4 animate-fade-up" style={{ animationDelay: "0.15s" }}>
           <h1 className="font-serif text-4xl md:text-5xl font-black text-warm-brown leading-tight mb-6">
             {product.name}
           </h1>
@@ -65,7 +65,7 @@ export default async function ProductPage({
           </p>
           <Link
             href="/order"
-            className="inline-block bg-berry text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-berry-dark transition-colors"
+            className="inline-block bg-berry text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200"
           >
             前往訂購
           </Link>
