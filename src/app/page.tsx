@@ -58,6 +58,7 @@ export default async function HomePage() {
 
       {/* 品牌故事 */}
       <section className="max-w-3xl mx-auto px-5 py-20 text-center animate-fade-up" style={{ animationDelay: "0.2s" }}>
+        <p className="text-berry/40 text-2xl mb-4">· · ·</p>
         <h2 className="font-serif text-3xl md:text-4xl font-bold text-warm-brown mb-6">
           用愛製作，用心傳遞
         </h2>
@@ -130,8 +131,15 @@ export default async function HomePage() {
         <p className="font-serif text-warm-brown text-lg font-bold mb-2">
           Jam For Love
         </p>
-        <p className="text-warm-brown-light text-sm">
+        <p className="text-warm-brown-light text-sm mb-4">
           用愛製作的手工果醬
+        </p>
+        <p className="text-warm-brown-light/50 text-xs">
+          以{" "}
+          <span className="inline-block hover:scale-125 transition-transform duration-200 cursor-default" title="用滿滿的愛心">
+            ❤️
+          </span>
+          {" "}手工熬煮 · {new Date().getFullYear()}
         </p>
       </footer>
     </div>

@@ -29,9 +29,9 @@ export default async function ProductPage({
     <div className="max-w-5xl mx-auto px-5 py-12">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-warm-brown-light hover:text-berry text-sm font-medium transition-colors mb-8"
+        className="group inline-flex items-center gap-2 text-warm-brown-light hover:text-berry text-sm font-medium transition-colors mb-8"
       >
-        <span>&larr;</span>
+        <span className="inline-block group-hover:-translate-x-1 transition-transform duration-200">&larr;</span>
         <span>回到首頁</span>
       </Link>
 
@@ -69,6 +69,9 @@ export default async function ProductPage({
           >
             前往訂購
           </Link>
+          <p className="mt-4 text-warm-brown-light/50 text-xs">
+            每一罐都是小量手工熬煮，新鮮現做
+          </p>
         </div>
       </div>
     </div>

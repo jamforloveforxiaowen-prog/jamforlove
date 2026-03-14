@@ -112,6 +112,8 @@ export default function OrderPage() {
       return;
     }
 
+    setCart([]);
+    try { sessionStorage.removeItem("jamforlove-cart"); } catch { /* ok */ }
     setSubmitted(true);
   }
 
@@ -124,7 +126,9 @@ export default function OrderPage() {
             訂單已送出！
           </h1>
           <p className="text-warm-brown-light mb-10 leading-relaxed animate-fade-up" style={{ animationDelay: "0.35s" }}>
-            感謝您的訂購，我們會盡快處理您的訂單。
+            感謝您的訂購！我們正用滿滿的愛心為您準備果醬，
+            <br className="hidden sm:block" />
+            請期待甜蜜的包裹送到您手中。
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-up" style={{ animationDelay: "0.5s" }}>
             <button
@@ -241,9 +245,12 @@ export default function OrderPage() {
 
         {/* 收件資料 */}
         <div className="lg:col-span-2">
-          <h2 className="font-serif text-xl font-bold text-warm-brown mb-5">
+          <h2 className="font-serif text-xl font-bold text-warm-brown mb-1">
             收件資料
           </h2>
+          <p className="text-warm-brown-light/60 text-xs mb-5">
+            我們會小心包裝，讓果醬安全到你手中
+          </p>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="order-name" className="block text-sm font-medium text-warm-brown mb-2">

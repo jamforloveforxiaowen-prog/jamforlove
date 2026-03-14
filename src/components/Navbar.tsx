@@ -36,9 +36,12 @@ export default function Navbar() {
       <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
         <Link
           href="/"
-          className="font-serif text-2xl font-bold text-warm-brown tracking-tight hover:text-berry transition-colors"
+          className="group/logo font-serif text-2xl font-bold text-warm-brown tracking-tight hover:text-berry transition-colors"
         >
-          Jam For Love
+          Jam For{" "}
+          <span className="inline-block group-hover/logo:scale-110 transition-transform duration-200">
+            Love
+          </span>
         </Link>
 
         {/* 桌面版選單 */}

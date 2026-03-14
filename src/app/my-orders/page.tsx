@@ -23,10 +23,10 @@ interface Order {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: "待確認",
-  confirmed: "已確認",
-  shipped: "已出貨",
-  completed: "已完成",
+  pending: "🕐 待確認",
+  confirmed: "✨ 已確認",
+  shipped: "🚚 已出貨",
+  completed: "🎉 已完成",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,8 +52,9 @@ export default function MyOrdersPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-5 py-20 text-center text-warm-brown-light">
-        載入中...
+      <div className="max-w-3xl mx-auto px-5 py-20 text-center">
+        <p className="text-2xl mb-3 animate-gentle-float">🍓</p>
+        <p className="text-warm-brown-light text-sm">正在翻找您的訂單...</p>
       </div>
     );
   }
@@ -67,8 +68,11 @@ export default function MyOrdersPage() {
       {orders.length === 0 ? (
         <div className="text-center py-20 animate-fade-up">
           <p className="text-5xl mb-5 animate-gentle-float">📦</p>
-          <p className="text-warm-brown-light text-lg mb-6">
-            目前沒有訂單紀錄
+          <p className="text-warm-brown-light text-lg mb-2">
+            還沒有訂單紀錄
+          </p>
+          <p className="text-warm-brown-light/60 text-sm mb-6">
+            來挑一罐用愛熬煮的果醬吧！
           </p>
           <a
             href="/order"
