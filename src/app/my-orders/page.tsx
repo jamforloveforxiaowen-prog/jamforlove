@@ -65,11 +65,17 @@ export default function MyOrdersPage() {
       </h1>
 
       {orders.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">📦</p>
-          <p className="text-warm-brown-light text-lg">
+        <div className="text-center py-20 animate-fade-up">
+          <p className="text-5xl mb-5">📦</p>
+          <p className="text-warm-brown-light text-lg mb-6">
             目前沒有訂單紀錄
           </p>
+          <a
+            href="/order"
+            className="inline-block bg-berry text-white px-6 py-3 rounded-full font-semibold hover:bg-berry-dark transition-colors"
+          >
+            去逛逛果醬
+          </a>
         </div>
       ) : (
         <div className="space-y-6">
