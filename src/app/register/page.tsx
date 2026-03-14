@@ -93,7 +93,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-berry text-white py-3 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
+            className="w-full bg-berry text-white py-3.5 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50 transition-all duration-200"
           >
             {loading ? "註冊中..." : "註冊"}
           </button>

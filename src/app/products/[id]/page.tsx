@@ -35,7 +35,7 @@ export default async function ProductPage({
         <span>回到首頁</span>
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
         <div className="relative aspect-square rounded-2xl overflow-hidden animate-scale-in">
           {product.imageUrl ? (
             <Image

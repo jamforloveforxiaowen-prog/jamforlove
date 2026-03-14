@@ -330,13 +330,13 @@ function ProductManager() {
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => startEdit(product)}
-                className="text-sm text-warm-brown-light hover:text-warm-brown px-3 py-1.5 border-2 border-cream-dark rounded-full hover:border-warm-brown transition-colors"
+                className="text-sm text-warm-brown-light hover:text-warm-brown px-4 py-2 border-2 border-cream-dark rounded-full hover:border-warm-brown transition-colors"
               >
                 編輯
               </button>
               <button
                 onClick={() => toggleActive(product)}
-                className={`text-sm px-3 py-1.5 rounded-full border-2 transition-colors ${
+                className={`text-sm px-4 py-2 rounded-full border-2 transition-colors ${
                   product.isActive
                     ? "text-berry border-berry/30 hover:bg-berry/5"
                     : "text-leaf border-leaf/30 hover:bg-leaf/5"
@@ -431,7 +431,7 @@ function OrderManager() {
                 <select
                   value={order.status}
                   onChange={(e) => updateStatus(order.id, e.target.value)}
-                  className="border-2 border-cream-dark rounded-xl px-3 py-1.5 text-sm text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
+                  className="border-2 border-cream-dark rounded-xl px-3 py-2 text-sm text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>

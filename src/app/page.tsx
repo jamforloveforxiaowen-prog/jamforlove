@@ -33,7 +33,7 @@ export default async function HomePage() {
             Handmade with Love
           </p>
           <h1
-            className="font-serif text-5xl md:text-7xl lg:text-8xl font-black text-cream leading-tight mb-8 animate-fade-up"
+            className="font-serif text-4xl md:text-6xl lg:text-8xl font-black text-cream leading-tight mb-8 animate-fade-up"
             style={{ animationDelay: "0.25s" }}
           >
             Jam For Love

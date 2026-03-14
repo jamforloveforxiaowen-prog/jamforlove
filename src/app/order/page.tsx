@@ -155,7 +155,7 @@ export default function OrderPage() {
         訂購果醬
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
         {/* 產品選擇 */}
         <div className="lg:col-span-3">
           <h2 className="font-serif text-xl font-bold text-warm-brown mb-5">
@@ -196,7 +196,7 @@ export default function OrderPage() {
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty - 1)}
-                      className="w-10 h-10 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
+                      className="w-11 h-11 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
                     >
                       −
                     </button>
@@ -206,7 +206,7 @@ export default function OrderPage() {
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty + 1)}
-                      className="w-10 h-10 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
+                      className="w-11 h-11 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
                     >
                       +
                     </button>

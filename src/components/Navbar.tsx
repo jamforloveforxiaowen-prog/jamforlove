@@ -103,7 +103,7 @@ export default function Navbar() {
         {/* 手機版漢堡選單 */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5"
+          className="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-1.5"
           aria-label="選單"
           aria-expanded={menuOpen}
         >
@@ -121,11 +121,11 @@ export default function Navbar() {
 
       {/* 手機版展開選單 */}
       {menuOpen && (
-        <div className="md:hidden border-t border-cream-dark bg-cream px-5 py-4 space-y-3 animate-slide-down">
+        <div className="md:hidden border-t border-cream-dark bg-cream px-5 py-3 space-y-1 animate-slide-down">
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+            className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
           >
             首頁
           </Link>
@@ -134,14 +134,14 @@ export default function Navbar() {
               <Link
                 href="/order"
                 onClick={() => setMenuOpen(false)}
-                className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
               >
                 訂購
               </Link>
               <Link
                 href="/my-orders"
                 onClick={() => setMenuOpen(false)}
-                className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
               >
                 我的訂單
               </Link>
@@ -149,14 +149,14 @@ export default function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setMenuOpen(false)}
-                  className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                  className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
                 >
                   後台管理
                 </Link>
               )}
               <button
                 onClick={handleLogout}
-                className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
               >
                 登出
               </button>
@@ -166,14 +166,14 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
               >
                 登入
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMenuOpen(false)}
-                className="block text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
               >
                 註冊
               </Link>

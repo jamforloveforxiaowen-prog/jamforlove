@@ -86,7 +86,7 @@ export default function MyOrdersPage() {
           {orders.map((order, i) => (
             <div
               key={order.id}
-              className="bg-white rounded-2xl border-2 border-cream-dark p-6 animate-fade-up"
+              className="bg-white rounded-2xl border-2 border-cream-dark p-4 sm:p-6 animate-fade-up"
               style={{ animationDelay: `${0.1 + i * 0.08}s` }}
             >
               <div className="flex items-center justify-between mb-4">
