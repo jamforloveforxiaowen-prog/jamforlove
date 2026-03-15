@@ -147,7 +147,7 @@ export default function RegisterPage() {
       {/* 右側註冊表單 — 深色毛玻璃卡片 */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative z-10">
         <div
-          className="w-full max-w-sm animate-reveal-up"
+          className="w-full max-w-md animate-reveal-up"
           style={{
             background: "rgba(255, 255, 255, 0.06)",
             backdropFilter: "blur(24px)",
@@ -189,77 +189,79 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {/* 表單 */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="reg-username"
-                className="block text-sm font-medium text-white/70 mb-1.5"
-              >
-                帳號
-              </label>
-              <input
-                id="reg-username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className={inputClass}
-                placeholder="3-20 個字元"
-                minLength={3}
-                maxLength={20}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="reg-password"
-                className="block text-sm font-medium text-white/70 mb-1.5"
-              >
-                密碼
-              </label>
-              <input
-                id="reg-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputClass}
-                placeholder="至少 6 個字元"
-                minLength={6}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="reg-name"
-                className="block text-sm font-medium text-white/70 mb-1.5"
-              >
-                姓名
-              </label>
-              <input
-                id="reg-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClass}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="reg-email"
-                className="block text-sm font-medium text-white/70 mb-1.5"
-              >
-                Email
-              </label>
-              <input
-                id="reg-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClass}
-                placeholder="用於密碼重設"
-                required
-              />
+          {/* 表單 — 兩欄式 */}
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label
+                  htmlFor="reg-username"
+                  className="block text-sm font-medium text-white/70 mb-1.5"
+                >
+                  帳號
+                </label>
+                <input
+                  id="reg-username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className={inputClass}
+                  placeholder="3-20 個字元"
+                  minLength={3}
+                  maxLength={20}
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="reg-password"
+                  className="block text-sm font-medium text-white/70 mb-1.5"
+                >
+                  密碼
+                </label>
+                <input
+                  id="reg-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClass}
+                  placeholder="至少 6 個字元"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="reg-name"
+                  className="block text-sm font-medium text-white/70 mb-1.5"
+                >
+                  姓名
+                </label>
+                <input
+                  id="reg-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="reg-email"
+                  className="block text-sm font-medium text-white/70 mb-1.5"
+                >
+                  Email
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass}
+                  placeholder="用於密碼重設"
+                  required
+                />
+              </div>
             </div>
             {error && (
               <p className="text-rose-light text-sm font-medium" role="alert">
