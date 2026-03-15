@@ -42,51 +42,79 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex">
-      {/* 左側品牌宣言 — 不對稱佈局 + 毛玻璃裝飾 */}
-      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden bg-linen">
-        {/* 毛玻璃漸層光球 */}
-        <div
-          className="absolute rounded-full opacity-30"
-          style={{
-            width: 420,
-            height: 420,
-            background: "var(--color-rose)",
-            filter: "blur(100px)",
-            top: "-8%",
-            left: "-5%",
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-20"
-          style={{
-            width: 300,
-            height: 300,
-            background: "var(--color-sage)",
-            filter: "blur(80px)",
-            bottom: "5%",
-            right: "0%",
-          }}
-        />
-        <div
-          className="absolute rounded-full opacity-15"
-          style={{
-            width: 200,
-            height: 200,
-            background: "var(--color-honey)",
-            filter: "blur(70px)",
-            top: "45%",
-            left: "55%",
-          }}
-        />
+    <div
+      className="min-h-[calc(100vh-4rem)] relative overflow-hidden flex"
+      style={{
+        background:
+          "linear-gradient(135deg, var(--color-linen) 0%, var(--color-parchment) 30%, var(--color-rose-light) 60%, var(--color-rose) 100%)",
+      }}
+    >
+      {/* 全螢幕漸層光球裝飾 — 散佈整個背景 */}
+      <div
+        className="absolute rounded-full opacity-40"
+        style={{
+          width: 500,
+          height: 500,
+          background: "var(--color-rose)",
+          filter: "blur(120px)",
+          top: "-12%",
+          left: "-8%",
+        }}
+      />
+      <div
+        className="absolute rounded-full opacity-25"
+        style={{
+          width: 350,
+          height: 350,
+          background: "var(--color-honey)",
+          filter: "blur(90px)",
+          top: "15%",
+          right: "5%",
+        }}
+      />
+      <div
+        className="absolute rounded-full opacity-25"
+        style={{
+          width: 400,
+          height: 400,
+          background: "var(--color-sage)",
+          filter: "blur(100px)",
+          bottom: "-5%",
+          left: "20%",
+        }}
+      />
+      <div
+        className="absolute rounded-full opacity-20"
+        style={{
+          width: 300,
+          height: 300,
+          background: "var(--color-rose-dark)",
+          filter: "blur(80px)",
+          bottom: "10%",
+          right: "-5%",
+        }}
+      />
+      <div
+        className="absolute rounded-full opacity-15"
+        style={{
+          width: 200,
+          height: 200,
+          background: "var(--color-linen)",
+          filter: "blur(60px)",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      />
 
-        {/* 品牌內容 */}
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+      {/* 左側品牌宣言 — 桌面版 */}
+      <div className="hidden lg:flex lg:w-[48%] relative z-10">
+        <div className="flex flex-col justify-between p-12 xl:p-16 w-full">
           {/* 頂部 Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
             <span
-              className="text-espresso-light text-base"
+              className="text-white/80 text-base"
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 300,
@@ -99,14 +127,15 @@ export default function LoginPage() {
 
           {/* 中間大文案 */}
           <div className="animate-reveal-up">
-            <h2 className="font-serif text-espresso leading-[1.15] mb-6"
+            <h2
+              className="font-serif text-espresso leading-[1.15] mb-6"
               style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
             >
-              用<span className="text-rose">愛</span>手工熬煮
+              用<span className="text-rose-dark">愛</span>手工熬煮
               <br />
               每一瓶果醬
             </h2>
-            <p className="text-espresso-light/50 text-base leading-relaxed max-w-sm">
+            <p className="text-espresso-light/60 text-base leading-relaxed max-w-sm">
               嚴選當季新鮮水果，不加人工色素與防腐劑，每一口都是自然的甜蜜。
             </p>
           </div>
@@ -118,39 +147,18 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* 右側登入表單 — 毛玻璃卡片 */}
-      <div className="flex-1 flex items-center justify-center px-6 py-16 relative overflow-hidden">
-        {/* 背景漸層 */}
+      {/* 右側（或居中）登入表單 — 毛玻璃卡片 */}
+      <div className="flex-1 flex items-center justify-center px-6 py-16 relative z-10">
         <div
-          className="absolute inset-0"
+          className="w-full max-w-sm animate-reveal-up"
           style={{
-            background:
-              "linear-gradient(160deg, var(--color-linen) 0%, var(--color-parchment) 40%, var(--color-linen-dark) 100%)",
-          }}
-        />
-        {/* 右側裝飾光球 */}
-        <div
-          className="absolute rounded-full opacity-15"
-          style={{
-            width: 280,
-            height: 280,
-            background: "var(--color-rose)",
-            filter: "blur(80px)",
-            bottom: "-10%",
-            right: "-5%",
-          }}
-        />
-
-        {/* 毛玻璃表單卡片 */}
-        <div
-          className="relative z-10 w-full max-w-sm animate-reveal-up"
-          style={{
-            background: "rgba(255, 255, 255, 0.6)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.5)",
-            borderRadius: "1.25rem",
-            boxShadow: "0 8px 48px rgba(30, 15, 8, 0.06)",
+            background: "rgba(255, 255, 255, 0.55)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.45)",
+            borderRadius: "1.5rem",
+            boxShadow:
+              "0 8px 48px rgba(30, 15, 8, 0.08), inset 0 1px 0 rgba(255,255,255,0.5)",
             padding: "2.5rem 2.25rem",
           }}
         >
