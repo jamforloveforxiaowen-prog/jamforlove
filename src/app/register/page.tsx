@@ -137,8 +137,8 @@ export default function RegisterPage() {
             </div>
             <div className="w-px h-10 bg-white/10" />
             <div className="text-center">
-              <div className="text-sage-light text-2xl font-bold font-serif">3日</div>
-              <div className="text-white/30 text-xs mt-1">新鮮直送</div>
+              <div className="text-sage-light text-2xl font-bold font-serif">小批</div>
+              <div className="text-white/30 text-xs mt-1">手工熬煮</div>
             </div>
           </div>
         </div>
