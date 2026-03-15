@@ -23,7 +23,7 @@ export default function Navbar() {
       .then((res) => res.json())
       .then((data) => setUser(data.user || null))
       .catch(() => setUser(null));
-  }, []);
+  }, [pathname]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
