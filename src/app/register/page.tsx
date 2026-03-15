@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, name }),
+      body: JSON.stringify({ username, password, name, email }),
     });
 
     const data = await res.json();
@@ -128,6 +129,23 @@ export default function RegisterPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input-field"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="reg-email"
+                className="block text-sm font-medium text-espresso mb-2"
+              >
+                Email
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field"
+                placeholder="用於密碼重設"
                 required
               />
             </div>

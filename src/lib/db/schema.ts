@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().default(""),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["user", "admin"] })
     .notNull()
@@ -11,6 +12,19 @@ export const users = sqliteTable("users", {
   name: text("name").notNull().default(""),
   phone: text("phone").notNull().default(""),
   address: text("address").notNull().default(""),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const passwordResetTokens = sqliteTable("password_reset_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  token: text("token").notNull().unique(),
+  expiresAt: text("expires_at").notNull(),
+  used: integer("used", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

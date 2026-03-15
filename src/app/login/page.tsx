@@ -111,6 +111,14 @@ export default function LoginPage() {
                 className="input-field"
                 required
               />
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-espresso-light/50 hover:text-rose transition-colors"
+                >
+                  忘記密碼？
+                </Link>
+              </div>
             </div>
             {error && (
               <p className="text-rose text-sm font-medium">{error}</p>

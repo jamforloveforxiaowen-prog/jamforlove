@@ -51,7 +51,8 @@ export async function getSession(): Promise<SessionUser | null> {
 export async function register(
   username: string,
   password: string,
-  name: string
+  name: string,
+  email: string
 ) {
   const existing = await db
     .select()
@@ -66,7 +67,7 @@ export async function register(
   const passwordHash = await hashPassword(password);
   const result = await db
     .insert(users)
-    .values({ username, passwordHash, name })
+    .values({ username, passwordHash, name, email })
     .returning()
     .get();
 

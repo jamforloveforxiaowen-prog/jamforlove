@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { register, createToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { username, password, name } = await req.json();
+  const { username, password, name, email } = await req.json();
 
-  if (!username || !password || !name) {
-    return NextResponse.json({ error: "請填寫帳號、密碼和姓名" }, { status: 400 });
+  if (!username || !password || !name || !email) {
+    return NextResponse.json({ error: "請填寫所有必填欄位" }, { status: 400 });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: "請輸入有效的 Email 地址" }, { status: 400 });
   }
 
   if (username.length < 3 || username.length > 20) {
@@ -22,7 +27,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const result = await register(username, password, name);
+  const result = await register(username, password, name, email);
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });
