@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         : "http://localhost:3000";
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
-    await resend.emails.send({
+    await getResend().emails.send({
       from: "Jam For Love <onboarding@resend.dev>",
       to: email,
       subject: "重設您的密碼 — Jam For Love",
