@@ -49,19 +49,27 @@ function ResetPasswordForm() {
 
     setLoading(true);
 
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error);
+      if (!res.ok) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setLoading(false);
       return;
     }
+
+    setLoading(false);
 
     setSuccess(true);
   }
@@ -131,6 +139,7 @@ function ResetPasswordForm() {
               onChange={(e) => setPassword(e.target.value)}
               className="input-field"
               placeholder="至少 6 個字元"
+              minLength={6}
               required
             />
           </div>
@@ -152,7 +161,7 @@ function ResetPasswordForm() {
             />
           </div>
           {error && (
-            <p className="text-rose text-sm font-medium">{error}</p>
+            <p className="text-rose text-sm font-medium" role="alert">{error}</p>
           )}
           <button
             type="submit"

@@ -39,6 +39,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/orders")
@@ -47,13 +48,16 @@ export default function MyOrdersPage() {
         setOrders(Array.isArray(data) ? data.reverse() : []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setError("無法載入訂單，請稍後再試");
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <p className="text-3xl mb-3 animate-float">🍓</p>
+        <p className="text-3xl mb-3 animate-float" role="status" aria-label="載入中">🍓</p>
         <p className="text-espresso-light/50 text-sm">正在翻找你的訂單...</p>
       </div>
     );
@@ -71,7 +75,11 @@ export default function MyOrdersPage() {
         <div className="w-16 h-[2px] bg-rose mt-5" />
       </div>
 
-      {orders.length === 0 ? (
+      {error && (
+        <p className="text-rose text-sm font-medium mb-6" role="alert">{error}</p>
+      )}
+
+      {orders.length === 0 && !error ? (
         <div className="text-center py-24 animate-reveal-up">
           <div className="w-16 h-16 rounded-full bg-linen-dark/50 flex items-center justify-center mx-auto mb-6">
             <svg
@@ -150,13 +158,13 @@ export default function MyOrdersPage() {
 
               {/* 收件資訊 + 總計 */}
               <div className="border-t border-linen-dark/40 mt-4 pt-4 flex items-start justify-between gap-4">
-                <div className="text-xs text-espresso-light/50 space-y-0.5">
+                <div className="text-xs text-espresso-light/50 space-y-0.5 min-w-0 break-words">
                   <p>
                     {order.customerName} / {order.phone}
                   </p>
-                  <p>{order.address}</p>
+                  <p className="break-words">{order.address}</p>
                   {order.notes && (
-                    <p className="opacity-60">備註：{order.notes}</p>
+                    <p className="opacity-60 break-words">備註：{order.notes}</p>
                   )}
                 </div>
                 <p

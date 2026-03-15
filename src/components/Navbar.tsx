@@ -89,7 +89,7 @@ export default function Navbar() {
                 </Link>
               )}
               <span className="w-px h-4 bg-white/20 mx-2" />
-              <span className="text-white/70 px-4 py-1.5 rounded-full">{user.name}</span>
+              <span className="text-white/70 px-4 py-1.5 rounded-full max-w-[120px] truncate" title={user.name}>{user.name}</span>
               <button
                 onClick={handleLogout}
                 className="text-white/70 hover:text-white px-4 py-1.5 rounded-full transition-colors duration-200"
@@ -143,7 +143,7 @@ export default function Navbar() {
 
       {/* 手機版展開選單 */}
       {menuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-rose px-6 py-4 space-y-1 animate-slide-down">
+        <div className="md:hidden border-t border-white/10 bg-rose px-6 py-4 space-y-1 animate-slide-down" aria-live="polite">
           <Link href="/" onClick={() => setMenuOpen(false)} className={mobileLinkClass("/")}>
             首頁
           </Link>

@@ -36,6 +36,7 @@ export default function OrderPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -44,7 +45,8 @@ export default function OrderPage() {
       .then((data) => {
         if (Array.isArray(data)) setProducts(data);
       })
-      .catch(() => setError("無法載入產品，請稍後再試"));
+      .catch(() => setError("無法載入產品，請稍後再試"))
+      .finally(() => setProductsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -97,25 +99,33 @@ export default function OrderPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customerName,
-        phone,
-        address,
-        notes,
-        items: cart.map(({ productId, quantity }) => ({ productId, quantity })),
-      }),
-    });
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName,
+          phone,
+          address,
+          notes,
+          items: cart.map(({ productId, quantity }) => ({ productId, quantity })),
+        }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error);
+      if (!res.ok) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setLoading(false);
       return;
     }
+
+    setLoading(false);
 
     setCart([]);
     try {
@@ -227,7 +237,7 @@ export default function OrderPage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-serif font-bold text-espresso text-sm">
+                    <h3 className="font-serif font-bold text-espresso text-sm truncate">
                       {product.name}
                     </h3>
                     <p
@@ -259,7 +269,17 @@ export default function OrderPage() {
                 </div>
               );
             })}
-            {products.length === 0 && (
+            {productsLoading && (
+              <div className="text-center py-16">
+                <div
+                  className="w-8 h-8 border-2 border-rose/20 border-t-rose rounded-full animate-spin mx-auto mb-3"
+                  role="status"
+                  aria-label="載入產品中"
+                />
+                <p className="text-espresso-light/50 text-sm">載入產品中...</p>
+              </div>
+            )}
+            {!productsLoading && products.length === 0 && (
               <div className="text-center py-16">
                 <p className="text-3xl mb-3 animate-float">🍓</p>
                 <p className="text-espresso-light/60 text-sm">
@@ -340,6 +360,9 @@ export default function OrderPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="input-field"
+                pattern="[0-9\-\+\s]{8,15}"
+                title="請輸入有效的電話號碼（8-15 碼）"
+                minLength={8}
                 required
               />
             </div>
@@ -356,6 +379,7 @@ export default function OrderPage() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="input-field"
+                minLength={5}
                 required
               />
             </div>
@@ -377,7 +401,7 @@ export default function OrderPage() {
             </div>
 
             {error && (
-              <p className="text-rose text-sm font-medium">{error}</p>
+              <p className="text-rose text-sm font-medium" role="alert">{error}</p>
             )}
 
             <button
@@ -390,6 +414,8 @@ export default function OrderPage() {
                   <span
                     className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-slow"
                     style={{ animationDuration: "0.8s" }}
+                    role="status"
+                    aria-label="送出中"
                   />
                   送出中...
                 </span>

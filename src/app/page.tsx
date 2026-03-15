@@ -193,7 +193,7 @@ export default async function HomePage() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-espresso/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
-                <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-200">
+                <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-200 line-clamp-1">
                   {product.name}
                 </h3>
                 <p className="text-espresso-light/60 text-sm mt-1.5 line-clamp-2 leading-relaxed">

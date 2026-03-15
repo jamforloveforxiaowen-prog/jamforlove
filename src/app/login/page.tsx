@@ -16,19 +16,27 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error);
+      if (!res.ok) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setLoading(false);
       return;
     }
+
+    setLoading(false);
 
     router.push("/");
     router.refresh();
@@ -121,7 +129,7 @@ export default function LoginPage() {
               </div>
             </div>
             {error && (
-              <p className="text-rose text-sm font-medium">{error}</p>
+              <p className="text-rose text-sm font-medium" role="alert">{error}</p>
             )}
             <button
               type="submit"

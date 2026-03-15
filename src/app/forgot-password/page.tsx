@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -8,26 +8,44 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (cooldown > 0) return;
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error);
+      if (!res.ok) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setLoading(false);
       return;
     }
 
+    setLoading(false);
+    setCooldown(60);
     setSent(true);
   }
 
@@ -99,14 +117,14 @@ export default function ForgotPasswordPage() {
             />
           </div>
           {error && (
-            <p className="text-rose text-sm font-medium">{error}</p>
+            <p className="text-rose text-sm font-medium" role="alert">{error}</p>
           )}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || cooldown > 0}
             className="btn-primary w-full !py-3.5"
           >
-            {loading ? "寄送中..." : "寄送重設連結"}
+            {loading ? "寄送中..." : cooldown > 0 ? `請等待 ${cooldown} 秒` : "寄送重設連結"}
           </button>
         </form>
 

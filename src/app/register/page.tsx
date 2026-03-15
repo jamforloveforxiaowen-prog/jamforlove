@@ -18,19 +18,27 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, name, email }),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, name, email }),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error);
+      if (!res.ok) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setLoading(false);
       return;
     }
+
+    setLoading(false);
 
     router.push("/");
     router.refresh();
@@ -96,6 +104,8 @@ export default function RegisterPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="input-field"
                 placeholder="3-20 個字元"
+                minLength={3}
+                maxLength={20}
                 required
               />
             </div>
@@ -113,6 +123,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field"
                 placeholder="至少 6 個字元"
+                minLength={6}
                 required
               />
             </div>
@@ -150,7 +161,7 @@ export default function RegisterPage() {
               />
             </div>
             {error && (
-              <p className="text-rose text-sm font-medium">{error}</p>
+              <p className="text-rose text-sm font-medium" role="alert">{error}</p>
             )}
             <button
               type="submit"

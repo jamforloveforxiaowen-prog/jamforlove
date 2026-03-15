@@ -97,6 +97,7 @@ export default function AdminPage() {
 function ProductManager() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
@@ -151,6 +152,7 @@ function ProductManager() {
       return;
     }
 
+    setSubmitting(true);
     const body = { name, description, price: priceNum, imageUrl };
 
     const url = editingId
@@ -158,41 +160,73 @@ function ProductManager() {
       : "/api/admin/products";
     const method = editingId ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "儲存失敗，請檢查資料後重試");
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "儲存失敗，請檢查資料後重試");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setSubmitting(false);
       return;
     }
 
+    setSubmitting(false);
     resetForm();
     loadProducts();
   }
 
   async function toggleActive(product: Product) {
-    await fetch(`/api/admin/products/${product.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !product.isActive }),
-    });
-    loadProducts();
+    const action = product.isActive ? "下架" : "上架";
+    if (!window.confirm(`確定要${action}「${product.name}」嗎？`)) return;
+
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !product.isActive }),
+      });
+      loadProducts();
+    } catch {
+      setError(`${action}失敗，請重試`);
+    }
   }
 
   if (loading) {
     return (
-      <p className="text-espresso-light/50 text-center py-16 text-sm">
+      <p className="text-espresso-light/50 text-center py-16 text-sm" role="status" aria-label="載入中">
         載入中...
       </p>
     );
   }
 
+  if (!loading && error && products.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
+        <button
+          onClick={() => { setError(""); setLoading(true); loadProducts(); }}
+          className="btn-primary !py-2 !px-5 !text-sm"
+        >
+          重新載入
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
+      {error && (
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
+      )}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-lg font-bold text-espresso">
           產品列表
@@ -277,11 +311,11 @@ function ProductManager() {
             />
           </div>
           {error && (
-            <p className="text-rose text-sm font-medium">{error}</p>
+            <p className="text-rose text-sm font-medium" role="alert">{error}</p>
           )}
           <div className="flex gap-3">
-            <button type="submit" className="btn-primary !py-2.5 !px-6">
-              {editingId ? "儲存" : "新增"}
+            <button type="submit" disabled={submitting} className="btn-primary !py-2.5 !px-6">
+              {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
             </button>
             <button
               type="button"
@@ -302,7 +336,7 @@ function ProductManager() {
               !product.isActive ? "opacity-40" : ""
             }`}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
@@ -314,8 +348,8 @@ function ProductManager() {
                   🍓
                 </div>
               )}
-              <div>
-                <h3 className="font-serif font-bold text-espresso text-sm">
+              <div className="min-w-0">
+                <h3 className="font-serif font-bold text-espresso text-sm truncate">
                   {product.name}
                   {!product.isActive && (
                     <span className="ml-2 text-xs text-rose font-sans font-normal">
@@ -395,9 +429,23 @@ function OrderManager() {
 
   if (loading) {
     return (
-      <p className="text-espresso-light/50 text-center py-16 text-sm">
+      <p className="text-espresso-light/50 text-center py-16 text-sm" role="status" aria-label="載入中">
         載入中...
       </p>
+    );
+  }
+
+  if (!loading && error && orders.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
+        <button
+          onClick={() => { setError(""); setLoading(true); loadOrders(); }}
+          className="btn-primary !py-2 !px-5 !text-sm"
+        >
+          重新載入
+        </button>
+      </div>
     );
   }
 
@@ -407,7 +455,7 @@ function OrderManager() {
         訂單列表
       </h2>
       {error && (
-        <p className="text-rose text-sm font-medium mb-4">{error}</p>
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
       )}
 
       {orders.length === 0 ? (
@@ -479,7 +527,7 @@ function OrderManager() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="text-sm space-y-1">
+                <div className="text-sm space-y-1 min-w-0 break-words">
                   <p className="text-espresso">
                     <span className="text-espresso-light/50">收件人</span>{" "}
                     {order.customerName}
@@ -488,12 +536,12 @@ function OrderManager() {
                     <span className="text-espresso-light/50">電話</span>{" "}
                     {order.phone}
                   </p>
-                  <p className="text-espresso">
+                  <p className="text-espresso break-words">
                     <span className="text-espresso-light/50">地址</span>{" "}
                     {order.address}
                   </p>
                   {order.notes && (
-                    <p className="text-espresso-light/40">
+                    <p className="text-espresso-light/40 break-words">
                       備註：{order.notes}
                     </p>
                   )}

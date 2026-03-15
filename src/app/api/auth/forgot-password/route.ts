@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
     .get();
 
   if (user) {
+    // HTML escape 防止 XSS
+    const escapeHtml = (str: string) =>
+      str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const safeName = escapeHtml(user.name);
+
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 小時後過期
 
@@ -49,7 +54,7 @@ export async function POST(req: NextRequest) {
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
           <h2 style="color: #1e0f08; margin-bottom: 16px;">重設密碼</h2>
           <p style="color: #5c3d2e; line-height: 1.6;">
-            您好 ${user.name}，<br><br>
+            您好 ${safeName}，<br><br>
             我們收到了重設您 Jam For Love 帳號密碼的請求。
             請點擊下方按鈕設定新密碼：
           </p>

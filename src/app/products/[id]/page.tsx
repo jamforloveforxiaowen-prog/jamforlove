@@ -83,7 +83,7 @@ export default async function ProductPage({
             className="animate-reveal-up"
             style={{ animationDelay: "0.25s" }}
           >
-            <p className="text-espresso-light/70 leading-loose text-base whitespace-pre-wrap mb-10">
+            <p className="text-espresso-light/70 leading-loose text-base whitespace-pre-wrap mb-10 break-words">
               {product.description || "用心手作的好味道，等你來品嚐。"}
             </p>
           </div>
