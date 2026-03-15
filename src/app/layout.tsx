@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Noto_Serif_TC, Outfit } from "next/font/google";
+import { Cormorant, Noto_Serif_TC, Figtree } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+
+const display = Cormorant({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
 
 const serif = Noto_Serif_TC({
   variable: "--font-serif",
@@ -9,7 +16,7 @@ const serif = Noto_Serif_TC({
   weight: ["400", "700", "900"],
 });
 
-const sans = Outfit({
+const sans = Figtree({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -33,7 +40,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <body className={`${serif.variable} ${sans.variable} min-h-screen`}>
+      <body
+        className={`${display.variable} ${serif.variable} ${sans.variable} min-h-screen`}
+      >
         <Navbar />
         <main>{children}</main>
       </body>

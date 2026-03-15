@@ -26,17 +26,32 @@ export default async function ProductPage({
   if (!product) notFound();
 
   return (
-    <div className="max-w-5xl mx-auto px-5 py-12">
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-20">
       <Link
         href="/"
-        className="group inline-flex items-center gap-2 text-warm-brown-light hover:text-berry text-sm font-medium transition-colors mb-8"
+        className="group inline-flex items-center gap-2 text-espresso-light/60 hover:text-rose text-sm transition-colors duration-200 mb-10"
       >
-        <span className="inline-block group-hover:-translate-x-1 transition-transform duration-200">&larr;</span>
-        <span>回到首頁</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          className="group-hover:-translate-x-1 transition-transform duration-200"
+        >
+          <path
+            d="M10 12L6 8l4-4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        回到首頁
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-        <div className="relative aspect-square rounded-2xl overflow-hidden animate-scale-in">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start">
+        {/* 產品圖片 */}
+        <div className="relative aspect-square rounded-lg overflow-hidden bg-linen-dark animate-reveal-scale">
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
@@ -47,31 +62,65 @@ export default async function ProductPage({
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-cream-dark flex items-center justify-center text-8xl">
+            <div className="absolute inset-0 flex items-center justify-center text-8xl">
               🍓
             </div>
           )}
         </div>
 
-        <div className="py-4 animate-fade-up" style={{ animationDelay: "0.15s" }}>
-          <h1 className="font-serif text-4xl md:text-5xl font-black text-warm-brown leading-tight mb-6">
-            {product.name}
-          </h1>
-          <p className="text-warm-brown-light leading-loose text-lg whitespace-pre-wrap mb-8">
-            {product.description || "用心手作的好味道，等你來品嚐。"}
-          </p>
-          <p className="font-serif text-4xl font-bold text-berry mb-10">
-            NT$ {product.price}
-          </p>
-          <Link
-            href="/order"
-            className="inline-block bg-berry text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200"
+        {/* 產品資訊 */}
+        <div className="py-2 md:py-8">
+          <div className="animate-reveal-up" style={{ animationDelay: "0.15s" }}>
+            <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-4">
+              Handmade Jam
+            </p>
+            <h1 className="font-serif text-4xl md:text-5xl font-bold text-espresso leading-tight mb-6">
+              {product.name}
+            </h1>
+          </div>
+
+          <div
+            className="animate-reveal-up"
+            style={{ animationDelay: "0.25s" }}
           >
-            前往訂購
-          </Link>
-          <p className="mt-4 text-warm-brown-light/50 text-xs">
-            每一罐都是小量手工熬煮，新鮮現做
-          </p>
+            <p className="text-espresso-light/70 leading-loose text-base whitespace-pre-wrap mb-10">
+              {product.description || "用心手作的好味道，等你來品嚐。"}
+            </p>
+          </div>
+
+          <div
+            className="animate-reveal-up"
+            style={{ animationDelay: "0.35s" }}
+          >
+            <div className="flex items-baseline gap-2 mb-10">
+              <span
+                className="text-rose text-4xl font-bold"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                NT$ {product.price}
+              </span>
+            </div>
+            <Link href="/order" className="btn-primary text-base px-10 py-4">
+              前往訂購
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <path
+                  d="M3 8h10m0 0L9 4m4 4L9 12"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+            <p className="mt-5 text-espresso-light/40 text-xs">
+              每一罐都是小量手工熬煮，新鮮現做
+            </p>
+          </div>
         </div>
       </div>
     </div>

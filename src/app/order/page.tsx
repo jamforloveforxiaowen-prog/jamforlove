@@ -50,7 +50,9 @@ export default function OrderPage() {
   useEffect(() => {
     try {
       sessionStorage.setItem("jamforlove-cart", JSON.stringify(cart));
-    } catch { /* storage full */ }
+    } catch {
+      /* storage full */
+    }
   }, [cart]);
 
   function updateQuantity(product: Product, quantity: number) {
@@ -80,7 +82,10 @@ export default function OrderPage() {
     return cart.find((item) => item.productId === productId)?.quantity || 0;
   }
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -113,33 +118,64 @@ export default function OrderPage() {
     }
 
     setCart([]);
-    try { sessionStorage.removeItem("jamforlove-cart"); } catch { /* ok */ }
+    try {
+      sessionStorage.removeItem("jamforlove-cart");
+    } catch {
+      /* ok */
+    }
     setSubmitted(true);
   }
 
   if (submitted) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-5">
+      <div className="min-h-[70vh] flex items-center justify-center px-6">
         <div className="text-center max-w-md">
-          <p className="text-5xl mb-6 animate-pop-in">🎉</p>
-          <h1 className="font-serif text-3xl font-bold text-warm-brown mb-4 animate-fade-up" style={{ animationDelay: "0.2s" }}>
+          <div
+            className="w-20 h-20 rounded-full bg-sage/10 flex items-center justify-center mx-auto mb-8 animate-reveal-scale"
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-sage"
+            >
+              <path
+                d="M5 13l4 4L19 7"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <h1
+            className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up"
+            style={{ animationDelay: "0.15s" }}
+          >
             訂單已送出！
           </h1>
-          <p className="text-warm-brown-light mb-10 leading-relaxed animate-fade-up" style={{ animationDelay: "0.35s" }}>
+          <p
+            className="text-espresso-light/60 mb-10 leading-relaxed animate-reveal-up"
+            style={{ animationDelay: "0.25s" }}
+          >
             感謝你的訂購！我們正用滿滿的愛心為你準備果醬，
             <br className="hidden sm:block" />
             請期待甜蜜的包裹送到你手中。
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-up" style={{ animationDelay: "0.5s" }}>
+          <div
+            className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal-up"
+            style={{ animationDelay: "0.4s" }}
+          >
             <button
               onClick={() => router.push("/my-orders")}
-              className="bg-berry text-white px-6 py-3 rounded-full font-semibold hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] transition-all duration-200"
+              className="btn-primary"
             >
               查看我的訂單
             </button>
             <button
               onClick={() => router.push("/")}
-              className="border-2 border-cream-dark text-warm-brown px-6 py-3 rounded-full font-semibold hover:border-warm-brown active:scale-[0.97] transition-all duration-200"
+              className="btn-secondary"
             >
               回到首頁
             </button>
@@ -150,15 +186,21 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-5 py-12">
-      <h1 className="font-serif text-4xl font-bold text-warm-brown mb-10 animate-fade-up">
-        訂購果醬
-      </h1>
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+      <div className="mb-12 animate-reveal-up">
+        <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
+          Order
+        </p>
+        <h1 className="font-serif text-4xl md:text-5xl font-bold text-espresso">
+          訂購果醬
+        </h1>
+        <div className="w-16 h-[2px] bg-rose mt-5" />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
         {/* 產品選擇 */}
         <div className="lg:col-span-3">
-          <h2 className="font-serif text-xl font-bold text-warm-brown mb-5">
+          <h2 className="font-serif text-lg font-bold text-espresso mb-5">
             選擇產品
           </h2>
           <div className="space-y-3">
@@ -167,46 +209,49 @@ export default function OrderPage() {
               return (
                 <div
                   key={product.id}
-                  className={`rounded-2xl p-4 flex items-center gap-4 transition-colors ${
+                  className={`rounded-lg p-4 flex items-center gap-4 transition-all duration-200 ${
                     qty > 0
-                      ? "bg-berry/5 border-2 border-berry/20"
-                      : "bg-white border-2 border-transparent"
+                      ? "bg-rose/[0.04] ring-1 ring-rose/20"
+                      : "bg-white ring-1 ring-linen-dark/60"
                   }`}
                 >
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-16 h-16 rounded-xl object-cover shrink-0"
+                      className="w-14 h-14 rounded-md object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-xl bg-cream-dark flex items-center justify-center text-2xl shrink-0">
+                    <div className="w-14 h-14 rounded-md bg-linen-dark flex items-center justify-center text-2xl shrink-0">
                       🍓
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-serif font-bold text-warm-brown">
+                    <h3 className="font-serif font-bold text-espresso text-sm">
                       {product.name}
                     </h3>
-                    <p className="text-berry font-semibold">
+                    <p
+                      className="text-rose font-semibold text-sm mt-0.5"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
                       NT$ {product.price}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty - 1)}
-                      className="w-11 h-11 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
+                      className="w-9 h-9 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
                     >
                       −
                     </button>
-                    <span className="w-6 text-center font-bold text-warm-brown tabular-nums">
+                    <span className="w-7 text-center font-semibold text-espresso tabular-nums text-sm">
                       {qty}
                     </span>
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty + 1)}
-                      className="w-11 h-11 rounded-full border-2 border-cream-dark text-warm-brown hover:border-berry hover:text-berry active:scale-90 transition-all duration-150 flex items-center justify-center font-bold text-lg"
+                      className="w-9 h-9 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
                     >
                       +
                     </button>
@@ -215,9 +260,9 @@ export default function OrderPage() {
               );
             })}
             {products.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-2xl mb-3 animate-gentle-float">🍓</p>
-                <p className="text-warm-brown-light">
+              <div className="text-center py-16">
+                <p className="text-3xl mb-3 animate-float">🍓</p>
+                <p className="text-espresso-light/60 text-sm">
                   新口味正在熬煮中，請稍後再來逛逛
                 </p>
               </div>
@@ -225,22 +270,33 @@ export default function OrderPage() {
           </div>
 
           {cart.length > 0 && (
-            <div className="mt-8 bg-white rounded-2xl p-6 border-2 border-cream-dark animate-scale-in">
-              <h3 className="font-serif font-bold text-warm-brown mb-3">購物清單</h3>
+            <div className="mt-8 bg-white rounded-lg p-6 ring-1 ring-linen-dark/60 animate-reveal-scale">
+              <h3 className="font-serif font-bold text-espresso mb-4 text-sm">
+                購物清單
+              </h3>
               {cart.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex justify-between text-sm text-warm-brown-light py-1"
+                  className="flex justify-between text-sm text-espresso-light/70 py-1"
                 >
                   <span>
                     {item.name} × {item.quantity}
                   </span>
-                  <span className="font-medium">NT$ {item.price * item.quantity}</span>
+                  <span className="font-medium text-espresso">
+                    NT$ {item.price * item.quantity}
+                  </span>
                 </div>
               ))}
-              <div className="border-t border-cream-dark mt-3 pt-3 flex justify-between font-bold text-warm-brown text-lg">
-                <span>總計</span>
-                <span className="text-berry">NT$ {total}</span>
+              <div className="border-t border-linen-dark/60 mt-4 pt-4 flex justify-between items-baseline">
+                <span className="font-serif font-bold text-espresso">
+                  總計
+                </span>
+                <span
+                  className="text-rose font-bold text-xl"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  NT$ {total}
+                </span>
               </div>
             </div>
           )}
@@ -248,15 +304,18 @@ export default function OrderPage() {
 
         {/* 收件資料 */}
         <div className="lg:col-span-2">
-          <h2 className="font-serif text-xl font-bold text-warm-brown mb-1">
+          <h2 className="font-serif text-lg font-bold text-espresso mb-1">
             收件資料
           </h2>
-          <p className="text-warm-brown-light/60 text-xs mb-5">
+          <p className="text-espresso-light/40 text-xs mb-6">
             我們會用心包裝，讓果醬安全送到你手中
           </p>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="order-name" className="block text-sm font-medium text-warm-brown mb-2">
+              <label
+                htmlFor="order-name"
+                className="block text-sm font-medium text-espresso mb-2"
+              >
                 收件人姓名
               </label>
               <input
@@ -264,12 +323,15 @@ export default function OrderPage() {
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
+                className="input-field"
                 required
               />
             </div>
             <div>
-              <label htmlFor="order-phone" className="block text-sm font-medium text-warm-brown mb-2">
+              <label
+                htmlFor="order-phone"
+                className="block text-sm font-medium text-espresso mb-2"
+              >
                 聯絡電話
               </label>
               <input
@@ -277,12 +339,15 @@ export default function OrderPage() {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
+                className="input-field"
                 required
               />
             </div>
             <div>
-              <label htmlFor="order-address" className="block text-sm font-medium text-warm-brown mb-2">
+              <label
+                htmlFor="order-address"
+                className="block text-sm font-medium text-espresso mb-2"
+              >
                 收件地址
               </label>
               <input
@@ -290,12 +355,15 @@ export default function OrderPage() {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
+                className="input-field"
                 required
               />
             </div>
             <div>
-              <label htmlFor="order-notes" className="block text-sm font-medium text-warm-brown mb-2">
+              <label
+                htmlFor="order-notes"
+                className="block text-sm font-medium text-espresso mb-2"
+              >
                 備註
               </label>
               <textarea
@@ -303,24 +371,31 @@ export default function OrderPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full border-2 border-cream-dark bg-white rounded-xl px-4 py-3 text-warm-brown focus:outline-none focus:ring-2 focus:ring-berry/30 focus:border-berry transition"
+                className="input-field"
                 placeholder="有任何特殊需求請在此說明"
               />
             </div>
 
-            {error && <p className="text-berry text-sm">{error}</p>}
+            {error && (
+              <p className="text-rose text-sm font-medium">{error}</p>
+            )}
 
             <button
               type="submit"
               disabled={loading || cart.length === 0}
-              className="w-full bg-berry text-white py-4 rounded-full font-semibold text-lg hover:bg-berry-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-40 transition-all duration-200"
+              className="btn-primary w-full !py-4 !text-base"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-slow" style={{ animationDuration: "0.8s" }} />
+                  <span
+                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-slow"
+                    style={{ animationDuration: "0.8s" }}
+                  />
                   送出中...
                 </span>
-              ) : `確認訂購 — NT$ ${total}`}
+              ) : (
+                `確認訂購 — NT$ ${total}`
+              )}
             </button>
           </form>
         </div>

@@ -1,54 +1,170 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-cream: #faf6f0;
-  --color-cream-dark: #f0e8da;
-  --color-warm-brown: #5c3d2e;
-  --color-warm-brown-light: #6b4a3a;
-  --color-berry: #c4506a;
-  --color-berry-light: #d4768e;
-  --color-berry-dark: #a23b5a;
-  --color-leaf: #4a7c59;
-  --color-leaf-light: #6a9c72;
-  --color-honey: #d4a04a;
+  --color-linen: #f8f3eb;
+  --color-linen-dark: #ebe2d4;
+  --color-parchment: #f2ead8;
+  --color-espresso: #1e0f08;
+  --color-espresso-light: #5c3d2e;
+  --color-rose: #c4506a;
+  --color-rose-light: #d87a90;
+  --color-rose-dark: #a03050;
+  --color-rose-muted: #c4506a1a;
+  --color-sage: #5a7c52;
+  --color-sage-light: #6a9c72;
+  --color-honey: #c89530;
   --color-honey-light: #e8c47a;
+  --color-wine: #4a1828;
+  --font-display: var(--font-display);
   --font-serif: var(--font-serif);
   --font-sans: var(--font-sans);
-  --animate-fade-in: fade-in 0.6s ease-out both;
-  --animate-fade-up: fade-up 0.6s ease-out both;
-  --animate-scale-in: scale-in 0.5s ease-out both;
-  --animate-slide-down: slide-down 0.3s cubic-bezier(0.25, 1, 0.5, 1) both;
-  --animate-gentle-float: gentle-float 3s ease-in-out infinite;
-  --animate-pop-in: pop-in 0.5s cubic-bezier(0.25, 1, 0.5, 1) both;
-  --animate-spin-slow: spin-slow 8s linear infinite;
+  --animate-reveal: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-reveal-up: reveal-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-reveal-scale: reveal-scale 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-down: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-spin-slow: spin-slow 12s linear infinite;
 }
 
+/* ── 基礎 ───────────────────────────── */
+
 body {
-  background: var(--color-cream);
-  color: var(--color-warm-brown);
+  background: var(--color-linen);
+  color: var(--color-espresso);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-serif), serif;
+  letter-spacing: -0.01em;
 }
 
 ::selection {
-  background: var(--color-honey-light);
-  color: var(--color-warm-brown);
+  background: oklch(0.75 0.12 10);
+  color: var(--color-linen);
 }
 
-/* 動畫 keyframes */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ── 表單元素 ─────────────────────────── */
+
+.input-field {
+  width: 100%;
+  border: 1.5px solid var(--color-linen-dark);
+  background: white;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+  color: var(--color-espresso);
+  font-size: 0.9375rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-@keyframes fade-up {
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-rose);
+  box-shadow: 0 0 0 3px var(--color-rose-muted);
+}
+
+.input-field::placeholder {
+  color: var(--color-espresso-light);
+  opacity: 0.4;
+}
+
+/* ── 按鈕 ─────────────────────────────── */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-rose);
+  color: white;
+  font-weight: 600;
+  padding: 0.875rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--color-rose-dark);
+  box-shadow: 0 4px 20px oklch(0.55 0.15 10 / 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1.5px solid var(--color-linen-dark);
+  color: var(--color-espresso-light);
+  font-weight: 500;
+  padding: 0.875rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-espresso);
+  color: var(--color-espresso);
+}
+
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+/* ── 裝飾元素 ─────────────────────────── */
+
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-linen-dark);
+}
+
+.wave-divider {
+  width: 100%;
+  height: 60px;
+  overflow: hidden;
+}
+
+.wave-divider svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Keyframes ────────────────────────── */
+
+@keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -56,10 +172,10 @@ h1, h2, h3, h4 {
   }
 }
 
-@keyframes scale-in {
+@keyframes reveal-scale {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -78,31 +194,26 @@ h1, h2, h3, h4 {
   }
 }
 
-@keyframes gentle-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
   }
-  70% {
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+  50% {
+    transform: translateY(-8px);
   }
 }
 
 @keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* 尊重使用者偏好 */
+/* ── 無障礙 ──────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

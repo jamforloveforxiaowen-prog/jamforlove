@@ -32,74 +32,62 @@ export default function Navbar() {
     router.refresh();
   }
 
+  const navLink =
+    "text-espresso-light hover:text-rose transition-colors duration-200";
+
   return (
-    <nav className="border-b border-cream-dark bg-cream/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 group/logo"
-        >
+    <nav className="sticky top-0 z-50 bg-linen/85 backdrop-blur-md border-b border-linen-dark/60">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/logo.jpg"
             alt="Jam For Love"
-            width={40}
-            height={40}
-            className="rounded-full group-hover/logo:scale-105 transition-transform duration-200"
+            width={36}
+            height={36}
+            className="rounded-full group-hover:scale-105 transition-transform duration-300"
           />
-          <span className="font-serif text-xl font-bold text-warm-brown tracking-tight group-hover/logo:text-berry transition-colors">
+          <span
+            className="text-xl tracking-tight text-espresso group-hover:text-rose transition-colors duration-200"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
             Jam For Love
           </span>
         </Link>
 
         {/* 桌面版選單 */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link
-            href="/"
-            className="text-warm-brown-light hover:text-berry transition-colors"
-          >
+        <div className="hidden md:flex items-center gap-8 text-sm">
+          <Link href="/" className={navLink}>
             首頁
           </Link>
           {user ? (
             <>
-              <Link
-                href="/order"
-                className="text-warm-brown-light hover:text-berry transition-colors"
-              >
+              <Link href="/order" className={navLink}>
                 訂購
               </Link>
-              <Link
-                href="/my-orders"
-                className="text-warm-brown-light hover:text-berry transition-colors"
-              >
+              <Link href="/my-orders" className={navLink}>
                 我的訂單
               </Link>
               {user.role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="text-warm-brown-light hover:text-berry transition-colors"
-                >
+                <Link href="/admin" className={navLink}>
                   後台管理
                 </Link>
               )}
-              <span className="text-warm-brown/60 text-xs">{user.name}</span>
-              <button
-                onClick={handleLogout}
-                className="text-warm-brown-light hover:text-berry transition-colors"
-              >
+              <span className="text-espresso-light/40 text-xs">
+                {user.name}
+              </span>
+              <button onClick={handleLogout} className={navLink}>
                 登出
               </button>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="text-warm-brown-light hover:text-berry transition-colors"
-              >
+              <Link href="/login" className={navLink}>
                 登入
               </Link>
               <Link
                 href="/register"
-                className="bg-berry text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-berry-dark transition-colors"
+                className="btn-primary !py-2 !px-5 !text-xs"
               >
                 註冊
               </Link>
@@ -110,29 +98,35 @@ export default function Navbar() {
         {/* 手機版漢堡選單 */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-1.5"
+          className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px]"
           aria-label="選單"
           aria-expanded={menuOpen}
         >
           <span
-            className={`block w-5 h-0.5 bg-warm-brown transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2" : ""}`}
+            className={`block w-[18px] h-[1.5px] bg-espresso transition-all duration-300 origin-center ${
+              menuOpen ? "rotate-45 translate-y-[6.5px]" : ""
+            }`}
           />
           <span
-            className={`block w-5 h-0.5 bg-warm-brown transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`}
+            className={`block w-[18px] h-[1.5px] bg-espresso transition-all duration-300 ${
+              menuOpen ? "opacity-0 scale-x-0" : ""
+            }`}
           />
           <span
-            className={`block w-5 h-0.5 bg-warm-brown transition-all duration-300 ${menuOpen ? "-rotate-45 -translate-y-2" : ""}`}
+            className={`block w-[18px] h-[1.5px] bg-espresso transition-all duration-300 origin-center ${
+              menuOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
+            }`}
           />
         </button>
       </div>
 
       {/* 手機版展開選單 */}
       {menuOpen && (
-        <div className="md:hidden border-t border-cream-dark bg-cream px-5 py-3 space-y-1 animate-slide-down">
+        <div className="md:hidden border-t border-linen-dark/40 bg-linen px-6 py-4 space-y-1 animate-slide-down">
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+            className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
           >
             首頁
           </Link>
@@ -141,14 +135,14 @@ export default function Navbar() {
               <Link
                 href="/order"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
               >
                 訂購
               </Link>
               <Link
                 href="/my-orders"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
               >
                 我的訂單
               </Link>
@@ -156,14 +150,14 @@ export default function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setMenuOpen(false)}
-                  className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                  className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
                 >
                   後台管理
                 </Link>
               )}
               <button
                 onClick={handleLogout}
-                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
               >
                 登出
               </button>
@@ -173,14 +167,14 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
               >
                 登入
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMenuOpen(false)}
-                className="block py-2 text-warm-brown-light hover:text-berry transition-colors font-medium"
+                className="block py-2.5 text-espresso-light hover:text-rose transition-colors"
               >
                 註冊
               </Link>
