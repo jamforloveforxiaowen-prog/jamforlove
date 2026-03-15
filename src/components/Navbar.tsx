@@ -81,23 +81,8 @@ export default function Navbar() {
           padding: "0 28px",
         }}
       >
-        <div className="h-[52px] flex items-center justify-between">
-          {/* 品牌名稱 */}
-          <Link href="/" className="shrink-0 group">
-            <span
-              className="text-[1.2rem] italic transition-all duration-300 group-hover:opacity-80"
-              style={{
-                fontFamily: "var(--font-display)", fontWeight: 500, fontStyle: "italic",
-                letterSpacing: "0.01em",
-                color: s ? "var(--color-espresso)" : "white",
-                textShadow: s ? "none" : "0 1px 4px rgba(0,0,0,0.15)",
-              }}
-            >
-              Jam For Love
-            </span>
-          </Link>
-
-          {/* 桌面版導航 */}
+        <div className="h-[52px] flex items-center justify-center relative">
+          {/* 桌面版導航 — 置中 */}
           <div className="hidden md:flex items-center gap-0.5">
             {isAuthPage ? (
               <Link href="/" className={navLinkClass("/")}>首頁</Link>
@@ -121,8 +106,8 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 右側操作區 */}
-          <div className="hidden md:flex items-center gap-1.5">
+          {/* 右側操作區 — 絕對定位靠右 */}
+          <div className="hidden md:flex items-center gap-1.5 absolute right-0 pr-7">
             {!isAuthPage && (
               <>
                 {user ? (
