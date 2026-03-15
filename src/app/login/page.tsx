@@ -107,11 +107,11 @@ export default function LoginPage() {
         }}
       />
 
-      {/* 左側品牌宣言 — 桌面版 */}
-      <div className="hidden lg:flex lg:w-[48%] relative z-10">
-        <div className="flex flex-col justify-between p-12 xl:p-16 w-full">
-          {/* 頂部 Logo */}
-          <div className="flex items-center gap-3">
+      {/* 左側品牌宣言 — 桌面版，垂直水平置中 */}
+      <div className="hidden lg:flex lg:w-[48%] items-center justify-center relative z-10">
+        <div className="animate-reveal-up text-center px-12 xl:px-16 max-w-lg">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3 mb-10">
             <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
             <span
               className="text-white/80 text-base"
@@ -125,22 +125,20 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* 中間大文案 */}
-          <div className="animate-reveal-up">
-            <h2
-              className="font-serif text-espresso leading-[1.15] mb-6"
-              style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
-            >
-              用<span className="text-rose-dark">愛</span>手工熬煮
-              <br />
-              每一瓶果醬
-            </h2>
-            <p className="text-espresso-light/60 text-base leading-relaxed max-w-sm">
-              嚴選當季新鮮水果，不加人工色素與防腐劑，每一口都是自然的甜蜜。
-            </p>
-          </div>
+          {/* 大文案 */}
+          <h2
+            className="font-serif text-espresso leading-[1.15] mb-6"
+            style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
+          >
+            用<span className="text-rose-dark">愛</span>手工熬煮
+            <br />
+            每一瓶果醬
+          </h2>
+          <p className="text-espresso-light/60 text-base leading-relaxed max-w-sm mx-auto mb-10">
+            嚴選當季新鮮水果，不加人工色素與防腐劑，每一口都是自然的甜蜜。
+          </p>
 
-          {/* 底部版權 */}
+          {/* 版權 */}
           <p className="text-espresso-light/30 text-xs">
             &copy; 2025 Jam For Love
           </p>
