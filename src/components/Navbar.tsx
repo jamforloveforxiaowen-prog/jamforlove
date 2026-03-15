@@ -89,10 +89,10 @@ export default function Navbar() {
                 </Link>
               )}
               <span className="w-px h-4 bg-white/20 mx-2" />
-              <span className="text-white/40 text-xs px-2">{user.name}</span>
+              <span className="text-white/70 px-4 py-1.5 rounded-full">{user.name}</span>
               <button
                 onClick={handleLogout}
-                className="text-white/70 hover:text-white px-3 py-1.5 rounded-full transition-colors duration-200 text-sm"
+                className="text-white/70 hover:text-white px-4 py-1.5 rounded-full transition-colors duration-200"
               >
                 登出
               </button>
