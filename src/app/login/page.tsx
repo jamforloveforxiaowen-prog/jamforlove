@@ -110,21 +110,6 @@ export default function LoginPage() {
       {/* 左側品牌宣言 — 桌面版，垂直水平置中 */}
       <div className="hidden lg:flex lg:w-[48%] items-center justify-center relative z-10">
         <div className="animate-reveal-up text-center px-12 xl:px-16 max-w-lg">
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-3 mb-10">
-            <div className="w-2.5 h-2.5 rounded-full bg-white/70" />
-            <span
-              className="text-white/80 text-base"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 300,
-                fontStyle: "italic",
-              }}
-            >
-              Jam For Love
-            </span>
-          </div>
-
           {/* 大文案 */}
           <h2
             className="font-serif text-espresso leading-[1.15] mb-6"

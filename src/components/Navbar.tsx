@@ -17,6 +17,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -75,70 +76,76 @@ export default function Navbar() {
           <Link href="/" className={navLinkClass("/")}>
             首頁
           </Link>
-          {user ? (
+          {!isAuthPage && (
             <>
-              <Link href="/order" className={navLinkClass("/order")}>
-                訂購
-              </Link>
-              <Link href="/my-orders" className={navLinkClass("/my-orders")}>
-                我的訂單
-              </Link>
-              {user.role === "admin" && (
-                <Link href="/admin" className={navLinkClass("/admin")}>
-                  後台管理
-                </Link>
+              {user ? (
+                <>
+                  <Link href="/order" className={navLinkClass("/order")}>
+                    訂購
+                  </Link>
+                  <Link href="/my-orders" className={navLinkClass("/my-orders")}>
+                    我的訂單
+                  </Link>
+                  {user.role === "admin" && (
+                    <Link href="/admin" className={navLinkClass("/admin")}>
+                      後台管理
+                    </Link>
+                  )}
+                  <span className="w-px h-4 bg-white/20 mx-2" />
+                  <span className="text-white/70 px-4 py-1.5 rounded-full max-w-[120px] truncate" title={user.name}>{user.name}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-white/70 hover:text-white px-4 py-1.5 rounded-full transition-colors duration-200"
+                  >
+                    登出
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="w-px h-4 bg-white/20 mx-2" />
+                  <Link
+                    href="/login"
+                    className="text-white/70 hover:text-white px-3 py-1.5 rounded-full transition-colors duration-200"
+                  >
+                    登入
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="bg-white/15 hover:bg-white/25 text-white px-4 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 backdrop-blur-sm"
+                  >
+                    註冊
+                  </Link>
+                </>
               )}
-              <span className="w-px h-4 bg-white/20 mx-2" />
-              <span className="text-white/70 px-4 py-1.5 rounded-full max-w-[120px] truncate" title={user.name}>{user.name}</span>
-              <button
-                onClick={handleLogout}
-                className="text-white/70 hover:text-white px-4 py-1.5 rounded-full transition-colors duration-200"
-              >
-                登出
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="w-px h-4 bg-white/20 mx-2" />
-              <Link
-                href="/login"
-                className="text-white/70 hover:text-white px-3 py-1.5 rounded-full transition-colors duration-200"
-              >
-                登入
-              </Link>
-              <Link
-                href="/register"
-                className="bg-white/15 hover:bg-white/25 text-white px-4 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 backdrop-blur-sm"
-              >
-                註冊
-              </Link>
             </>
           )}
         </div>
 
-        {/* 手機版漢堡選單 */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px]"
-          aria-label="選單"
-          aria-expanded={menuOpen}
-        >
-          <span
-            className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 origin-center ${
-              menuOpen ? "rotate-45 translate-y-[6.5px]" : ""
-            }`}
-          />
-          <span
-            className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 ${
-              menuOpen ? "opacity-0 scale-x-0" : ""
-            }`}
-          />
-          <span
-            className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 origin-center ${
-              menuOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
-            }`}
-          />
-        </button>
+        {/* 手機版漢堡選單 — 登入/註冊頁不顯示 */}
+        {!isAuthPage && (
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px]"
+            aria-label="選單"
+            aria-expanded={menuOpen}
+          >
+            <span
+              className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 origin-center ${
+                menuOpen ? "rotate-45 translate-y-[6.5px]" : ""
+              }`}
+            />
+            <span
+              className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 ${
+                menuOpen ? "opacity-0 scale-x-0" : ""
+              }`}
+            />
+            <span
+              className={`block w-[18px] h-[1.5px] bg-white transition-all duration-300 origin-center ${
+                menuOpen ? "-rotate-45 -translate-y-[6.5px]" : ""
+              }`}
+            />
+          </button>
+        )}
       </div>
 
       {/* 手機版展開選單 */}
