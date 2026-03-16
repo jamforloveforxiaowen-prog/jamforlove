@@ -65,12 +65,12 @@ export default function Navbar() {
     return `${base} text-espresso-light hover:text-rose active:text-rose-dark font-medium`;
   }
 
-  // 首頁填色膠囊的 inline style — 暖棕色
+  // 首頁填色膠囊的 inline style — 玫瑰色
   const homeCTAStyle = {
-    background: "var(--color-espresso)",
+    background: "var(--color-rose)",
     color: "white",
     border: "none",
-    boxShadow: "0 3px 12px rgba(30,15,8,0.2), inset 0 1px 0 rgba(255,255,255,0.08)",
+    boxShadow: "0 3px 12px rgba(196,80,106,0.25), inset 0 1px 0 rgba(255,255,255,0.12)",
     letterSpacing: "0.03em",
   };
 
