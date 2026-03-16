@@ -71,17 +71,17 @@ export default function Navbar() {
       <div
         className="pointer-events-auto w-full transition-all duration-500 ease-out"
         style={{
-          maxWidth: s ? 600 : 680,
+          maxWidth: s ? 500 : 560,
           borderRadius: 9999,
           background: s ? "rgba(248,243,235,0.92)" : "rgba(30,15,8,0.18)",
           backdropFilter: "blur(16px) saturate(1.4)",
           WebkitBackdropFilter: "blur(16px) saturate(1.4)",
           border: s ? "1px solid rgba(235,226,212,0.8)" : "1px solid rgba(255,255,255,0.12)",
           boxShadow: s ? "0 8px 32px rgba(30,15,8,0.08), 0 1px 2px rgba(30,15,8,0.04)" : "0 4px 24px rgba(0,0,0,0.06)",
-          padding: "0 20px",
+          padding: "0 14px",
         }}
       >
-        <div className="h-[52px] flex items-center justify-center relative">
+        <div className="h-[44px] flex items-center justify-center relative">
           {/* 桌面版導航 — 置中 */}
           <div className="hidden md:flex items-center gap-0.5">
             {isAuthPage ? (
