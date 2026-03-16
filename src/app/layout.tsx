@@ -44,7 +44,7 @@ export default function RootLayout({
         className={`${display.variable} ${serif.variable} ${sans.variable} min-h-screen`}
       >
         <Navbar />
-        <main className="pt-16">{children}</main>
+        <main className="pt-14">{children}</main>
       </body>
     </html>
   );
