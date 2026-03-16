@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AddToCartButton from "@/components/AddToCartButton";
 
 export const dynamic = "force-dynamic";
 
@@ -100,23 +101,9 @@ export default async function ProductPage({
                 NT$ {product.price}
               </span>
             </div>
-            <Link href="/order" className="btn-primary text-base px-10 py-4">
-              前往訂購
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <path
-                  d="M3 8h10m0 0L9 4m4 4L9 12"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
+            <AddToCartButton
+              product={{ id: product.id, name: product.name, price: product.price, imageUrl: product.imageUrl }}
+            />
             <p className="mt-5 text-espresso-light/40 text-xs">
               每一罐都是小量手工熬煮，新鮮現做
             </p>

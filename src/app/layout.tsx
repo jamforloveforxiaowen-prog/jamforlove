@@ -3,6 +3,7 @@ import { Cormorant, Noto_Serif_TC, Figtree } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { CartProvider } from "@/contexts/CartContext";
 
 const display = Cormorant({
   variable: "--font-display",
@@ -44,9 +45,11 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${serif.variable} ${sans.variable} min-h-screen flex flex-col`}
       >
-        <Navbar />
-        <main className="pt-14 flex-1">{children}</main>
-        <Footer />
+        <CartProvider>
+          <Navbar />
+          <main className="pt-14 flex-1">{children}</main>
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import { useCart } from "@/contexts/CartContext";
 
 interface User { id: number; username: string; role: string; name: string }
 
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { totalCount } = useCart();
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
@@ -136,6 +138,21 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-0.5 ml-0.5">
             {!isAuthPage && (
               <>
+                <Dot scrolled={s} />
+                <Link
+                  href="/order"
+                  className="relative px-2 py-1 transition-colors duration-250"
+                  aria-label={`購物車，${totalCount} 件商品`}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}>
+                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {totalCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {totalCount > 99 ? "99+" : totalCount}
+                    </span>
+                  )}
+                </Link>
                 {!user && <Dot scrolled={s} />}
                 {user ? (
                   <>
@@ -180,7 +197,23 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 手機版漢堡按鈕 */}
+          {/* 手機版購物車 + 漢堡按鈕 */}
+          {!isAuthPage && (
+            <Link
+              href="/order"
+              className="md:hidden relative px-1.5 py-1 mr-1 transition-colors duration-250"
+              aria-label={`購物車，${totalCount} 件商品`}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}>
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {totalCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                  {totalCount > 99 ? "99+" : totalCount}
+                </span>
+              )}
+            </Link>
+          )}
           {!isAuthPage && (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
