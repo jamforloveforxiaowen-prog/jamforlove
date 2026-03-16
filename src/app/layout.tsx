@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant, Noto_Serif_TC, Figtree } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 
 const display = Cormorant({
   variable: "--font-display",
@@ -43,8 +43,10 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${serif.variable} ${sans.variable} min-h-screen`}
       >
-        <Navbar />
-        <main className="pt-16">{children}</main>
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <main className="flex-1 min-w-0">{children}</main>
+        </div>
       </body>
     </html>
   );
