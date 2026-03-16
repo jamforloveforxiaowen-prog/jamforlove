@@ -53,13 +53,26 @@ export default function Navbar() {
 
   const s = scrolled;
 
-  // 統一字型大小 0.8rem，統一 padding px-2 py-1，統一 duration-250
-  function navLinkClass(href: string) {
-    const base = "relative px-3 py-1 text-[0.8rem] tracking-wide font-medium rounded-full transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50";
+  // 統一字型大小 0.8rem，統一 duration-250
+  // 首頁（未登入時）：填色膠囊 CTA；其餘：透明膠囊外框
+  function navLinkClass(href: string, filled = false) {
+    const base = "relative px-3 py-1 text-[0.8rem] tracking-wide rounded-full transition-all duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50";
+    if (filled) {
+      return `${base} font-semibold`;
+    }
     const capsule = s ? "border border-espresso-light/15" : "border border-white/18";
-    if (isActive(href)) return s ? `${base} ${capsule} text-rose` : `${base} ${capsule} text-white`;
-    return s ? `${base} ${capsule} text-espresso-light hover:text-rose active:text-rose-dark` : `${base} ${capsule} text-white/70 hover:text-white active:text-white`;
+    if (isActive(href)) return s ? `${base} ${capsule} text-rose font-medium` : `${base} ${capsule} text-white font-medium`;
+    return s ? `${base} ${capsule} text-espresso-light hover:text-rose active:text-rose-dark font-medium` : `${base} ${capsule} text-white/70 hover:text-white active:text-white font-medium`;
   }
+
+  // 首頁填色膠囊的 inline style
+  const homeCTAStyle = {
+    background: s ? "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))" : "rgba(255,255,255,0.15)",
+    color: "white",
+    border: s ? "none" : "1px solid rgba(255,255,255,0.18)",
+    boxShadow: s ? "0 3px 12px rgba(196,80,106,0.25), inset 0 1px 0 rgba(255,255,255,0.12)" : "none",
+    letterSpacing: "0.03em",
+  };
 
   function mobileLinkClass(href: string) {
     const base = "block py-2.5 px-2 text-[0.9rem] tracking-wide transition-colors duration-250 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50";
@@ -87,10 +100,14 @@ export default function Navbar() {
           {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
-              <Link href="/" className={navLinkClass("/")}>首頁</Link>
+              <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
             ) : (
               <>
-                <Link href="/" className={navLinkClass("/")}>首頁</Link>
+                {user ? (
+                  <Link href="/" className={navLinkClass("/")}>首頁</Link>
+                ) : (
+                  <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
+                )}
                 {user && (
                   <>
                     <Dot scrolled={s} />
@@ -145,14 +162,8 @@ export default function Navbar() {
                     </Link>
                     <Link
                       href="/register"
-                      className="px-3 py-1 rounded-full text-[0.8rem] font-semibold transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
-                      style={{
-                        background: s ? "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))" : "rgba(255,255,255,0.15)",
-                        color: "white",
-                        border: s ? "none" : "1px solid rgba(255,255,255,0.18)",
-                        boxShadow: s ? "0 3px 12px rgba(196,80,106,0.25), inset 0 1px 0 rgba(255,255,255,0.12)" : "none",
-                        letterSpacing: "0.03em",
-                      }}
+                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
+                      style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}
                     >
                       註冊
                     </Link>
