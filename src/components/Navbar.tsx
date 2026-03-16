@@ -54,7 +54,7 @@ export default function Navbar() {
   const s = scrolled; // 縮短變數名方便使用
 
   function navLinkClass(href: string) {
-    const base = "relative px-2.5 py-1.5 text-[0.85rem] tracking-wide font-medium transition-all duration-300 hover:-translate-y-px";
+    const base = "relative px-1.5 py-1 text-[0.85rem] tracking-wide font-medium transition-all duration-300 hover:-translate-y-px";
     if (isActive(href)) return s ? `${base} text-rose` : `${base} text-white`;
     return s ? `${base} text-espresso-light hover:text-rose` : `${base} text-white/70 hover:text-white`;
   }
