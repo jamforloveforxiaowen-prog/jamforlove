@@ -82,7 +82,7 @@ export default function Navbar() {
   const close = () => setMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end pt-3 px-4 pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end pt-3 pointer-events-none max-w-6xl mx-auto px-6">
       <div
         className="pointer-events-auto transition-all duration-500 ease-out"
         style={{
