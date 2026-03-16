@@ -29,7 +29,7 @@ export default async function ProductPage({
     <div className="max-w-6xl mx-auto px-6 py-12 md:py-20">
       <Link
         href="/"
-        className="group inline-flex items-center gap-2 text-espresso-light/60 hover:text-rose text-sm transition-colors duration-200 mb-10"
+        className="group inline-flex items-center gap-2 text-espresso-light/60 hover:text-rose text-sm transition-colors duration-200 mb-10 py-2"
       >
         <svg
           width="16"

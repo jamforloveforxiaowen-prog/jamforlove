@@ -15,7 +15,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* ── Hero ─────────────────────────── */}
-      <section className="min-h-[calc(100vh-4rem)] flex items-center">
+      <section className="min-h-[calc(100vh-3.5rem)] flex items-center">
         <div className="max-w-6xl mx-auto px-6 w-full py-20 md:py-0">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 items-center">
             {/* 左側文字 */}
@@ -211,27 +211,6 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* ── Footer ───────────────────────── */}
-      <footer className="border-t border-linen-dark/60">
-        <div className="max-w-6xl mx-auto px-6 py-14 flex flex-col items-center gap-5">
-          <Image
-            src="/logo.jpg"
-            alt="Jam For Love"
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-          <p
-            className="text-espresso text-lg tracking-tight"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
-          >
-            Jam For Love
-          </p>
-          <p className="text-espresso-light/40 text-xs tracking-wide">
-            用愛手工熬煮 &middot; {new Date().getFullYear()}
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

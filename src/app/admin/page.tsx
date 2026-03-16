@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Product {
   id: number;
@@ -214,7 +215,7 @@ function ProductManager() {
         <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
         <button
           onClick={() => { setError(""); setLoading(true); loadProducts(); }}
-          className="btn-primary !py-2 !px-5 !text-sm"
+          className="btn-primary-sm"
         >
           重新載入
         </button>
@@ -236,7 +237,7 @@ function ProductManager() {
             resetForm();
             setShowForm(true);
           }}
-          className="btn-primary !py-2 !px-5 !text-sm"
+          className="btn-primary-sm"
         >
           + 新增產品
         </button>
@@ -252,10 +253,11 @@ function ProductManager() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-espresso mb-2">
+              <label htmlFor="admin-name" className="block text-sm font-medium text-espresso mb-2">
                 名稱
               </label>
               <input
+                id="admin-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -264,10 +266,11 @@ function ProductManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-espresso mb-2">
+              <label htmlFor="admin-price" className="block text-sm font-medium text-espresso mb-2">
                 價格 (NT$)
               </label>
               <input
+                id="admin-price"
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -278,10 +281,11 @@ function ProductManager() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-espresso mb-2">
+            <label htmlFor="admin-imageUrl" className="block text-sm font-medium text-espresso mb-2">
               圖片網址
             </label>
             <input
+              id="admin-imageUrl"
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
@@ -289,9 +293,11 @@ function ProductManager() {
               placeholder="https://example.com/jam.jpg"
             />
             {imageUrl && (
-              <img
+              <Image
                 src={imageUrl}
                 alt="預覽"
+                width={80}
+                height={80}
                 className="mt-3 w-20 h-20 object-cover rounded-md ring-1 ring-linen-dark/60"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
@@ -300,10 +306,11 @@ function ProductManager() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-espresso mb-2">
+            <label htmlFor="admin-description" className="block text-sm font-medium text-espresso mb-2">
               說明
             </label>
             <textarea
+              id="admin-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -314,13 +321,13 @@ function ProductManager() {
             <p className="text-rose text-sm font-medium" role="alert">{error}</p>
           )}
           <div className="flex gap-3">
-            <button type="submit" disabled={submitting} className="btn-primary !py-2.5 !px-6">
+            <button type="submit" disabled={submitting} className="btn-primary-sm">
               {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="btn-secondary !py-2.5 !px-6"
+              className="btn-secondary"
             >
               取消
             </button>
@@ -338,14 +345,16 @@ function ProductManager() {
           >
             <div className="flex items-center gap-4 min-w-0">
               {product.imageUrl ? (
-                <img
+                <Image
                   src={product.imageUrl}
                   alt={product.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-md object-cover shrink-0"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-md bg-linen-dark flex items-center justify-center text-xl shrink-0">
-                  🍓
+                  <span role="img" aria-label="草莓">🍓</span>
                 </div>
               )}
               <div className="min-w-0">
@@ -441,7 +450,7 @@ function OrderManager() {
         <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
         <button
           onClick={() => { setError(""); setLoading(true); loadOrders(); }}
-          className="btn-primary !py-2 !px-5 !text-sm"
+          className="btn-primary-sm"
         >
           重新載入
         </button>

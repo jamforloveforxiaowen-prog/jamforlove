@@ -123,6 +123,62 @@ h1, h2, h3, h4 {
   transform: scale(0.97);
 }
 
+.btn-primary-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-rose);
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-primary-sm:hover {
+  background: var(--color-rose-dark);
+  box-shadow: 0 4px 20px oklch(0.55 0.15 10 / 0.25);
+}
+
+.btn-primary-sm:active {
+  transform: scale(0.97);
+}
+
+.btn-primary-sm:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn-primary-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-rose);
+  color: white;
+  font-weight: 600;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-primary-lg:hover {
+  background: var(--color-rose-dark);
+  box-shadow: 0 4px 20px oklch(0.55 0.15 10 / 0.25);
+}
+
+.btn-primary-lg:active {
+  transform: scale(0.97);
+}
+
+.btn-primary-lg:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* ── 裝飾元素 ─────────────────────────── */
 
 .ornament {

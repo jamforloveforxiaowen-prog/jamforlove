@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface Product {
   id: number;
@@ -226,14 +227,16 @@ export default function OrderPage() {
                   }`}
                 >
                   {product.imageUrl ? (
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.name}
+                      width={56}
+                      height={56}
                       className="w-14 h-14 rounded-md object-cover shrink-0"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-md bg-linen-dark flex items-center justify-center text-2xl shrink-0">
-                      🍓
+                      <span role="img" aria-label="草莓">🍓</span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -251,7 +254,7 @@ export default function OrderPage() {
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty - 1)}
-                      className="w-9 h-9 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
+                      className="w-11 h-11 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
                     >
                       −
                     </button>
@@ -261,7 +264,7 @@ export default function OrderPage() {
                     <button
                       type="button"
                       onClick={() => updateQuantity(product, qty + 1)}
-                      className="w-9 h-9 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
+                      className="w-11 h-11 rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center text-lg"
                     >
                       +
                     </button>
@@ -407,7 +410,7 @@ export default function OrderPage() {
             <button
               type="submit"
               disabled={loading || cart.length === 0}
-              className="btn-primary w-full !py-4 !text-base"
+              className="btn-primary-lg w-full"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">

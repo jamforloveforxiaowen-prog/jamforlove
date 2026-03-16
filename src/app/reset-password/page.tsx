@@ -17,7 +17,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+      <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center max-w-6xl mx-auto px-6">
         <div className="text-center animate-reveal-up">
           <h1 className="font-serif text-2xl font-bold text-espresso mb-3">
             連結無效
@@ -76,7 +76,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+      <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center max-w-6xl mx-auto px-6">
         <div className="w-full max-w-sm text-center animate-reveal-up">
           <div className="w-16 h-16 rounded-full bg-sage/10 flex items-center justify-center mx-auto mb-6">
             <svg
@@ -113,7 +113,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+    <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center max-w-6xl mx-auto px-6">
       <div className="w-full max-w-sm animate-reveal-up">
         <div className="mb-10">
           <h1 className="font-serif text-3xl font-bold text-espresso mb-2">
@@ -166,7 +166,7 @@ function ResetPasswordForm() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full !py-3.5"
+            className="btn-primary w-full"
           >
             {loading ? "更新中..." : "更新密碼"}
           </button>
@@ -180,7 +180,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center">
           <p className="text-espresso-light/50 text-sm">載入中...</p>
         </div>
       }

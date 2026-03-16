@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+      <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center max-w-6xl mx-auto px-6">
         <div className="w-full max-w-sm text-center animate-reveal-up">
           <div className="w-16 h-16 rounded-full bg-sage/10 flex items-center justify-center mx-auto mb-6">
             <svg
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
+    <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center max-w-6xl mx-auto px-6">
       <div className="w-full max-w-sm animate-reveal-up">
         <div className="mb-10">
           <h1 className="font-serif text-3xl font-bold text-espresso mb-2">
@@ -122,7 +122,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading || cooldown > 0}
-            className="btn-primary w-full !py-3.5"
+            className="btn-primary w-full"
           >
             {loading ? "寄送中..." : cooldown > 0 ? `請等待 ${cooldown} 秒` : "寄送重設連結"}
           </button>

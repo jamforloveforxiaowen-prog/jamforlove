@@ -96,6 +96,10 @@ export default function Navbar() {
         }}
       >
         <div className="h-[40px] flex items-center justify-center">
+          {/* 手機版 auth 頁面：顯示首頁連結 */}
+          {isAuthPage && (
+            <Link href="/" className={`md:hidden ${navLinkClass("/", true)}`} style={homeCTAStyle}>首頁</Link>
+          )}
           {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
@@ -237,10 +241,10 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex gap-2.5">
-              <Link href="/login" onClick={close} className="flex-1 text-center py-2 rounded-full text-[0.8rem] font-medium text-espresso-light transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50" style={{ border: "1px solid var(--color-linen-dark)" }}>
+              <Link href="/login" onClick={close} className={mobileLinkClass("/login")}>
                 登入
               </Link>
-              <Link href="/register" onClick={close} className="flex-1 text-center py-2 rounded-full text-[0.8rem] font-semibold text-white transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50" style={{ background: "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))", boxShadow: "0 3px 10px rgba(196,80,106,0.2)" }}>
+              <Link href="/register" onClick={close} className={mobileLinkClass("/register")}>
                 註冊
               </Link>
             </div>
