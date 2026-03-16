@@ -10,7 +10,7 @@ interface User { id: number; username: string; role: string; name: string }
 function Dot() {
   return (
     <span
-      className="inline-block w-[3px] h-[3px] rounded-full mx-0.5 opacity-25"
+      className="inline-block w-[3px] h-[3px] rounded-full mx-2 opacity-25"
       style={{ background: "var(--color-espresso-light)" }}
     />
   );
