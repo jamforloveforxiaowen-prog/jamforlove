@@ -60,9 +60,8 @@ export default function Navbar() {
     if (filled) {
       return `${base} font-semibold`;
     }
-    const capsule = s ? "border border-espresso-light/15" : "border border-white/18";
-    if (isActive(href)) return s ? `${base} ${capsule} text-rose font-medium` : `${base} ${capsule} text-white font-medium`;
-    return s ? `${base} ${capsule} text-espresso-light hover:text-rose active:text-rose-dark font-medium` : `${base} ${capsule} text-white/70 hover:text-white active:text-white font-medium`;
+    if (isActive(href)) return s ? `${base} text-rose font-medium` : `${base} text-white font-medium`;
+    return s ? `${base} text-espresso-light hover:text-rose active:text-rose-dark font-medium` : `${base} text-white/70 hover:text-white active:text-white font-medium`;
   }
 
   // 首頁填色膠囊的 inline style
