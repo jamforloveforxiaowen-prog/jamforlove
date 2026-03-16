@@ -115,7 +115,6 @@ export default function Navbar() {
                 <Dot />
                 <Link href="/news" className={navLinkClass("/news")}>最新消息</Link>
                 <Link href="/story" className={navLinkClass("/story")}>果醬的故事</Link>
-                <Link href="/about" className={navLinkClass("/about")}>關於我們</Link>
                 {user && (
                   <>
                     <Dot />
@@ -250,7 +249,6 @@ export default function Navbar() {
             <Link href="/" onClick={close} className={mobileLinkClass("/")}>首頁</Link>
             <Link href="/news" onClick={close} className={mobileLinkClass("/news")}>最新消息</Link>
             <Link href="/story" onClick={close} className={mobileLinkClass("/story")}>果醬的故事</Link>
-            <Link href="/about" onClick={close} className={mobileLinkClass("/about")}>關於我們</Link>
             {user && (
               <>
                 <Link href="/order" onClick={close} className={mobileLinkClass("/order")}>訂購</Link>
