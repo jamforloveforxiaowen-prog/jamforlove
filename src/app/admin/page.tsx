@@ -50,7 +50,14 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders";
+type Tab = "products" | "orders" | "news" | "story";
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "products", label: "產品管理" },
+  { key: "orders", label: "訂單管理" },
+  { key: "news", label: "最新消息" },
+  { key: "story", label: "果醬的故事" },
+];
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -67,30 +74,26 @@ export default function AdminPage() {
         <div className="w-16 h-[2px] bg-rose mt-5" />
       </div>
 
-      <div className="flex gap-2 mb-10">
-        <button
-          onClick={() => setTab("products")}
-          className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
-            tab === "products"
-              ? "bg-espresso text-linen"
-              : "text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
-          }`}
-        >
-          產品管理
-        </button>
-        <button
-          onClick={() => setTab("orders")}
-          className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
-            tab === "orders"
-              ? "bg-espresso text-linen"
-              : "text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
-          }`}
-        >
-          訂單管理
-        </button>
+      <div className="flex flex-wrap gap-2 mb-10">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+              tab === t.key
+                ? "bg-espresso text-linen"
+                : "text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {tab === "products" ? <ProductManager /> : <OrderManager />}
+      {tab === "products" && <ProductManager />}
+      {tab === "orders" && <OrderManager />}
+      {tab === "news" && <NewsManager />}
+      {tab === "story" && <StoryManager />}
     </div>
   );
 }
@@ -398,6 +401,544 @@ function ProductManager() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+interface NewsItem {
+  id: number;
+  title: string;
+  content: string;
+  isPublished: boolean;
+  createdAt: string;
+}
+
+function NewsManager() {
+  const [items, setItems] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [error, setError] = useState("");
+
+  async function loadItems() {
+    try {
+      const res = await fetch("/api/admin/news");
+      const data = await res.json();
+      if (Array.isArray(data)) setItems(data);
+    } catch {
+      setError("無法載入最新消息");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  function resetForm() {
+    setTitle("");
+    setContent("");
+    setEditingId(null);
+    setShowForm(false);
+    setError("");
+  }
+
+  function startEdit(item: NewsItem) {
+    setTitle(item.title);
+    setContent(item.content);
+    setEditingId(item.id);
+    setShowForm(true);
+    setError("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    const url = editingId
+      ? `/api/admin/news/${editingId}`
+      : "/api/admin/news";
+    const method = editingId ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "儲存失敗");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
+    resetForm();
+    loadItems();
+  }
+
+  async function togglePublish(item: NewsItem) {
+    const action = item.isPublished ? "取消發佈" : "發佈";
+    if (!window.confirm(`確定要${action}「${item.title}」嗎？`)) return;
+    try {
+      await fetch(`/api/admin/news/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !item.isPublished }),
+      });
+      loadItems();
+    } catch {
+      setError(`${action}失敗，請重試`);
+    }
+  }
+
+  async function handleDelete(item: NewsItem) {
+    if (!window.confirm(`確定要刪除「${item.title}」嗎？此操作無法復原。`)) return;
+    try {
+      await fetch(`/api/admin/news/${item.id}`, { method: "DELETE" });
+      loadItems();
+    } catch {
+      setError("刪除失敗，請重試");
+    }
+  }
+
+  if (loading) {
+    return (
+      <p className="text-espresso-light/50 text-center py-16 text-sm" role="status">
+        載入中...
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {error && (
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
+      )}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">消息列表</h2>
+        <button
+          onClick={() => { resetForm(); setShowForm(true); }}
+          className="btn-primary-sm"
+        >
+          + 新增消息
+        </button>
+      </div>
+
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6 mb-8 space-y-5"
+        >
+          <h3 className="font-serif font-bold text-espresso">
+            {editingId ? "編輯消息" : "新增消息"}
+          </h3>
+          <div>
+            <label htmlFor="news-title" className="block text-sm font-medium text-espresso mb-2">
+              標題
+            </label>
+            <input
+              id="news-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="news-content" className="block text-sm font-medium text-espresso mb-2">
+              內容
+            </label>
+            <textarea
+              id="news-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              className="input-field"
+              required
+            />
+          </div>
+          <div className="flex gap-3">
+            <button type="submit" disabled={submitting} className="btn-primary-sm">
+              {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary">
+              取消
+            </button>
+          </div>
+        </form>
+      )}
+
+      {items.length === 0 && !showForm ? (
+        <div className="text-center py-24">
+          <p className="text-espresso-light/50 text-sm">尚無消息，點擊上方按鈕新增</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${
+                !item.isPublished ? "opacity-40" : ""
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-serif font-bold text-espresso text-sm truncate">
+                    {item.title}
+                    {!item.isPublished && (
+                      <span className="ml-2 text-xs text-rose font-sans font-normal">未發佈</span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-espresso-light/50 line-clamp-2 mt-1">
+                    {item.content}
+                  </p>
+                  <p className="text-xs text-espresso-light/40 mt-1">{item.createdAt}</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => startEdit(item)}
+                    className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200"
+                  >
+                    編輯
+                  </button>
+                  <button
+                    onClick={() => togglePublish(item)}
+                    className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${
+                      item.isPublished
+                        ? "text-rose ring-rose/20 hover:bg-rose/5"
+                        : "text-sage ring-sage/20 hover:bg-sage/5"
+                    }`}
+                  >
+                    {item.isPublished ? "取消發佈" : "發佈"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="text-xs text-rose/60 hover:text-rose px-3 py-2 ring-1 ring-rose/20 rounded-md hover:bg-rose/5 transition-all duration-200"
+                  >
+                    刪除
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface StoryBlock {
+  id: number;
+  sortOrder: number;
+  heading: string;
+  content: string;
+  imageUrl: string;
+  isPublished: boolean;
+}
+
+function StoryManager() {
+  const [items, setItems] = useState<StoryBlock[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [heading, setHeading] = useState("");
+  const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [error, setError] = useState("");
+
+  async function loadItems() {
+    try {
+      const res = await fetch("/api/admin/story");
+      const data = await res.json();
+      if (Array.isArray(data)) setItems(data);
+    } catch {
+      setError("無法載入故事內容");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  function resetForm() {
+    setHeading("");
+    setContent("");
+    setImageUrl("");
+    setSortOrder("0");
+    setEditingId(null);
+    setShowForm(false);
+    setError("");
+  }
+
+  function startEdit(item: StoryBlock) {
+    setHeading(item.heading);
+    setContent(item.content);
+    setImageUrl(item.imageUrl);
+    setSortOrder(String(item.sortOrder));
+    setEditingId(item.id);
+    setShowForm(true);
+    setError("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    const url = editingId
+      ? `/api/admin/story/${editingId}`
+      : "/api/admin/story";
+    const method = editingId ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          heading,
+          content,
+          imageUrl,
+          sortOrder: Number(sortOrder),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "儲存失敗");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
+    resetForm();
+    loadItems();
+  }
+
+  async function togglePublish(item: StoryBlock) {
+    const action = item.isPublished ? "取消發佈" : "發佈";
+    if (!window.confirm(`確定要${action}此段落嗎？`)) return;
+    try {
+      await fetch(`/api/admin/story/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !item.isPublished }),
+      });
+      loadItems();
+    } catch {
+      setError(`${action}失敗，請重試`);
+    }
+  }
+
+  async function handleDelete(item: StoryBlock) {
+    if (!window.confirm("確定要刪除此段落嗎？此操作無法復原。")) return;
+    try {
+      await fetch(`/api/admin/story/${item.id}`, { method: "DELETE" });
+      loadItems();
+    } catch {
+      setError("刪除失敗，請重試");
+    }
+  }
+
+  if (loading) {
+    return (
+      <p className="text-espresso-light/50 text-center py-16 text-sm" role="status">
+        載入中...
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {error && (
+        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
+      )}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">故事段落</h2>
+        <button
+          onClick={() => { resetForm(); setShowForm(true); }}
+          className="btn-primary-sm"
+        >
+          + 新增段落
+        </button>
+      </div>
+
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6 mb-8 space-y-5"
+        >
+          <h3 className="font-serif font-bold text-espresso">
+            {editingId ? "編輯段落" : "新增段落"}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="story-heading" className="block text-sm font-medium text-espresso mb-2">
+                標題（選填）
+              </label>
+              <input
+                id="story-heading"
+                type="text"
+                value={heading}
+                onChange={(e) => setHeading(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label htmlFor="story-sortOrder" className="block text-sm font-medium text-espresso mb-2">
+                排序（數字越小越前面）
+              </label>
+              <input
+                id="story-sortOrder"
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="story-imageUrl" className="block text-sm font-medium text-espresso mb-2">
+              圖片網址（選填）
+            </label>
+            <input
+              id="story-imageUrl"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="input-field"
+              placeholder="https://example.com/photo.jpg"
+            />
+            {imageUrl && (
+              <Image
+                src={imageUrl}
+                alt="預覽"
+                width={80}
+                height={80}
+                className="mt-3 w-20 h-20 object-cover rounded-md ring-1 ring-linen-dark/60"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )}
+          </div>
+          <div>
+            <label htmlFor="story-content" className="block text-sm font-medium text-espresso mb-2">
+              內容
+            </label>
+            <textarea
+              id="story-content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              className="input-field"
+              required
+            />
+          </div>
+          <div className="flex gap-3">
+            <button type="submit" disabled={submitting} className="btn-primary-sm">
+              {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary">
+              取消
+            </button>
+          </div>
+        </form>
+      )}
+
+      {items.length === 0 && !showForm ? (
+        <div className="text-center py-24">
+          <p className="text-espresso-light/50 text-sm">尚無段落，點擊上方按鈕新增</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${
+                !item.isPublished ? "opacity-40" : ""
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  <span className="text-xs text-espresso-light/40 font-mono shrink-0 pt-0.5">
+                    #{item.sortOrder}
+                  </span>
+                  {item.imageUrl && (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.heading || "故事圖片"}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-md object-cover shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    {item.heading && (
+                      <h3 className="font-serif font-bold text-espresso text-sm truncate">
+                        {item.heading}
+                        {!item.isPublished && (
+                          <span className="ml-2 text-xs text-rose font-sans font-normal">未發佈</span>
+                        )}
+                      </h3>
+                    )}
+                    {!item.heading && !item.isPublished && (
+                      <span className="text-xs text-rose font-sans">未發佈</span>
+                    )}
+                    <p className="text-xs text-espresso-light/50 line-clamp-2 mt-0.5">
+                      {item.content}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => startEdit(item)}
+                    className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200"
+                  >
+                    編輯
+                  </button>
+                  <button
+                    onClick={() => togglePublish(item)}
+                    className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${
+                      item.isPublished
+                        ? "text-rose ring-rose/20 hover:bg-rose/5"
+                        : "text-sage ring-sage/20 hover:bg-sage/5"
+                    }`}
+                  >
+                    {item.isPublished ? "取消發佈" : "發佈"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    className="text-xs text-rose/60 hover:text-rose px-3 py-2 ring-1 ring-rose/20 rounded-md hover:bg-rose/5 transition-all duration-200"
+                  >
+                    刪除
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
