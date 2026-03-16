@@ -61,8 +61,8 @@ export default function Navbar() {
     if (filled) {
       return `${base} font-semibold`;
     }
-    if (isActive(href)) return `${base} text-rose font-medium`;
-    return `${base} text-espresso-light hover:text-rose active:text-rose-dark font-medium`;
+    if (isActive(href)) return `${base} text-rose bg-rose/10 font-medium`;
+    return `${base} text-espresso-light hover:text-rose hover:bg-rose/10 active:text-rose-dark font-medium`;
   }
 
   // 首頁填色膠囊的 inline style — 玫瑰色
