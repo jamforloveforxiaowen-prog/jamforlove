@@ -163,15 +163,13 @@ export default function Navbar() {
                     <Dot />
                     <Link
                       href="/login"
-                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 hover:text-rose focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                      style={{ color: "var(--color-espresso-light)" }}
+                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-all duration-250 text-espresso-light hover:text-rose hover:bg-rose/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
                     >
                       登入
                     </Link>
                     <Link
                       href="/register"
-                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 hover:text-rose focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                      style={{ color: "var(--color-espresso-light)" }}
+                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-all duration-250 text-espresso-light hover:text-rose hover:bg-rose/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
                     >
                       註冊
                     </Link>
