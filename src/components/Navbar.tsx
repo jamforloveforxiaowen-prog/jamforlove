@@ -54,7 +54,7 @@ export default function Navbar() {
   const s = scrolled; // 縮短變數名方便使用
 
   function navLinkClass(href: string) {
-    const base = "relative px-4 py-1.5 text-[0.85rem] tracking-wide font-medium transition-all duration-300 hover:-translate-y-px";
+    const base = "relative px-2.5 py-1.5 text-[0.85rem] tracking-wide font-medium transition-all duration-300 hover:-translate-y-px";
     if (isActive(href)) return s ? `${base} text-rose` : `${base} text-white`;
     return s ? `${base} text-espresso-light hover:text-rose` : `${base} text-white/70 hover:text-white`;
   }
@@ -67,18 +67,18 @@ export default function Navbar() {
   const close = () => setMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end pt-4 px-4 pointer-events-none">
       <div
         className="pointer-events-auto w-full transition-all duration-500 ease-out"
         style={{
-          maxWidth: s ? 720 : 800,
+          maxWidth: s ? 600 : 680,
           borderRadius: 9999,
           background: s ? "rgba(248,243,235,0.92)" : "rgba(30,15,8,0.18)",
           backdropFilter: "blur(16px) saturate(1.4)",
           WebkitBackdropFilter: "blur(16px) saturate(1.4)",
           border: s ? "1px solid rgba(235,226,212,0.8)" : "1px solid rgba(255,255,255,0.12)",
           boxShadow: s ? "0 8px 32px rgba(30,15,8,0.08), 0 1px 2px rgba(30,15,8,0.04)" : "0 4px 24px rgba(0,0,0,0.06)",
-          padding: "0 28px",
+          padding: "0 20px",
         }}
       >
         <div className="h-[52px] flex items-center justify-center relative">
@@ -107,7 +107,7 @@ export default function Navbar() {
           </div>
 
           {/* 右側操作區 — 絕對定位靠右 */}
-          <div className="hidden md:flex items-center gap-1.5 absolute right-0 pr-7">
+          <div className="hidden md:flex items-center gap-1 absolute right-0 pr-4">
             {!isAuthPage && (
               <>
                 {user ? (
