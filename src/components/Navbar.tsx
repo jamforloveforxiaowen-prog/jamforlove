@@ -112,6 +112,7 @@ export default function Navbar() {
                   <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
                 )}
                 <Dot scrolled={s} />
+                <Link href="/about" className={navLinkClass("/about")}>關於我們</Link>
                 <Link href="/news" className={navLinkClass("/news")}>最新消息</Link>
                 <Link href="/story" className={navLinkClass("/story")}>果醬的故事</Link>
                 {user && (
@@ -223,6 +224,7 @@ export default function Navbar() {
         >
           <div className="space-y-0.5">
             <Link href="/" onClick={close} className={mobileLinkClass("/")}>首頁</Link>
+            <Link href="/about" onClick={close} className={mobileLinkClass("/about")}>關於我們</Link>
             <Link href="/news" onClick={close} className={mobileLinkClass("/news")}>最新消息</Link>
             <Link href="/story" onClick={close} className={mobileLinkClass("/story")}>果醬的故事</Link>
             {user && (
