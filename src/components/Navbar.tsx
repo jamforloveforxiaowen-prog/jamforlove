@@ -72,8 +72,7 @@ export default function Navbar() {
       <div
         className="pointer-events-auto transition-all duration-500 ease-out"
         style={{
-          maxWidth: s ? 500 : 560,
-          width: "100%",
+          width: "fit-content",
           borderRadius: 9999,
           background: s ? "rgba(248,243,235,0.92)" : "rgba(30,15,8,0.18)",
           backdropFilter: "blur(16px) saturate(1.4)",
