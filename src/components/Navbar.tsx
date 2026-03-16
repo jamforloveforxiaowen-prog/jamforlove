@@ -55,9 +55,10 @@ export default function Navbar() {
 
   // 統一字型大小 0.8rem，統一 padding px-2 py-1，統一 duration-250
   function navLinkClass(href: string) {
-    const base = "relative px-2 py-1 text-[0.8rem] tracking-wide font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50 rounded";
-    if (isActive(href)) return s ? `${base} text-rose` : `${base} text-white`;
-    return s ? `${base} text-espresso-light hover:text-rose active:text-rose-dark` : `${base} text-white/70 hover:text-white active:text-white`;
+    const base = "relative px-3 py-1 text-[0.8rem] tracking-wide font-medium rounded-full transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50";
+    const capsule = s ? "border border-espresso-light/15" : "border border-white/18";
+    if (isActive(href)) return s ? `${base} ${capsule} text-rose` : `${base} ${capsule} text-white`;
+    return s ? `${base} ${capsule} text-espresso-light hover:text-rose active:text-rose-dark` : `${base} ${capsule} text-white/70 hover:text-white active:text-white`;
   }
 
   function mobileLinkClass(href: string) {
