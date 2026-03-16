@@ -7,11 +7,11 @@ import { useCart } from "@/contexts/CartContext";
 
 interface User { id: number; username: string; role: string; name: string }
 
-function Dot({ scrolled }: { scrolled: boolean }) {
+function Dot() {
   return (
     <span
-      className="inline-block w-[3px] h-[3px] rounded-full mx-0.5 opacity-25 transition-colors duration-250"
-      style={{ background: scrolled ? "var(--color-espresso-light)" : "white" }}
+      className="inline-block w-[3px] h-[3px] rounded-full mx-0.5 opacity-25"
+      style={{ background: "var(--color-espresso-light)" }}
     />
   );
 }
@@ -56,22 +56,21 @@ export default function Navbar() {
   const s = scrolled;
 
   // 統一字型大小 0.8rem，統一 duration-250
-  // 首頁（未登入時）：填色膠囊 CTA；其餘：透明膠囊外框
   function navLinkClass(href: string, filled = false) {
     const base = "relative px-3 py-1 text-[0.8rem] tracking-wide rounded-full transition-all duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50";
     if (filled) {
       return `${base} font-semibold`;
     }
-    if (isActive(href)) return s ? `${base} text-rose font-medium` : `${base} text-white font-medium`;
-    return s ? `${base} text-espresso-light hover:text-rose active:text-rose-dark font-medium` : `${base} text-white/70 hover:text-white active:text-white font-medium`;
+    if (isActive(href)) return `${base} text-rose font-medium`;
+    return `${base} text-espresso-light hover:text-rose active:text-rose-dark font-medium`;
   }
 
-  // 首頁填色膠囊的 inline style
+  // 首頁填色膠囊的 inline style — 暖棕色
   const homeCTAStyle = {
-    background: s ? "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))" : "rgba(255,255,255,0.15)",
+    background: "var(--color-espresso)",
     color: "white",
-    border: s ? "none" : "1px solid rgba(255,255,255,0.18)",
-    boxShadow: s ? "0 3px 12px rgba(196,80,106,0.25), inset 0 1px 0 rgba(255,255,255,0.12)" : "none",
+    border: "none",
+    boxShadow: "0 3px 12px rgba(30,15,8,0.2), inset 0 1px 0 rgba(255,255,255,0.08)",
     letterSpacing: "0.03em",
   };
 
@@ -83,17 +82,17 @@ export default function Navbar() {
   const close = () => setMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end pt-3 pointer-events-none max-w-6xl mx-auto px-6">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
       <div
         className="pointer-events-auto transition-all duration-500 ease-out"
         style={{
           width: "fit-content",
           borderRadius: 9999,
-          background: s ? "rgba(248,243,235,0.92)" : "rgba(30,15,8,0.18)",
+          background: "rgba(248,243,235,0.92)",
           backdropFilter: "blur(16px) saturate(1.4)",
           WebkitBackdropFilter: "blur(16px) saturate(1.4)",
-          border: s ? "1px solid rgba(235,226,212,0.8)" : "1px solid rgba(255,255,255,0.12)",
-          boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.05)",
+          border: "1px solid rgba(235,226,212,0.8)",
+          boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.03)",
           padding: "0 14px",
         }}
       >
@@ -113,18 +112,18 @@ export default function Navbar() {
                 ) : (
                   <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
                 )}
-                <Dot scrolled={s} />
+                <Dot />
                 <Link href="/news" className={navLinkClass("/news")}>最新消息</Link>
                 <Link href="/story" className={navLinkClass("/story")}>果醬的故事</Link>
                 <Link href="/about" className={navLinkClass("/about")}>關於我們</Link>
                 {user && (
                   <>
-                    <Dot scrolled={s} />
+                    <Dot />
                     <Link href="/order" className={navLinkClass("/order")}>訂購</Link>
                     <Link href="/my-orders" className={navLinkClass("/my-orders")}>我的訂單</Link>
                     {user.role === "admin" && (
                       <>
-                        <Dot scrolled={s} />
+                        <Dot />
                         <Link href="/admin" className={navLinkClass("/admin")}>後台管理</Link>
                       </>
                     )}
@@ -134,32 +133,16 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 操作區 — 用分隔點連接 */}
+          {/* 操作區 */}
           <div className="hidden md:flex items-center gap-0.5 ml-0.5">
             {!isAuthPage && (
               <>
-                <Dot scrolled={s} />
-                <Link
-                  href="/order"
-                  className="relative px-2 py-1 transition-colors duration-250"
-                  aria-label={`購物車，${totalCount} 件商品`}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}>
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {totalCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                      {totalCount > 99 ? "99+" : totalCount}
-                    </span>
-                  )}
-                </Link>
-                {!user && <Dot scrolled={s} />}
                 {user ? (
                   <>
-                    <Dot scrolled={s} />
+                    <Dot />
                     <span
-                      className="px-2 py-1 text-[0.8rem] max-w-[80px] truncate transition-colors duration-250"
-                      style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.55)" }}
+                      className="px-2 py-1 text-[0.8rem] max-w-[80px] truncate"
+                      style={{ color: "var(--color-espresso-light)" }}
                       title={user.name}
                     >
                       {user.name}
@@ -168,8 +151,8 @@ export default function Navbar() {
                       onClick={handleLogout}
                       className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
                       style={{
-                        border: s ? "1px solid var(--color-linen-dark)" : "1px solid rgba(255,255,255,0.18)",
-                        color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)",
+                        border: "1px solid var(--color-linen-dark)",
+                        color: "var(--color-espresso-light)",
                       }}
                     >
                       登出
@@ -177,17 +160,18 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
+                    <Dot />
                     <Link
                       href="/login"
-                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                      style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}
+                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 hover:text-rose focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
+                      style={{ color: "var(--color-espresso-light)" }}
                     >
                       登入
                     </Link>
                     <Link
                       href="/register"
-                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                      style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}
+                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 hover:text-rose focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
+                      style={{ color: "var(--color-espresso-light)" }}
                     >
                       註冊
                     </Link>
@@ -197,28 +181,12 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 手機版購物車 + 漢堡按鈕 */}
-          {!isAuthPage && (
-            <Link
-              href="/order"
-              className="md:hidden relative px-1.5 py-1 mr-1 transition-colors duration-250"
-              aria-label={`購物車，${totalCount} 件商品`}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.7)" }}>
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {totalCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                  {totalCount > 99 ? "99+" : totalCount}
-                </span>
-              )}
-            </Link>
-          )}
+          {/* 手機版漢堡按鈕 */}
           {!isAuthPage && (
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="md:hidden w-8 h-8 flex flex-col items-center justify-center gap-[4px] rounded-full transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-              style={{ background: menuOpen ? (s ? "var(--color-linen-dark)" : "rgba(255,255,255,0.15)") : "transparent" }}
+              style={{ background: menuOpen ? "var(--color-linen-dark)" : "transparent" }}
               aria-label="選單"
               aria-expanded={menuOpen}
             >
@@ -228,7 +196,7 @@ export default function Navbar() {
                   className="block h-[1.5px] rounded-full transition-all duration-250 origin-center"
                   style={{
                     width: i === 1 && !menuOpen ? 12 : 16,
-                    background: s ? "var(--color-espresso)" : "white",
+                    background: "var(--color-espresso)",
                     ...(menuOpen && i === 0 ? { transform: "rotate(45deg) translateY(5.5px)" } : {}),
                     ...(menuOpen && i === 1 ? { opacity: 0, transform: "scaleX(0)" } : {}),
                     ...(menuOpen && i === 2 ? { transform: "rotate(-45deg) translateY(-5.5px)" } : {}),
@@ -239,6 +207,31 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/* 獨立購物車按鈕 — 登入後才顯示 */}
+      {user && !isAuthPage && (
+        <Link
+          href="/order"
+          className="pointer-events-auto relative flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-500 ease-out"
+          style={{
+            background: "rgba(248,243,235,0.92)",
+            backdropFilter: "blur(16px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
+            border: "1px solid rgba(235,226,212,0.8)",
+            boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.03)",
+          }}
+          aria-label={`購物車，${totalCount} 件商品`}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: "var(--color-espresso-light)" }}>
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {totalCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
+              {totalCount > 99 ? "99+" : totalCount}
+            </span>
+          )}
+        </Link>
+      )}
 
       {/* 手機版浮動面板 — 修正 top 為實際高度 */}
       {menuOpen && !isAuthPage && (
