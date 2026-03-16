@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -12,15 +11,9 @@ export default function Footer() {
         <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-5">
           關於我們
         </h2>
-        <p className="text-espresso-light text-base leading-relaxed font-serif mb-5">
+        <p className="text-espresso-light text-base leading-relaxed font-serif">
           「Jam for Love」是一個由國立暨南大學國際文教與比較教育系師/生所共同組成的募資團隊。成立之目的在於，希望集結眾人之關懷，協助不同NGO、NPO持續在其助人專業上努力。
         </p>
-        <Link
-          href="/about"
-          className="text-rose text-sm font-medium hover:text-rose-dark transition-colors duration-250"
-        >
-          瞭解更多 &rarr;
-        </Link>
       </div>
 
       <div className="max-w-xs mx-auto h-px bg-gradient-to-r from-transparent via-linen-dark to-transparent" />
