@@ -83,9 +83,8 @@ export default function Navbar() {
           padding: "0 14px",
         }}
       >
-        {/* 改為 flex justify-between，避免絕對定位重疊 */}
-        <div className="h-[40px] flex items-center justify-between">
-          {/* 左側導航連結 */}
+        <div className="h-[40px] flex items-center justify-center">
+          {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
               <Link href="/" className={navLinkClass("/")}>首頁</Link>
@@ -109,12 +108,14 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 右側操作區 */}
-          <div className="hidden md:flex items-center gap-0.5">
+          {/* 操作區 — 用分隔點連接 */}
+          <div className="hidden md:flex items-center gap-0.5 ml-0.5">
             {!isAuthPage && (
               <>
+                {!user && <Dot scrolled={s} />}
                 {user ? (
                   <>
+                    <Dot scrolled={s} />
                     <span
                       className="px-2 py-1 text-[0.8rem] max-w-[80px] truncate transition-colors duration-250"
                       style={{ color: s ? "var(--color-espresso-light)" : "rgba(255,255,255,0.55)" }}
