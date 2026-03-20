@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
 export default function OrderPage() {
   const router = useRouter();
@@ -76,27 +77,38 @@ export default function OrderPage() {
   if (submitted) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-full bg-sage/10 flex items-center justify-center mx-auto mb-8 animate-reveal-scale">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-sage">
-              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        <div className="text-center max-w-md relative">
+          {/* 慶祝彩帶動畫（背景） */}
+          <div className="absolute inset-0 -top-20 pointer-events-none">
+            <LottieAnimation
+              src={LOTTIE_URLS.confetti}
+              loop={false}
+              className="w-full h-full"
+            />
           </div>
-          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.15s" }}>
-            訂單已送出！
-          </h1>
-          <p className="text-espresso-light/60 mb-10 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.25s" }}>
-            感謝你的訂購！我們正用滿滿的愛心為你準備果醬，
-            <br className="hidden sm:block" />
-            請期待甜蜜的包裹送到你手中。
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal-up" style={{ animationDelay: "0.4s" }}>
-            <button onClick={() => router.push("/my-orders")} className="btn-primary">
-              查看我的訂單
-            </button>
-            <button onClick={() => router.push("/")} className="btn-secondary">
-              回到首頁
-            </button>
+          {/* 成功打勾動畫 */}
+          <div className="relative">
+            <LottieAnimation
+              src={LOTTIE_URLS.success}
+              loop={false}
+              className="w-28 h-28 mx-auto mb-4"
+            />
+            <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.15s" }}>
+              訂單已送出！
+            </h1>
+            <p className="text-espresso-light/60 mb-10 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.25s" }}>
+              感謝你的訂購！我們正用滿滿的愛心為你準備果醬，
+              <br className="hidden sm:block" />
+              請期待甜蜜的包裹送到你手中。
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center animate-reveal-up" style={{ animationDelay: "0.4s" }}>
+              <button onClick={() => router.push("/my-orders")} className="btn-primary">
+                查看我的訂單
+              </button>
+              <button onClick={() => router.push("/")} className="btn-secondary">
+                回到首頁
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -112,21 +124,23 @@ export default function OrderPage() {
         <h1 className="font-serif text-4xl md:text-5xl font-bold text-espresso">
           購物車
         </h1>
-        <div className="w-16 h-[2px] bg-rose mt-5" />
+        <div className="w-16 h-[2px] bg-rose mt-5 origin-left animate-underline-grow" />
       </div>
 
       {cartLoading ? (
         <div className="text-center py-16">
-          <div className="w-8 h-8 border-2 border-rose/20 border-t-rose rounded-full animate-spin mx-auto mb-3" role="status" aria-label="載入中" />
+          <LottieAnimation
+            src={LOTTIE_URLS.loading}
+            className="w-24 h-24 mx-auto mb-3"
+          />
           <p className="text-espresso-light/50 text-sm">載入購物車...</p>
         </div>
       ) : items.length === 0 ? (
-        <div className="text-center py-24">
-          <div className="w-16 h-16 rounded-full bg-linen-dark/50 flex items-center justify-center mx-auto mb-6">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-espresso-light/40">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+        <div className="text-center py-16">
+          <LottieAnimation
+            src={LOTTIE_URLS.emptyCart}
+            className="w-52 h-52 mx-auto mb-4"
+          />
           <p className="font-serif text-espresso text-lg mb-2">購物車是空的</p>
           <p className="text-espresso-light/50 text-sm mb-8">去看看有什麼好吃的果醬吧</p>
           <Link href="/" className="btn-primary-sm">
@@ -141,10 +155,11 @@ export default function OrderPage() {
               購物清單
             </h2>
             <div className="space-y-3">
-              {items.map((item) => (
+              {items.map((item, idx) => (
                 <div
                   key={item.productId}
-                  className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 flex items-center gap-4"
+                  className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 flex items-center gap-4 animate-reveal-up"
+                  style={{ animationDelay: `${idx * 0.06}s` }}
                 >
                   {item.imageUrl ? (
                     <Image
@@ -278,7 +293,7 @@ export default function OrderPage() {
               </div>
 
               {error && (
-                <p className="text-rose text-sm font-medium" role="alert">{error}</p>
+                <p className="text-rose text-sm font-medium animate-shake" role="alert">{error}</p>
               )}
 
               <button

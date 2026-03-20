@@ -3,6 +3,8 @@ import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
+import ScrollReveal from "@/components/ScrollReveal";
+import HeroLottie from "@/components/HeroLottie";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +80,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* 右側 Logo */}
+            {/* 右側 Logo + 愛心動畫 */}
             <div className="md:col-span-5 order-1 md:order-2 flex justify-center md:justify-end">
               <div
                 className="relative animate-reveal-scale"
@@ -93,6 +95,8 @@ export default async function HomePage() {
                   className="relative rounded-full shadow-2xl shadow-espresso/10 w-[200px] h-[200px] md:w-[300px] md:h-[300px] lg:w-[340px] lg:h-[340px]"
                   priority
                 />
+                {/* 愛心浮動動畫 */}
+                <HeroLottie />
               </div>
             </div>
           </div>
@@ -118,16 +122,20 @@ export default async function HomePage() {
       {/* ── 品牌故事 ─────────────────────── */}
       <section className="bg-rose text-white">
         <div className="max-w-3xl mx-auto px-6 py-20 md:py-28 text-center">
-          <h2
-            className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-8"
-            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.1)" }}
-          >
-            用愛製作，用心傳遞
-          </h2>
-          <p className="text-white/80 text-lg leading-loose max-w-xl mx-auto">
-            我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
-            每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
-          </p>
+          <ScrollReveal>
+            <h2
+              className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-8"
+              style={{ textShadow: "0 2px 20px rgba(0,0,0,0.1)" }}
+            >
+              用愛製作，用心傳遞
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.15}>
+            <p className="text-white/80 text-lg leading-loose max-w-xl mx-auto">
+              我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
+              每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -149,63 +157,65 @@ export default async function HomePage() {
 
       {/* ── 產品區 ───────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-        <div className="mb-14">
+        <ScrollReveal className="mb-14">
           <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
             Our Jams
           </p>
           <h2 className="font-serif text-4xl md:text-5xl font-bold text-espresso">
             我們的果醬
           </h2>
-          <div className="w-16 h-[2px] bg-rose mt-5" />
-        </div>
+          <div className="w-16 h-[2px] bg-rose mt-5 origin-left animate-underline-grow" />
+        </ScrollReveal>
 
         {allProducts.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="text-4xl mb-5 animate-float">
-              <span role="img" aria-label="草莓">🍓</span>
-            </p>
-            <p className="text-espresso-light text-lg font-serif">
+            <HeroLottie variant="cooking" />
+            <p className="text-espresso-light text-lg font-serif mt-4">
               新口味正在熬煮中，敬請期待...
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
             {allProducts.map((product, i) => (
-              <Link
+              <ScrollReveal
                 key={product.id}
-                href={`/products/${product.id}`}
-                className="group block animate-reveal-up"
-                style={{ animationDelay: `${0.1 + i * 0.1}s` }}
+                delay={i * 0.1}
+                direction="scale"
               >
-                <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-5 bg-linen-dark">
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                      🍓
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-espresso/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-                <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-200 line-clamp-1">
-                  {product.name}
-                </h3>
-                <p className="text-espresso-light/60 text-sm mt-1.5 line-clamp-2 leading-relaxed">
-                  {product.description}
-                </p>
-                <p
-                  className="text-rose font-semibold mt-3 text-lg"
-                  style={{ fontFamily: "var(--font-display)" }}
+                <Link
+                  href={`/products/${product.id}`}
+                  className="group block"
                 >
-                  NT$ {product.price}
-                </p>
-              </Link>
+                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-5 bg-linen-dark">
+                    {product.imageUrl ? (
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-6xl">
+                        🍓
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-espresso/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+                  <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-200 line-clamp-1">
+                    {product.name}
+                  </h3>
+                  <p className="text-espresso-light/60 text-sm mt-1.5 line-clamp-2 leading-relaxed">
+                    {product.description}
+                  </p>
+                  <p
+                    className="text-rose font-semibold mt-3 text-lg"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    NT$ {product.price}
+                  </p>
+                </Link>
+              </ScrollReveal>
             ))}
           </div>
         )}

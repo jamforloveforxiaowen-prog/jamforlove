@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import ScrollReveal from "@/components/ScrollReveal";
+import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
 interface StoryBlock {
   id: number;
@@ -33,17 +35,24 @@ export default function StoryPage() {
         <h1 className="font-serif text-4xl md:text-5xl font-bold text-espresso">
           果醬的故事
         </h1>
-        <div className="w-16 h-[2px] bg-rose mt-5" />
+        <div className="w-16 h-[2px] bg-rose mt-5 origin-left animate-underline-grow" />
       </div>
 
       {loading ? (
-        <p className="text-espresso-light/50 text-center py-16 text-sm">載入中...</p>
+        <div className="text-center py-16">
+          <LottieAnimation
+            src={LOTTIE_URLS.loading}
+            className="w-24 h-24 mx-auto mb-3"
+          />
+          <p className="text-espresso-light/50 text-sm">載入中...</p>
+        </div>
       ) : blocks.length === 0 ? (
         <div className="flex items-center justify-center py-24">
           <div className="text-center">
-            <p className="text-5xl mb-6 animate-float">
-              <span role="img" aria-label="果醬">🍯</span>
-            </p>
+            <LottieAnimation
+              src={LOTTIE_URLS.cooking}
+              className="w-48 h-48 mx-auto mb-4"
+            />
             <p className="text-espresso-light text-lg font-serif">
               Coming Soon — 敬請期待
             </p>
@@ -51,40 +60,54 @@ export default function StoryPage() {
         </div>
       ) : (
         <div className="space-y-16">
-          {blocks.map((block, i) => (
-            <section
-              key={block.id}
-              className={`flex flex-col ${
-                block.imageUrl
-                  ? i % 2 === 0
-                    ? "md:flex-row"
-                    : "md:flex-row-reverse"
-                  : ""
-              } gap-8 items-center`}
-            >
-              {block.imageUrl && (
-                <div className="w-full md:w-1/2 shrink-0">
-                  <Image
-                    src={block.imageUrl}
-                    alt={block.heading || "果醬的故事"}
-                    width={600}
-                    height={400}
-                    className="w-full rounded-lg object-cover ring-1 ring-linen-dark/60"
-                  />
-                </div>
-              )}
-              <div className={block.imageUrl ? "w-full md:w-1/2" : "w-full"}>
-                {block.heading && (
-                  <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">
-                    {block.heading}
-                  </h2>
+          {blocks.map((block, i) => {
+            const isEven = i % 2 === 0;
+            const hasImage = !!block.imageUrl;
+
+            return (
+              <section
+                key={block.id}
+                className={`flex flex-col ${
+                  hasImage
+                    ? isEven
+                      ? "md:flex-row"
+                      : "md:flex-row-reverse"
+                    : ""
+                } gap-8 items-center`}
+              >
+                {hasImage && (
+                  <ScrollReveal
+                    direction={isEven ? "left" : "right"}
+                    className="w-full md:w-1/2 shrink-0"
+                  >
+                    <div className="overflow-hidden rounded-lg">
+                      <Image
+                        src={block.imageUrl}
+                        alt={block.heading || "果醬的故事"}
+                        width={600}
+                        height={400}
+                        className="w-full object-cover ring-1 ring-linen-dark/60 hover:scale-[1.03] transition-transform duration-700 ease-out"
+                      />
+                    </div>
+                  </ScrollReveal>
                 )}
-                <p className="text-espresso-light leading-relaxed whitespace-pre-line">
-                  {block.content}
-                </p>
-              </div>
-            </section>
-          ))}
+                <ScrollReveal
+                  direction={hasImage ? (isEven ? "right" : "left") : "up"}
+                  delay={hasImage ? 0.12 : 0}
+                  className={hasImage ? "w-full md:w-1/2" : "w-full"}
+                >
+                  {block.heading && (
+                    <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">
+                      {block.heading}
+                    </h2>
+                  )}
+                  <p className="text-espresso-light leading-relaxed whitespace-pre-line">
+                    {block.content}
+                  </p>
+                </ScrollReveal>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
