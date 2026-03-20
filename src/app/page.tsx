@@ -3,8 +3,6 @@ import { products } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
-import ScrollReveal from "@/components/ScrollReveal";
-import HeroLottie from "@/components/HeroLottie";
 
 export const dynamic = "force-dynamic";
 
@@ -22,70 +20,52 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 items-center">
             {/* 左側文字 */}
             <div className="md:col-span-7 order-2 md:order-1">
-              <p
-                className="text-rose text-xs font-semibold tracking-[0.35em] uppercase mb-8 animate-reveal"
-                style={{ animationDelay: "0.1s" }}
-              >
+              <p className="text-rose text-xs font-semibold tracking-[0.35em] uppercase mb-8">
                 Handmade with Love
               </p>
               <h1
-                className="leading-[0.85] mb-8 animate-reveal-up"
+                className="leading-[0.85] mb-8"
                 style={{
                   fontFamily: "var(--font-display)",
                   fontStyle: "italic",
                   fontWeight: 300,
                   fontSize: "clamp(4rem, 10vw, 9rem)",
                   color: "var(--color-espresso)",
-                  animationDelay: "0.2s",
                 }}
               >
                 Jam
                 <br />
                 <span className="text-rose">For Love</span>
               </h1>
-              <p
-                className="font-serif text-espresso-light text-xl md:text-2xl leading-relaxed mb-4 max-w-lg animate-reveal-up"
-                style={{ animationDelay: "0.4s" }}
-              >
+              <p className="font-serif text-espresso-light text-xl md:text-2xl leading-relaxed mb-4 max-w-lg">
                 嚴選當季新鮮水果，不添加人工色素與防腐劑。
               </p>
-              <p
-                className="text-espresso-light/60 leading-relaxed mb-10 max-w-md animate-reveal-up"
-                style={{ animationDelay: "0.5s" }}
-              >
+              <p className="text-espresso-light/60 leading-relaxed mb-10 max-w-md">
                 每一口，都是用愛熬出的幸福滋味。
               </p>
-              <div
-                className="animate-reveal-up"
-                style={{ animationDelay: "0.65s" }}
-              >
-                <Link href="/order" className="btn-primary text-base px-10 py-4">
-                  立即訂購
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    className="ml-1"
-                  >
-                    <path
-                      d="M3 8h10m0 0L9 4m4 4L9 12"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </Link>
-              </div>
+              <Link href="/order" className="btn-primary text-base px-10 py-4">
+                立即訂購
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="ml-1"
+                >
+                  <path
+                    d="M3 8h10m0 0L9 4m4 4L9 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
             </div>
 
-            {/* 右側 Logo + 愛心動畫 */}
+            {/* 右側 Logo */}
             <div className="md:col-span-5 order-1 md:order-2 flex justify-center md:justify-end">
-              <div
-                className="relative animate-reveal-scale"
-                style={{ animationDelay: "0.3s" }}
-              >
+              <div className="relative">
                 <div className="absolute -inset-6 bg-rose/[0.06] rounded-full blur-2xl" />
                 <Image
                   src="/logo.jpg"
@@ -95,8 +75,6 @@ export default async function HomePage() {
                   className="relative rounded-full shadow-2xl shadow-espresso/10 w-[200px] h-[200px] md:w-[300px] md:h-[300px] lg:w-[340px] lg:h-[340px]"
                   priority
                 />
-                {/* 愛心浮動動畫 */}
-                <HeroLottie />
               </div>
             </div>
           </div>
@@ -121,11 +99,6 @@ export default async function HomePage() {
 
       {/* ── 品牌故事 ─────────────────────── */}
       <section className="story-section text-white relative overflow-hidden">
-        {/* 裝飾性有機形狀 */}
-        <div className="absolute top-10 left-[8%] w-24 h-24 rounded-full bg-white/[0.04] animate-drift pointer-events-none" />
-        <div className="absolute bottom-16 right-[12%] w-36 h-36 rounded-full bg-white/[0.05] animate-drift-reverse pointer-events-none" />
-        <div className="absolute top-1/2 left-[3%] w-16 h-16 rounded-full bg-white/[0.03] animate-drift pointer-events-none hidden md:block" />
-
         {/* 引號裝飾 */}
         <div className="absolute top-12 md:top-16 left-1/2 -translate-x-1/2 pointer-events-none z-10 select-none">
           <span
@@ -138,28 +111,19 @@ export default async function HomePage() {
         </div>
 
         <div className="max-w-3xl mx-auto px-6 py-24 md:py-36 text-center relative z-10">
-          <ScrollReveal>
-            <HeroLottie variant="story" />
-            <h2
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4"
-              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300, textShadow: "0 2px 30px rgba(0,0,0,0.15)" }}
-            >
-              用愛製作，用心傳遞
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <div className="w-12 h-[1.5px] bg-white/40 mx-auto my-8" />
-          </ScrollReveal>
-          <ScrollReveal delay={0.2}>
-            <p className="text-white/75 text-lg md:text-xl leading-loose max-w-xl mx-auto font-serif">
-              我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
-            </p>
-          </ScrollReveal>
-          <ScrollReveal delay={0.3}>
-            <p className="text-white/55 text-base leading-loose max-w-lg mx-auto mt-4">
-              每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
-            </p>
-          </ScrollReveal>
+          <h2
+            className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4"
+            style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300, textShadow: "0 2px 30px rgba(0,0,0,0.15)" }}
+          >
+            用愛製作，用心傳遞
+          </h2>
+          <div className="w-12 h-[1.5px] bg-white/40 mx-auto my-8" />
+          <p className="text-white/75 text-lg md:text-xl leading-loose max-w-xl mx-auto font-serif">
+            我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
+          </p>
+          <p className="text-white/55 text-base leading-loose max-w-lg mx-auto mt-4">
+            每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
+          </p>
         </div>
       </section>
 
@@ -188,13 +152,11 @@ export default async function HomePage() {
               { icon: "🫙", text: "小量手工熬煮" },
               { icon: "🌿", text: "無人工添加物" },
               { icon: "💛", text: "用愛傳遞溫暖" },
-            ].map((item, i) => (
-              <ScrollReveal key={item.text} delay={i * 0.08} direction="scale">
-                <div className="feature-pill">
-                  <span className="pill-icon">{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
-              </ScrollReveal>
+            ].map((item) => (
+              <div key={item.text} className="feature-pill">
+                <span className="pill-icon">{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -204,7 +166,7 @@ export default async function HomePage() {
       <section className="max-w-6xl mx-auto px-6 pb-28 md:pb-36 pt-8">
         {/* 標題區：不對稱排版 */}
         <div className="mb-16 md:mb-20 md:flex md:items-end md:justify-between md:gap-8">
-          <ScrollReveal>
+          <div>
             <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
               Our Jams
             </p>
@@ -214,74 +176,66 @@ export default async function HomePage() {
             >
               我們的果醬
             </h2>
-            <div className="w-20 h-[2px] bg-rose mt-6 origin-left animate-underline-grow" />
-          </ScrollReveal>
-          <ScrollReveal delay={0.15} className="hidden md:block">
-            <p className="text-espresso-light/50 text-sm max-w-[16rem] leading-relaxed">
-              每一瓶都承載著對食材的尊重與對味覺的執著
-            </p>
-          </ScrollReveal>
+            <div className="w-20 h-[2px] bg-rose mt-6" />
+          </div>
+          <p className="text-espresso-light/50 text-sm max-w-[16rem] leading-relaxed hidden md:block">
+            每一瓶都承載著對食材的尊重與對味覺的執著
+          </p>
         </div>
 
         {allProducts.length === 0 ? (
           <div className="py-20 text-center">
-            <HeroLottie variant="cooking" />
-            <p className="text-espresso-light text-lg font-serif mt-4">
+            <p className="text-espresso-light text-lg font-serif">
               新口味正在熬煮中，敬請期待...
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {allProducts.map((product, i) => (
-              <ScrollReveal
+            {allProducts.map((product) => (
+              <Link
                 key={product.id}
-                delay={i * 0.12}
-                direction="up"
+                href={`/products/${product.id}`}
+                className="product-card group block"
               >
-                <Link
-                  href={`/products/${product.id}`}
-                  className="product-card group block"
-                >
-                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-4 bg-linen-dark">
-                    {product.imageUrl ? (
-                      <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                        🍓
-                      </div>
-                    )}
-                    {/* 漸層遮罩 */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-espresso/30 via-espresso/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    {/* 手工標籤 */}
-                    <div className="product-badge">手工製作</div>
-                  </div>
-                  <div className="px-1 pb-2">
-                    <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-300 line-clamp-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-espresso-light/50 text-sm mt-1.5 line-clamp-2 leading-relaxed">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center justify-between mt-4">
-                      <p
-                        className="text-rose font-semibold text-xl"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        NT$ {product.price}
-                      </p>
-                      <span className="text-espresso-light/30 text-xs font-medium tracking-wider uppercase group-hover:text-rose/60 transition-colors duration-300">
-                        查看詳情 →
-                      </span>
+                <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-4 bg-linen-dark">
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-6xl">
+                      🍓
                     </div>
+                  )}
+                  {/* 漸層遮罩 */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-espresso/30 via-espresso/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  {/* 手工標籤 */}
+                  <div className="product-badge">手工製作</div>
+                </div>
+                <div className="px-1 pb-2">
+                  <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-300 line-clamp-1">
+                    {product.name}
+                  </h3>
+                  <p className="text-espresso-light/50 text-sm mt-1.5 line-clamp-2 leading-relaxed">
+                    {product.description}
+                  </p>
+                  <div className="flex items-center justify-between mt-4">
+                    <p
+                      className="text-rose font-semibold text-xl"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      NT$ {product.price}
+                    </p>
+                    <span className="text-espresso-light/30 text-xs font-medium tracking-wider uppercase group-hover:text-rose/60 transition-colors duration-300">
+                      查看詳情 →
+                    </span>
                   </div>
-                </Link>
-              </ScrollReveal>
+                </div>
+              </Link>
             ))}
           </div>
         )}
