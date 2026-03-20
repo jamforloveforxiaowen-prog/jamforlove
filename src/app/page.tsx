@@ -106,34 +106,57 @@ export default async function HomePage() {
       {/* ── 有機波浪分隔 ──────────────────── */}
       <div className="w-full overflow-hidden leading-[0]">
         <svg
-          viewBox="0 0 1440 80"
+          viewBox="0 0 1440 120"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="w-full h-[40px] md:h-[60px]"
+          className="w-full h-[50px] md:h-[80px]"
         >
           <path
-            d="M0 40C240 10 480 70 720 40C960 10 1200 70 1440 40V80H0V40Z"
+            d="M0 60C180 20 360 90 540 50C720 10 900 80 1080 40C1260 0 1380 60 1440 40V120H0V60Z"
             fill="var(--color-rose)"
           />
         </svg>
       </div>
 
       {/* ── 品牌故事 ─────────────────────── */}
-      <section className="bg-rose text-white relative overflow-hidden">
-        <div className="max-w-3xl mx-auto px-6 py-20 md:py-28 text-center relative z-10">
+      <section className="story-section text-white relative overflow-hidden">
+        {/* 裝飾性有機形狀 */}
+        <div className="absolute top-10 left-[8%] w-24 h-24 rounded-full bg-white/[0.04] animate-drift pointer-events-none" />
+        <div className="absolute bottom-16 right-[12%] w-36 h-36 rounded-full bg-white/[0.05] animate-drift-reverse pointer-events-none" />
+        <div className="absolute top-1/2 left-[3%] w-16 h-16 rounded-full bg-white/[0.03] animate-drift pointer-events-none hidden md:block" />
+
+        {/* 引號裝飾 */}
+        <div className="absolute top-12 md:top-16 left-1/2 -translate-x-1/2 pointer-events-none z-10 select-none">
+          <span
+            className="text-white/[0.07] block leading-none"
+            style={{ fontFamily: "var(--font-display)", fontSize: "clamp(8rem, 20vw, 16rem)", fontStyle: "italic" }}
+            aria-hidden="true"
+          >
+            &ldquo;
+          </span>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-6 py-24 md:py-36 text-center relative z-10">
           <ScrollReveal>
             <HeroLottie variant="story" />
             <h2
-              className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-8"
-              style={{ textShadow: "0 2px 20px rgba(0,0,0,0.1)" }}
+              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300, textShadow: "0 2px 30px rgba(0,0,0,0.15)" }}
             >
               用愛製作，用心傳遞
             </h2>
           </ScrollReveal>
-          <ScrollReveal delay={0.15}>
-            <p className="text-white/80 text-lg leading-loose max-w-xl mx-auto">
+          <ScrollReveal delay={0.1}>
+            <div className="w-12 h-[1.5px] bg-white/40 mx-auto my-8" />
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <p className="text-white/75 text-lg md:text-xl leading-loose max-w-xl mx-auto font-serif">
               我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
+            </p>
+          </ScrollReveal>
+          <ScrollReveal delay={0.3}>
+            <p className="text-white/55 text-base leading-loose max-w-lg mx-auto mt-4">
               每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
             </p>
           </ScrollReveal>
@@ -143,30 +166,62 @@ export default async function HomePage() {
       {/* ── 波浪分隔（下） ────────────────── */}
       <div className="w-full overflow-hidden leading-[0]">
         <svg
-          viewBox="0 0 1440 80"
+          viewBox="0 0 1440 120"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          className="w-full h-[40px] md:h-[60px]"
+          className="w-full h-[50px] md:h-[80px]"
         >
           <path
-            d="M0 0H1440V40C1200 70 960 10 720 40C480 70 240 10 0 40V0Z"
+            d="M0 0H1440V60C1260 100 1080 20 900 60C720 100 540 30 360 70C180 110 60 30 0 60V0Z"
             fill="var(--color-rose)"
           />
         </svg>
       </div>
 
+      {/* ── 特色標籤 ───────────────────────── */}
+      <section className="py-16 md:py-20">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex flex-wrap justify-center gap-3 md:gap-4">
+            {[
+              { icon: "🍊", text: "當季新鮮水果" },
+              { icon: "🫙", text: "小量手工熬煮" },
+              { icon: "🌿", text: "無人工添加物" },
+              { icon: "💛", text: "用愛傳遞溫暖" },
+            ].map((item, i) => (
+              <ScrollReveal key={item.text} delay={i * 0.08} direction="scale">
+                <div className="feature-pill">
+                  <span className="pill-icon">{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 產品區 ───────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-        <ScrollReveal className="mb-14">
-          <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
-            Our Jams
-          </p>
-          <h2 className="font-serif text-4xl md:text-5xl font-bold text-espresso">
-            我們的果醬
-          </h2>
-          <div className="w-16 h-[2px] bg-rose mt-5 origin-left animate-underline-grow" />
-        </ScrollReveal>
+      <section className="max-w-6xl mx-auto px-6 pb-28 md:pb-36 pt-8">
+        {/* 標題區：不對稱排版 */}
+        <div className="mb-16 md:mb-20 md:flex md:items-end md:justify-between md:gap-8">
+          <ScrollReveal>
+            <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
+              Our Jams
+            </p>
+            <h2
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-espresso leading-[0.9]"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300 }}
+            >
+              我們的果醬
+            </h2>
+            <div className="w-20 h-[2px] bg-rose mt-6 origin-left animate-underline-grow" />
+          </ScrollReveal>
+          <ScrollReveal delay={0.15} className="hidden md:block">
+            <p className="text-espresso-light/50 text-sm max-w-[16rem] leading-relaxed">
+              每一瓶都承載著對食材的尊重與對味覺的執著
+            </p>
+          </ScrollReveal>
+        </div>
 
         {allProducts.length === 0 ? (
           <div className="py-20 text-center">
@@ -176,24 +231,24 @@ export default async function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {allProducts.map((product, i) => (
               <ScrollReveal
                 key={product.id}
-                delay={i * 0.1}
-                direction="scale"
+                delay={i * 0.12}
+                direction="up"
               >
                 <Link
                   href={`/products/${product.id}`}
-                  className="group block"
+                  className="product-card group block"
                 >
-                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-5 bg-linen-dark">
+                  <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-4 bg-linen-dark">
                     {product.imageUrl ? (
                       <Image
                         src={product.imageUrl}
                         alt={product.name}
                         fill
-                        className="object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+                        className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     ) : (
@@ -201,20 +256,30 @@ export default async function HomePage() {
                         🍓
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-espresso/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    {/* 漸層遮罩 */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-espresso/30 via-espresso/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    {/* 手工標籤 */}
+                    <div className="product-badge">手工製作</div>
                   </div>
-                  <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-200 line-clamp-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-espresso-light/60 text-sm mt-1.5 line-clamp-2 leading-relaxed">
-                    {product.description}
-                  </p>
-                  <p
-                    className="text-rose font-semibold mt-3 text-lg"
-                    style={{ fontFamily: "var(--font-display)" }}
-                  >
-                    NT$ {product.price}
-                  </p>
+                  <div className="px-1 pb-2">
+                    <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-300 line-clamp-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-espresso-light/50 text-sm mt-1.5 line-clamp-2 leading-relaxed">
+                      {product.description}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <p
+                        className="text-rose font-semibold text-xl"
+                        style={{ fontFamily: "var(--font-display)" }}
+                      >
+                        NT$ {product.price}
+                      </p>
+                      <span className="text-espresso-light/30 text-xs font-medium tracking-wider uppercase group-hover:text-rose/60 transition-colors duration-300">
+                        查看詳情 →
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               </ScrollReveal>
             ))}

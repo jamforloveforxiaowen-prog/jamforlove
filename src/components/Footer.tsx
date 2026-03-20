@@ -1,24 +1,29 @@
 import Image from "next/image";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export default function Footer() {
   return (
     <footer className="border-t border-linen-dark/60">
       {/* 關於我們 */}
       <div className="max-w-3xl mx-auto px-6 pt-14 pb-10 text-center">
-        <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
-          About Us
-        </p>
-        <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-5">
-          關於我們
-        </h2>
-        <p className="text-espresso-light text-base leading-relaxed font-serif">
-          「Jam for Love」是一個由國立暨南大學國際文教與比較教育系師/生所共同組成的募資團隊。成立之目的在於，希望集結眾人之關懷，協助不同NGO、NPO持續在其助人專業上努力。
-        </p>
+        <ScrollReveal>
+          <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
+            About Us
+          </p>
+          <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-5">
+            關於我們
+          </h2>
+        </ScrollReveal>
+        <ScrollReveal delay={0.1}>
+          <p className="text-espresso-light text-base leading-relaxed font-serif">
+            「Jam for Love」是一個由國立暨南大學國際文教與比較教育系師/生所共同組成的募資團隊。成立之目的在於，希望集結眾人之關懷，協助不同NGO、NPO持續在其助人專業上努力。
+          </p>
+        </ScrollReveal>
       </div>
 
       <div className="max-w-xs mx-auto h-px bg-gradient-to-r from-transparent via-linen-dark to-transparent" />
 
-      <div className="max-w-6xl mx-auto px-6 py-14 flex flex-col items-center gap-5">
+      <ScrollReveal className="max-w-6xl mx-auto px-6 py-14 flex flex-col items-center gap-5">
         <Image
           src="/logo.jpg"
           alt="Jam For Love"
@@ -36,7 +41,7 @@ export default function Footer() {
           href="https://www.facebook.com/groups/229394627478779/"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-300 shadow-sm"
+          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] hover:scale-110 transition-all duration-300 shadow-sm"
           aria-label="Facebook 社團"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -46,7 +51,7 @@ export default function Footer() {
         <p className="text-espresso-light/40 text-xs tracking-wide">
           用愛手工熬煮 &middot; {new Date().getFullYear()}
         </p>
-      </div>
+      </ScrollReveal>
     </footer>
   );
 }

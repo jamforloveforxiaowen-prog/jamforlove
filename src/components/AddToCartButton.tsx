@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/contexts/CartContext";
 
 interface Props {
@@ -26,16 +26,14 @@ export default function AddToCartButton({ product, className, size = "lg" }: Pro
     const btnSize = size === "sm" ? "w-8 h-8 text-sm" : "w-10 h-10 text-lg";
     const qtySize = size === "sm" ? "w-6 text-sm" : "w-8 text-base";
     return (
-      <div className={`flex items-center gap-1.5 ${className || ""}`}>
+      <div className={`flex items-center gap-1.5 animate-reveal-scale ${className || ""}`}>
         <button
           onClick={() => updateQuantity(product.id, inCart.quantity - 1)}
           className={`${btnSize} rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center`}
         >
           −
         </button>
-        <span className={`${qtySize} text-center font-semibold text-espresso tabular-nums`}>
-          {inCart.quantity}
-        </span>
+        <QuantityDisplay quantity={inCart.quantity} />
         <button
           onClick={() => updateQuantity(product.id, inCart.quantity + 1)}
           className={`${btnSize} rounded-md border border-linen-dark text-espresso-light hover:border-rose hover:text-rose active:scale-90 transition-all duration-150 flex items-center justify-center`}
@@ -55,7 +53,15 @@ export default function AddToCartButton({ product, className, size = "lg" }: Pro
       {added ? (
         <span className="inline-flex items-center gap-1.5">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M5 13l4 4L19 7"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="24"
+              className="animate-check-draw"
+            />
           </svg>
           已加入
         </span>
@@ -68,5 +74,30 @@ export default function AddToCartButton({ product, className, size = "lg" }: Pro
         </span>
       )}
     </button>
+  );
+}
+
+/** 數量顯示 — 變化時彈跳 */
+function QuantityDisplay({ quantity }: { quantity: number }) {
+  const [pop, setPop] = useState(false);
+  const prevQty = useRef(quantity);
+
+  useEffect(() => {
+    if (quantity !== prevQty.current) {
+      setPop(true);
+      const timer = setTimeout(() => setPop(false), 250);
+      prevQty.current = quantity;
+      return () => clearTimeout(timer);
+    }
+  }, [quantity]);
+
+  return (
+    <span
+      className={`w-8 text-center font-semibold text-espresso tabular-nums ${
+        pop ? "animate-number-pop" : ""
+      }`}
+    >
+      {quantity}
+    </span>
   );
 }

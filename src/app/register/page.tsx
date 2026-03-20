@@ -264,7 +264,7 @@ export default function RegisterPage() {
               </div>
             </div>
             {error && (
-              <p className="text-rose-light text-sm font-medium" role="alert">
+              <p className="text-rose-light text-sm font-medium animate-shake" role="alert">
                 {error}
               </p>
             )}
@@ -273,7 +273,12 @@ export default function RegisterPage() {
               disabled={loading}
               className="w-full py-4 bg-rose text-white font-semibold text-[0.9375rem] rounded-xl transition-all hover:bg-rose-dark hover:shadow-[0_4px_20px_rgba(196,80,106,0.4)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none mt-2"
             >
-              {loading ? "註冊中..." : "註冊"}
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
+                  註冊中...
+                </span>
+              ) : "註冊"}
             </button>
           </form>
 

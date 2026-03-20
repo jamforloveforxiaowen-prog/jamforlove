@@ -2,10 +2,38 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/contexts/CartContext";
 
 interface User { id: number; username: string; role: string; name: string }
+
+/** 購物車徽章 - 數量變化時彈跳 */
+function CartBadge({ count }: { count: number }) {
+  const [animate, setAnimate] = useState(false);
+  const prevCount = useRef(count);
+
+  useEffect(() => {
+    if (count !== prevCount.current && count > 0) {
+      setAnimate(true);
+      const timer = setTimeout(() => setAnimate(false), 400);
+      prevCount.current = count;
+      return () => clearTimeout(timer);
+    }
+    prevCount.current = count;
+  }, [count]);
+
+  if (count <= 0) return null;
+
+  return (
+    <span
+      className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none ${
+        animate ? "animate-pulse-badge" : ""
+      }`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 function Dot() {
   return (
@@ -222,11 +250,7 @@ export default function Navbar() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: "var(--color-espresso-light)" }}>
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {totalCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none">
-              {totalCount > 99 ? "99+" : totalCount}
-            </span>
-          )}
+          <CartBadge count={totalCount} />
         </Link>
       )}
 
@@ -246,18 +270,26 @@ export default function Navbar() {
           aria-live="polite"
         >
           <div className="space-y-0.5">
-            <Link href="/" onClick={close} className={mobileLinkClass("/")}>首頁</Link>
-            <Link href="/news" onClick={close} className={mobileLinkClass("/news")}>最新消息</Link>
-            <Link href="/story" onClick={close} className={mobileLinkClass("/story")}>果醬的故事</Link>
-            {user && (
-              <>
-                <Link href="/order" onClick={close} className={mobileLinkClass("/order")}>訂購</Link>
-                <Link href="/my-orders" onClick={close} className={mobileLinkClass("/my-orders")}>我的訂單</Link>
-                {user.role === "admin" && (
-                  <Link href="/admin" onClick={close} className={mobileLinkClass("/admin")}>後台管理</Link>
-                )}
-              </>
-            )}
+            {[
+              { href: "/", label: "首頁" },
+              { href: "/news", label: "最新消息" },
+              { href: "/story", label: "果醬的故事" },
+              ...(user ? [
+                { href: "/order", label: "訂購" },
+                { href: "/my-orders", label: "我的訂單" },
+                ...(user.role === "admin" ? [{ href: "/admin", label: "後台管理" }] : []),
+              ] : []),
+            ].map((link, i) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={close}
+                className={`${mobileLinkClass(link.href)} animate-reveal-up`}
+                style={{ animationDelay: `${0.05 + i * 0.04}s` }}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
           <div className="my-3" style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--color-linen-dark), transparent)" }} />
           {user ? (

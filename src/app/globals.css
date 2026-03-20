@@ -24,6 +24,13 @@
   --animate-slide-down: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-float: float 4s ease-in-out infinite;
   --animate-spin-slow: spin-slow 12s linear infinite;
+  --animate-reveal-left: reveal-left 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-reveal-right: reveal-right 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pulse-badge: pulse-badge 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shake: shake 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-check-draw: check-draw 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  --animate-number-pop: number-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-underline-grow: underline-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── 基礎 ───────────────────────────── */
@@ -206,6 +213,103 @@ h1, h2, h3, h4 {
   height: 100%;
 }
 
+/* ── 品牌故事紋理 ─────────────────────── */
+
+.story-section {
+  position: relative;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+    var(--color-rose);
+}
+
+.story-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 產品卡片 ─────────────────────────── */
+
+.product-card {
+  position: relative;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: white;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(30, 15, 8, 0.04);
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow:
+    0 20px 40px rgba(30, 15, 8, 0.08),
+    0 8px 16px rgba(196, 80, 106, 0.06);
+}
+
+.product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  border: 1.5px solid transparent;
+  transition: border-color 0.4s ease;
+  pointer-events: none;
+}
+
+.product-card:hover::after {
+  border-color: var(--color-rose-light);
+}
+
+/* 產品卡片裝飾角標 */
+.product-badge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 10;
+  background: var(--color-linen);
+  color: var(--color-rose);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.375rem 0.75rem;
+  border-radius: 2rem;
+  box-shadow: 0 2px 8px rgba(30, 15, 8, 0.1);
+  transform: rotate(2deg);
+}
+
+/* ── 特色標籤列 ────────────────────────── */
+
+.feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 3rem;
+  border: 1.5px solid var(--color-linen-dark);
+  background: white;
+  color: var(--color-espresso);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-pill:hover {
+  border-color: var(--color-rose-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(196, 80, 106, 0.08);
+}
+
+.feature-pill .pill-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 /* ── Keyframes ────────────────────────── */
 
 @keyframes reveal {
@@ -266,6 +370,143 @@ h1, h2, h3, h4 {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ── 滾動觸發動畫 ─────────────────────── */
+
+@keyframes reveal-left {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-right {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-badge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes number-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes underline-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes drift {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(6px, -10px) rotate(3deg);
+  }
+  50% {
+    transform: translate(-4px, -16px) rotate(-2deg);
+  }
+  75% {
+    transform: translate(8px, -6px) rotate(4deg);
+  }
+}
+
+@keyframes drift-reverse {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-8px, -6px) rotate(-3deg);
+  }
+  50% {
+    transform: translate(5px, -14px) rotate(2deg);
+  }
+  75% {
+    transform: translate(-6px, -10px) rotate(-4deg);
+  }
+}
+
+.animate-drift {
+  animation: drift 8s ease-in-out infinite;
+}
+
+.animate-drift-reverse {
+  animation: drift-reverse 10s ease-in-out infinite;
+}
+
+/* 滾動觸發：元素初始隱藏，進入視窗後播放 */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-32px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(32px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.is-visible,
+.scroll-reveal-left.is-visible,
+.scroll-reveal-right.is-visible,
+.scroll-reveal-scale.is-visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
 }
 
 /* ── 無障礙 ──────────────────────────── */
