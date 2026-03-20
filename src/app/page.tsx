@@ -120,9 +120,10 @@ export default async function HomePage() {
       </div>
 
       {/* ── 品牌故事 ─────────────────────── */}
-      <section className="bg-rose text-white">
-        <div className="max-w-3xl mx-auto px-6 py-20 md:py-28 text-center">
+      <section className="bg-rose text-white relative overflow-hidden">
+        <div className="max-w-3xl mx-auto px-6 py-20 md:py-28 text-center relative z-10">
           <ScrollReveal>
+            <HeroLottie variant="story" />
             <h2
               className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-8"
               style={{ textShadow: "0 2px 20px rgba(0,0,0,0.1)" }}

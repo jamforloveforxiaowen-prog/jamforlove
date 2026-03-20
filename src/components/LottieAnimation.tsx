@@ -44,6 +44,10 @@ export default function LottieAnimation({
 export const LOTTIE_URLS = {
   // 愛心浮動
   heart: "https://lottie.host/44d7aec3-1543-41ba-9aab-9be84f743d0a/xZ0BeBJt3o.lottie",
+  // 愛心跳動
+  heartBeat: "https://lottie.host/64e5ead9-ca1d-4e85-bc64-fd2f609d4d91/GiwKcXIA3R.json",
+  // 水果辨識
+  fruits: "https://lottie.host/65d3104d-9ea2-4805-9239-b86bfff910b5/43MfWr51fn.json",
   // 空購物車
   emptyCart: "https://lottie.host/c5d29225-0c4f-429b-b46b-090acd216979/iVHIeB5YWH.lottie",
   // 下單成功
