@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>動態島方案預覽 — Jam For Love</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;1,300&family=Noto+Serif+TC:wght@400;600&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-linen: #f8f3eb;
+    --color-linen-dark: #ebe2d4;
+    --color-espresso: #1e0f08;
+    --color-espresso-light: #5c3d2e;
+    --color-rose: #c4506a;
+    --color-rose-light: #d87a90;
+    --color-rose-dark: #a03050;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--color-linen);
+    color: var(--color-espresso);
+  }
+
+  /* ── 共用 ── */
+  .section-label {
+    text-align: center;
+    padding: 32px 16px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-rose);
+    letter-spacing: 0.05em;
+  }
+  .section-desc {
+    text-align: center;
+    padding: 8px 16px 24px;
+    font-size: 0.85rem;
+    color: var(--color-espresso-light);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-linen-dark), transparent);
+    margin: 0 48px;
+  }
+
+  /* ── 方案容器 ── */
+  .preview-frame {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto 48px;
+    height: 520px;
+    background: var(--color-linen);
+    border-radius: 16px;
+    border: 1px solid var(--color-linen-dark);
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(30,15,8,0.06);
+  }
+
+  /* ── 導覽列膠囊 ── */
+  .navbar-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px;
+    height: 40px;
+    border-radius: 9999px;
+    background: rgba(248,243,235,0.92);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid rgba(235,226,212,0.8);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .navbar-pill a {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    text-decoration: none;
+    color: var(--color-espresso-light);
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .navbar-pill a:hover { color: var(--color-rose); background: rgba(196,80,106,0.1); }
+  .navbar-pill a.active { color: white; background: var(--color-rose); font-weight: 600; box-shadow: 0 3px 12px rgba(196,80,106,0.25); }
+  .navbar-pill .dot {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--color-espresso-light); opacity: 0.25;
+  }
+
+  /* ── 動態島 ── */
+  .dynamic-island {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    height: 40px;
+    border-radius: 9999px;
+    background: rgba(30,15,8,0.88);
+    backdrop-filter: blur(16px);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(30,15,8,0.15);
+  }
+  .dynamic-island:hover {
+    background: rgba(30,15,8,0.95);
+    box-shadow: 0 6px 28px rgba(30,15,8,0.2);
+    transform: translateY(-1px);
+  }
+  .dynamic-island .bell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-rose);
+    font-size: 0.65rem;
+  }
+  .dynamic-island .arrow {
+    opacity: 0.5;
+    font-size: 0.75rem;
+    margin-left: 4px;
+  }
+
+  /* ── 動態島 - 亮色版 (方案C用) ── */
+  .dynamic-island-light {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px;
+    height: 36px;
+    border-radius: 9999px;
+    background: rgba(30,15,8,0.88);
+    backdrop-filter: blur(16px);
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(30,15,8,0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .dynamic-island-light:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(30,15,8,0.18);
+  }
+  .dynamic-island-light .bell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-rose);
+    font-size: 0.6rem;
+  }
+  .dynamic-island-light .arrow {
+    opacity: 0.5;
+    font-size: 0.7rem;
+  }
+
+  /* ── Hero 內容 ── */
+  .hero-content {
+    position: absolute;
+    bottom: 60px;
+    left: 48px;
+    right: 48px;
+  }
+  .hero-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hero-text .tagline {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--color-rose);
+    margin-bottom: 16px;
+  }
+  .hero-text h1 {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 5.5rem;
+    line-height: 0.85;
+    color: var(--color-espresso);
+    margin-bottom: 20px;
+  }
+  .hero-text h1 .rose { color: var(--color-rose); }
+  .hero-text .subtitle {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    color: var(--color-espresso-light);
+    margin-bottom: 6px;
+    line-height: 1.6;
+  }
+  .hero-text .subtitle2 {
+    font-size: 0.85rem;
+    color: rgba(92,61,46,0.6);
+    margin-bottom: 28px;
+  }
+  .hero-text .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 32px;
+    background: var(--color-rose);
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(196,80,106,0.3);
+    transition: all 0.2s;
+  }
+  .hero-text .cta:hover {
+    background: var(--color-rose-dark);
+    transform: translateY(-1px);
+  }
+  .hero-logo {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-rose-light), var(--color-rose));
+    box-shadow: 0 20px 60px rgba(196,80,106,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 2rem;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .hero-logo::before {
+    content: '';
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    background: rgba(196,80,106,0.06);
+    filter: blur(20px);
+  }
+
+  /* ── 輪播動畫 ── */
+  @keyframes slideUp {
+    0%, 30% { transform: translateY(0); opacity: 1; }
+    35%, 40% { transform: translateY(-100%); opacity: 0; }
+    45%, 100% { transform: translateY(100%); opacity: 0; }
+  }
+  .carousel-container {
+    overflow: hidden;
+    height: 1.2em;
+    position: relative;
+  }
+  .carousel-item {
+    position: absolute;
+    width: 100%;
+    animation: slideUp 9s infinite;
+  }
+  .carousel-item:nth-child(2) { animation-delay: 3s; }
+  .carousel-item:nth-child(3) { animation-delay: 6s; }
+
+  /* ── 方案 A ── */
+  .plan-a .top-bar {
+    position: absolute;
+    top: 12px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 10;
+  }
+
+  /* ── 方案 B ── */
+  .plan-b .top-bar {
+    position: absolute;
+    top: 12px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+  }
+  .plan-b .nav-row {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  /* ── 方案 C ── */
+  .plan-c .top-bar {
+    position: absolute;
+    top: 12px;
+    right: 24px;
+    z-index: 10;
+  }
+  .plan-c .hero-content {
+    bottom: 50px;
+  }
+  .plan-c .island-inline {
+    margin-bottom: 20px;
+  }
+
+  /* ── Tab 切換 ── */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 16px 8px;
+    position: sticky;
+    top: 0;
+    background: var(--color-linen);
+    z-index: 100;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-linen-dark);
+    background: white;
+    color: var(--color-espresso-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { border-color: var(--color-rose-light); color: var(--color-rose); }
+  .tab-btn.active {
+    background: var(--color-espresso);
+    color: white;
+    border-color: var(--color-espresso);
+  }
+  .plan-section { display: none; }
+  .plan-section.active { display: block; }
+
+  /* ── 標註 ── */
+  .annotation {
+    position: absolute;
+    font-size: 0.7rem;
+    color: var(--color-rose);
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .annotation::before {
+    content: '';
+    position: absolute;
+    border: 1px dashed var(--color-rose-light);
+  }
+</style>
+</head>
+<body>
+
+<div style="text-align:center; padding: 32px 16px 0;">
+  <h2 style="font-family:'Cormorant',serif; font-style:italic; font-weight:300; font-size:2.5rem; color:var(--color-espresso);">
+    Dynamic Island 方案預覽
+  </h2>
+  <p style="color:var(--color-espresso-light); font-size:0.85rem; margin-top:8px;">
+    點擊下方標籤切換三種方案
+  </p>
+</div>
+
+<!-- Tab 切換 -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('a')">A. 左右對稱</button>
+  <button class="tab-btn" onclick="switchTab('b')">B. 上方獨立行</button>
+  <button class="tab-btn" onclick="switchTab('c')">C. Hero 內嵌</button>
+</div>
+
+<!-- ════════ 方案 A ════════ -->
+<div id="plan-a" class="plan-section active">
+  <p class="section-label">方案 A — 左右對稱</p>
+  <p class="section-desc">動態島在左側，導覽列在右側，同一行浮動。視覺語言統一，像是導覽列的鏡像。</p>
+  <div class="preview-frame plan-a">
+    <div class="top-bar">
+      <a href="#" class="dynamic-island" style="text-decoration:none;">
+        <span class="bell">🔔</span>
+        <span class="carousel-container">
+          <span class="carousel-item">草莓季限定果醬熱烈預購中！</span>
+          <span class="carousel-item">新口味「百香芒果」即將上市</span>
+          <span class="carousel-item">母親節禮盒開放訂購 💝</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+      <div class="navbar-pill">
+        <a href="#" class="active">首頁</a>
+        <span class="dot"></span>
+        <a href="#">最新消息</a>
+        <a href="#">果醬的故事</a>
+        <span class="dot"></span>
+        <a href="#">登入</a>
+        <a href="#">註冊</a>
+      </div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-grid">
+        <div class="hero-text">
+          <p class="tagline">Handmade with Love</p>
+          <h1>Jam<br><span class="rose">For Love</span></h1>
+          <p class="subtitle">嚴選當季新鮮水果，不添加人工色素與防腐劑。</p>
+          <p class="subtitle2">每一口，都是用愛熬出的幸福滋味。</p>
+          <a href="#" class="cta">立即訂購 →</a>
+        </div>
+        <div class="hero-logo">Logo</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 方案 B ════════ -->
+<div id="plan-b" class="plan-section">
+  <p class="section-label">方案 B — 上方獨立行</p>
+  <p class="section-desc">動態島在最頂端置中，導覽列下移至第二行。層次分明，動態島更醒目。</p>
+  <div class="preview-frame plan-b">
+    <div class="top-bar">
+      <a href="#" class="dynamic-island" style="text-decoration:none;">
+        <span class="bell">🔔</span>
+        <span class="carousel-container">
+          <span class="carousel-item">草莓季限定果醬熱烈預購中！</span>
+          <span class="carousel-item">新口味「百香芒果」即將上市</span>
+          <span class="carousel-item">母親節禮盒開放訂購 💝</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+      <div class="nav-row">
+        <div class="navbar-pill">
+          <a href="#" class="active">首頁</a>
+          <span class="dot"></span>
+          <a href="#">最新消息</a>
+          <a href="#">果醬的故事</a>
+          <span class="dot"></span>
+          <a href="#">登入</a>
+          <a href="#">註冊</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-content" style="bottom:40px;">
+      <div class="hero-grid">
+        <div class="hero-text">
+          <p class="tagline">Handmade with Love</p>
+          <h1>Jam<br><span class="rose">For Love</span></h1>
+          <p class="subtitle">嚴選當季新鮮水果，不添加人工色素與防腐劑。</p>
+          <p class="subtitle2">每一口，都是用愛熬出的幸福滋味。</p>
+          <a href="#" class="cta">立即訂購 →</a>
+        </div>
+        <div class="hero-logo">Logo</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 方案 C ════════ -->
+<div id="plan-c" class="plan-section">
+  <p class="section-label">方案 C — Hero 內嵌</p>
+  <p class="section-desc">導覽列不動，動態島嵌在 Hero 文字區的最上方，作為內容的一部分。最簡潔，不影響現有導覽。</p>
+  <div class="preview-frame plan-c">
+    <div class="top-bar">
+      <div class="navbar-pill">
+        <a href="#" class="active">首頁</a>
+        <span class="dot"></span>
+        <a href="#">最新消息</a>
+        <a href="#">果醬的故事</a>
+        <span class="dot"></span>
+        <a href="#">登入</a>
+        <a href="#">註冊</a>
+      </div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-grid">
+        <div class="hero-text">
+          <div class="island-inline">
+            <a href="#" class="dynamic-island-light" style="text-decoration:none;">
+              <span class="bell">🔔</span>
+              <span class="carousel-container">
+                <span class="carousel-item">草莓季限定果醬熱烈預購中！</span>
+                <span class="carousel-item">新口味「百香芒果」即將上市</span>
+                <span class="carousel-item">母親節禮盒開放訂購 💝</span>
+              </span>
+              <span class="arrow">→</span>
+            </a>
+          </div>
+          <p class="tagline">Handmade with Love</p>
+          <h1>Jam<br><span class="rose">For Love</span></h1>
+          <p class="subtitle">嚴選當季新鮮水果，不添加人工色素與防腐劑。</p>
+          <p class="subtitle2">每一口，都是用愛熬出的幸福滋味。</p>
+          <a href="#" class="cta">立即訂購 →</a>
+        </div>
+        <div class="hero-logo">Logo</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center; padding: 24px 16px 48px; font-size: 0.75rem; color: var(--color-espresso-light); opacity: 0.5;">
+  預覽僅供參考，實際效果以開發版本為準
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.plan-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('plan-' + id).classList.add('active');
+  document.querySelectorAll('.tab-btn')[{a:0,b:1,c:2}[id]].classList.add('active');
+}
+</script>
+</body>
+</html>
