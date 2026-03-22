@@ -121,23 +121,25 @@ export default function Navbar() {
         style={{
           width: "fit-content",
           borderRadius: 9999,
-          background: "rgba(248,243,235,0.92)",
-          backdropFilter: "blur(16px) saturate(1.4)",
-          WebkitBackdropFilter: "blur(16px) saturate(1.4)",
-          border: "1px solid rgba(235,226,212,0.8)",
-          boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.03)",
-          padding: "0 14px",
+          ...(isAuthPage ? {} : {
+            background: "rgba(248,243,235,0.92)",
+            backdropFilter: "blur(16px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
+            border: "1px solid rgba(235,226,212,0.8)",
+            boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.03)",
+            padding: "0 14px",
+          }),
         }}
       >
         <div className="h-[40px] flex items-center justify-center">
           {/* 手機版 auth 頁面：顯示首頁連結 */}
           {isAuthPage && (
-            <Link href="/" className={`md:hidden ${navLinkClass("/")}`}>首頁</Link>
+            <Link href="/" className={`md:hidden ${navLinkClass("/", true)}`} style={activeCTAStyle}>首頁</Link>
           )}
           {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
-              <Link href="/" className={navLinkClass("/")}>首頁</Link>
+              <Link href="/" className={navLinkClass("/", true)} style={activeCTAStyle}>首頁</Link>
             ) : (
               <>
                 <Link
