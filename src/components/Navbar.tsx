@@ -132,12 +132,12 @@ export default function Navbar() {
         <div className="h-[40px] flex items-center justify-center">
           {/* 手機版 auth 頁面：顯示首頁連結 */}
           {isAuthPage && (
-            <Link href="/" className={`md:hidden ${navLinkClass("/", true)}`} style={activeCTAStyle}>首頁</Link>
+            <Link href="/" className={`md:hidden ${navLinkClass("/")}`}>首頁</Link>
           )}
           {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
-              <Link href="/" className={navLinkClass("/", true)} style={activeCTAStyle}>首頁</Link>
+              <Link href="/" className={navLinkClass("/")}>首頁</Link>
             ) : (
               <>
                 <Link
