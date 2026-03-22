@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/contexts/CartContext";
+import DynamicIsland from "./DynamicIsland";
 
 interface User { id: number; username: string; role: string; name: string }
 
@@ -110,7 +111,12 @@ export default function Navbar() {
   const close = () => setMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-end items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
+      {/* 左側：動態島 */}
+      <DynamicIsland />
+
+      {/* 右側：導覽列 + 購物車 */}
+      <div className="flex items-start gap-2">
       <div
         className="pointer-events-auto transition-all duration-500 ease-out"
         style={{
@@ -309,6 +315,7 @@ export default function Navbar() {
           )}
         </div>
       )}
+      </div>
     </nav>
   );
 }
