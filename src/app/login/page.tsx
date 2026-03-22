@@ -42,113 +42,63 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="min-h-[calc(100vh-3.5rem)] relative overflow-hidden flex"
-      style={{
-        background:
-          "linear-gradient(135deg, var(--color-linen) 0%, var(--color-parchment) 30%, var(--color-rose-light) 60%, var(--color-rose) 100%)",
-      }}
-    >
-      {/* 全螢幕漸層光球裝飾 — 散佈整個背景 */}
+    <div className="min-h-[calc(100vh-3.5rem)] flex">
+      {/* 左側品牌區 — 桌面版 */}
       <div
-        className="absolute rounded-full opacity-40"
-        style={{
-          width: 500,
-          height: 500,
-          background: "var(--color-rose)",
-          filter: "blur(120px)",
-          top: "-12%",
-          left: "-8%",
-        }}
-      />
-      <div
-        className="absolute rounded-full opacity-25"
-        style={{
-          width: 350,
-          height: 350,
-          background: "var(--color-honey)",
-          filter: "blur(90px)",
-          top: "15%",
-          right: "5%",
-        }}
-      />
-      <div
-        className="absolute rounded-full opacity-25"
-        style={{
-          width: 400,
-          height: 400,
-          background: "var(--color-sage)",
-          filter: "blur(100px)",
-          bottom: "-5%",
-          left: "20%",
-        }}
-      />
-      <div
-        className="absolute rounded-full opacity-20"
-        style={{
-          width: 300,
-          height: 300,
-          background: "var(--color-rose-dark)",
-          filter: "blur(80px)",
-          bottom: "10%",
-          right: "-5%",
-        }}
-      />
-      <div
-        className="absolute rounded-full opacity-15"
-        style={{
-          width: 200,
-          height: 200,
-          background: "var(--color-linen)",
-          filter: "blur(60px)",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      />
+        className="hidden lg:flex lg:w-[45%] relative overflow-hidden items-end"
+        style={{ background: "var(--color-rose)" }}
+      >
+        {/* 紋理疊加 */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`,
+            backgroundSize: "200px 200px",
+          }}
+        />
 
-      {/* 左側品牌宣言 — 桌面版，垂直水平置中 */}
-      <div className="hidden lg:flex lg:w-[48%] items-center justify-center relative z-10">
-        <div className="animate-reveal-up text-center px-12 xl:px-16 max-w-lg">
-          {/* 大文案 */}
-          <h2
-            className="font-serif text-espresso leading-[1.15] mb-6"
-            style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
+        {/* 底部品牌內容 */}
+        <div
+          className="relative z-10 px-12 xl:px-16 pb-16 w-full auth-stagger"
+        >
+          <p
+            className="text-white/50 text-[0.6875rem] font-semibold tracking-[0.3em] uppercase mb-4 auth-stagger-item"
           >
-            用<span className="text-rose-dark">愛</span>手工熬煮
-            <br />
-            每一瓶果醬
-          </h2>
-          <p className="text-espresso-light/60 text-base leading-relaxed max-w-sm mx-auto mb-10">
-            嚴選當季新鮮水果，不加人工色素與防腐劑，每一口都是自然的甜蜜。
+            Handmade with Love
           </p>
-
-          {/* 版權 */}
-          <p className="text-espresso-light/30 text-xs">
-            &copy; 2025 Jam For Love
+          <h2
+            className="text-white leading-[1.05] mb-6 auth-stagger-item"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontStyle: "italic",
+              fontWeight: 300,
+              fontSize: "clamp(3rem, 5vw, 4.5rem)",
+            }}
+          >
+            Jam
+            <br />
+            For Love
+          </h2>
+          <div
+            className="w-12 h-[2px] mb-6 auth-stagger-item"
+            style={{ background: "rgba(255,255,255,0.3)" }}
+          />
+          <p className="text-white/60 text-[0.9375rem] leading-relaxed max-w-xs auth-stagger-item">
+            嚴選當季新鮮水果，不加人工色素與防腐劑，每一口都是自然的甜蜜。
           </p>
         </div>
       </div>
 
-      {/* 右側（或居中）登入表單 — 毛玻璃卡片 */}
-      <div className="flex-1 flex items-center justify-center px-6 py-16 relative z-10">
-        <div
-          className="w-full max-w-sm animate-reveal-up"
-          style={{
-            background: "rgba(255, 255, 255, 0.55)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(255, 255, 255, 0.45)",
-            borderRadius: "1.5rem",
-            boxShadow:
-              "0 8px 48px rgba(30, 15, 8, 0.08), inset 0 1px 0 rgba(255,255,255,0.5)",
-            padding: "2.5rem 2.25rem",
-          }}
-        >
-          {/* 手機版 Logo */}
-          <div className="lg:hidden text-center mb-6">
+      {/* 右側登入表單 */}
+      <div
+        className="flex-1 flex items-center justify-center px-6 py-16"
+        style={{ background: "var(--color-linen)" }}
+      >
+        <div className="w-full max-w-sm auth-stagger">
+          {/* 手機版品牌 */}
+          <div className="lg:hidden mb-10 auth-stagger-item">
             <span
-              className="text-rose text-2xl"
+              className="text-rose text-xl"
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 300,
@@ -157,86 +107,92 @@ export default function LoginPage() {
             >
               Jam For Love
             </span>
-            <p className="text-espresso-light/40 text-[0.6875rem] tracking-[0.2em] uppercase mt-1">
-              Handmade with Love
-            </p>
           </div>
 
-          {/* 標題區 */}
-          <div className="mb-8">
-            <p className="text-rose text-[0.6875rem] font-semibold tracking-[0.2em] uppercase mb-2">
-              帳號登入
-            </p>
-            <h1 className="font-serif text-2xl font-bold text-espresso mb-1.5">
+          {/* 標題 */}
+          <div className="mb-10 auth-stagger-item">
+            <h1
+              className="font-serif text-espresso mb-2"
+              style={{ fontSize: "clamp(1.75rem, 3vw, 2.25rem)" }}
+            >
               歡迎回來
             </h1>
-            <p className="text-espresso-light/50 text-[0.8125rem]">
+            <p className="text-espresso-light/50 text-[0.875rem]">
               登入以查看訂單或訂購果醬
             </p>
           </div>
 
           {/* 表單 */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label
-                htmlFor="login-username"
-                className="block text-sm font-medium text-espresso mb-2"
-              >
-                帳號
-              </label>
-              <input
-                id="login-username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="login-password"
-                className="block text-sm font-medium text-espresso mb-2"
-              >
-                密碼
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]"
-                required
-              />
-              <div className="mt-2 text-right">
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-espresso-light/40 hover:text-rose transition-colors"
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-5">
+              <div className="auth-stagger-item">
+                <label
+                  htmlFor="login-username"
+                  className="block text-[0.8125rem] font-medium text-espresso-light mb-2"
                 >
-                  忘記密碼？
-                </Link>
+                  帳號
+                </label>
+                <input
+                  id="login-username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full border-b-[1.5px] border-linen-dark bg-transparent px-0 py-3 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/25 focus:border-rose"
+                  required
+                />
+              </div>
+              <div className="auth-stagger-item">
+                <label
+                  htmlFor="login-password"
+                  className="block text-[0.8125rem] font-medium text-espresso-light mb-2"
+                >
+                  密碼
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border-b-[1.5px] border-linen-dark bg-transparent px-0 py-3 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/25 focus:border-rose"
+                  required
+                />
+                <div className="mt-2.5 text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-[0.75rem] text-espresso-light/35 hover:text-rose transition-colors"
+                  >
+                    忘記密碼？
+                  </Link>
+                </div>
               </div>
             </div>
+
             {error && (
-              <p className="text-rose text-sm font-medium animate-shake" role="alert">
+              <p className="text-rose text-sm font-medium mt-4 animate-shake" role="alert">
                 {error}
               </p>
             )}
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-rose text-white font-semibold text-[0.9375rem] rounded-xl transition-all hover:bg-rose-dark hover:shadow-[0_4px_20px_rgba(196,80,106,0.3)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
+              className="auth-stagger-item w-full mt-8 py-3.5 bg-espresso text-linen font-semibold text-[0.9375rem] rounded-lg transition-all hover:bg-espresso-light active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
+                  <span
+                    className="w-4 h-4 border-2 border-linen/30 border-t-linen rounded-full animate-spin"
+                    style={{ animationDuration: "0.8s" }}
+                  />
                   登入中...
                 </span>
-              ) : "登入"}
+              ) : (
+                "登入"
+              )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-espresso-light/50 mt-7">
+          <p className="text-[0.8125rem] text-espresso-light/40 mt-8 auth-stagger-item">
             還沒有帳號？{" "}
             <Link
               href="/register"
