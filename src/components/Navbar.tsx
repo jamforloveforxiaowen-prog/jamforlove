@@ -94,8 +94,8 @@ export default function Navbar() {
     return `${base} text-espresso-light hover:text-rose hover:bg-rose/10 active:text-rose-dark font-medium`;
   }
 
-  // 首頁填色膠囊的 inline style — 玫瑰色
-  const homeCTAStyle = {
+  // 當前頁面填色膠囊的 inline style — 玫瑰色
+  const activeCTAStyle = {
     background: "var(--color-rose)",
     color: "white",
     border: "none",
@@ -132,31 +132,51 @@ export default function Navbar() {
         <div className="h-[40px] flex items-center justify-center">
           {/* 手機版 auth 頁面：顯示首頁連結 */}
           {isAuthPage && (
-            <Link href="/" className={`md:hidden ${navLinkClass("/", true)}`} style={homeCTAStyle}>首頁</Link>
+            <Link href="/" className={`md:hidden ${navLinkClass("/", true)}`} style={activeCTAStyle}>首頁</Link>
           )}
           {/* 導航連結 */}
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
-              <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
+              <Link href="/" className={navLinkClass("/", true)} style={activeCTAStyle}>首頁</Link>
             ) : (
               <>
-                {user ? (
-                  <Link href="/" className={navLinkClass("/")}>首頁</Link>
-                ) : (
-                  <Link href="/" className={navLinkClass("/", true)} style={homeCTAStyle}>首頁</Link>
-                )}
+                <Link
+                  href="/"
+                  className={navLinkClass("/", isActive("/"))}
+                  style={isActive("/") ? activeCTAStyle : undefined}
+                >首頁</Link>
                 <Dot />
-                <Link href="/news" className={navLinkClass("/news")}>最新消息</Link>
-                <Link href="/story" className={navLinkClass("/story")}>果醬的故事</Link>
+                <Link
+                  href="/news"
+                  className={navLinkClass("/news", isActive("/news"))}
+                  style={isActive("/news") ? activeCTAStyle : undefined}
+                >最新消息</Link>
+                <Link
+                  href="/story"
+                  className={navLinkClass("/story", isActive("/story"))}
+                  style={isActive("/story") ? activeCTAStyle : undefined}
+                >果醬的故事</Link>
                 {user && (
                   <>
                     <Dot />
-                    <Link href="/order" className={navLinkClass("/order")}>訂購</Link>
-                    <Link href="/my-orders" className={navLinkClass("/my-orders")}>我的訂單</Link>
+                    <Link
+                      href="/order"
+                      className={navLinkClass("/order", isActive("/order"))}
+                      style={isActive("/order") ? activeCTAStyle : undefined}
+                    >訂購</Link>
+                    <Link
+                      href="/my-orders"
+                      className={navLinkClass("/my-orders", isActive("/my-orders"))}
+                      style={isActive("/my-orders") ? activeCTAStyle : undefined}
+                    >我的訂單</Link>
                     {user.role === "admin" && (
                       <>
                         <Dot />
-                        <Link href="/admin" className={navLinkClass("/admin")}>後台管理</Link>
+                        <Link
+                          href="/admin"
+                          className={navLinkClass("/admin", isActive("/admin"))}
+                          style={isActive("/admin") ? activeCTAStyle : undefined}
+                        >後台管理</Link>
                       </>
                     )}
                   </>
