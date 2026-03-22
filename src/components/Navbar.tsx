@@ -111,14 +111,13 @@ export default function Navbar() {
   const close = () => setMenuOpen(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
       {/* 左側：動態島 */}
       <DynamicIsland />
 
-      {/* 右側：導覽列 + 購物車 */}
-      <div className="flex items-start gap-2">
+      {/* 右側：導覽列（ml-auto 確保永遠靠右）*/}
       <div
-        className="pointer-events-auto transition-all duration-500 ease-out"
+        className="pointer-events-auto ml-auto transition-all duration-500 ease-out"
         style={{
           width: "fit-content",
           borderRadius: 9999,
@@ -315,7 +314,6 @@ export default function Navbar() {
           )}
         </div>
       )}
-      </div>
     </nav>
   );
 }
