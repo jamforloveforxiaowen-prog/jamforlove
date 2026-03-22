@@ -147,11 +147,6 @@ export default function Navbar() {
                 >首頁</Link>
                 <Dot />
                 <Link
-                  href="/news"
-                  className={navLinkClass("/news", isActive("/news"))}
-                  style={isActive("/news") ? activeCTAStyle : undefined}
-                >最新消息</Link>
-                <Link
                   href="/story"
                   className={navLinkClass("/story", isActive("/story"))}
                   style={isActive("/story") ? activeCTAStyle : undefined}
@@ -297,7 +292,6 @@ export default function Navbar() {
           <div className="space-y-0.5">
             {[
               { href: "/", label: "首頁" },
-              { href: "/news", label: "最新消息" },
               { href: "/story", label: "果醬的故事" },
               ...(user ? [
                 { href: "/order", label: "訂購" },
