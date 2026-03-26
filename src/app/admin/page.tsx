@@ -50,12 +50,11 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "news" | "story";
+type Tab = "products" | "orders" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
-  { key: "news", label: "最新消息" },
   { key: "story", label: "果醬的故事" },
 ];
 
