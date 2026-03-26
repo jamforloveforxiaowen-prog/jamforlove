@@ -91,7 +91,6 @@ export default function AdminPage() {
 
       {tab === "products" && <ProductManager />}
       {tab === "orders" && <OrderManager />}
-      {tab === "news" && <NewsManager />}
       {tab === "story" && <StoryManager />}
     </div>
   );
