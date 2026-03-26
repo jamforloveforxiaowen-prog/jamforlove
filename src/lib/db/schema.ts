@@ -94,6 +94,14 @@ export const banners = sqliteTable("banners", {
     .default(sql`(datetime('now'))`),
 });
 
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const storyBlocks = sqliteTable("story_blocks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   sortOrder: integer("sort_order").notNull().default(0),

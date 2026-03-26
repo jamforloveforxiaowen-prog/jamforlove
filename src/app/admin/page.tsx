@@ -50,13 +50,14 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "banners" | "news" | "story";
+type Tab = "products" | "orders" | "banners" | "news" | "about" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
   { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
+  { key: "about", label: "關於我們" },
   { key: "story", label: "果醬的故事" },
 ];
 
@@ -95,6 +96,7 @@ export default function AdminPage() {
       {tab === "orders" && <OrderManager />}
       {tab === "banners" && <BannerManager />}
       {tab === "news" && <NewsManager />}
+      {tab === "about" && <AboutManager />}
       {tab === "story" && <StoryManager />}
     </div>
   );
@@ -662,6 +664,79 @@ function BannerManager() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── 關於我們管理 ──────────────────── */
+
+function AboutManager() {
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=about")
+      .then((res) => res.json())
+      .then((data) => setContent(data.value || ""))
+      .catch(() => setError("無法載入內容"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaved(false);
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "about", value: content }),
+      });
+      if (!res.ok) {
+        setError("儲存失敗");
+        setSubmitting(false);
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+    }
+    setSubmitting(false);
+  }
+
+  if (loading) {
+    return <p className="text-espresso-light/50 text-center py-16 text-sm">載入中...</p>;
+  }
+
+  return (
+    <div>
+      {error && <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>}
+      {saved && <p className="text-sage text-sm font-medium mb-4">已儲存！</p>}
+      <h2 className="font-serif text-lg font-bold text-espresso mb-6">編輯「關於我們」</h2>
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6 space-y-5">
+        <div>
+          <label htmlFor="about-content" className="block text-sm font-medium text-espresso mb-2">
+            內容（支援換行）
+          </label>
+          <textarea
+            id="about-content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={14}
+            className="input-field"
+            placeholder="輸入關於我們的介紹..."
+          />
+        </div>
+        <button type="submit" disabled={submitting} className="btn-primary-sm">
+          {submitting ? "儲存中..." : "儲存"}
+        </button>
+      </form>
     </div>
   );
 }
