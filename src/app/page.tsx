@@ -124,25 +124,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 特色標籤 ───────────────────────── */}
-      <section className="py-16 md:py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-            {[
-              { icon: "🍊", text: "當季新鮮水果" },
-              { icon: "🫙", text: "小量手工熬煮" },
-              { icon: "🌿", text: "無人工添加物" },
-              { icon: "💛", text: "用愛傳遞溫暖" },
-            ].map((item) => (
-              <div key={item.text} className="feature-pill">
-                <span className="pill-icon">{item.icon}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
 
     </div>
   );
