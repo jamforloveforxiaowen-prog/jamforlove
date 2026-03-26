@@ -50,11 +50,12 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "news" | "story";
+type Tab = "products" | "orders" | "banners" | "news" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
+  { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
   { key: "story", label: "果醬的故事" },
 ];
@@ -92,6 +93,7 @@ export default function AdminPage() {
 
       {tab === "products" && <ProductManager />}
       {tab === "orders" && <OrderManager />}
+      {tab === "banners" && <BannerManager />}
       {tab === "news" && <NewsManager />}
       {tab === "story" && <StoryManager />}
     </div>
@@ -404,6 +406,267 @@ function ProductManager() {
     </div>
   );
 }
+
+/* ── Banner 管理 ────────────────────── */
+
+interface BannerItem {
+  id: number;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+function BannerManager() {
+  const [items, setItems] = useState<BannerItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+  const [error, setError] = useState("");
+
+  async function loadItems() {
+    try {
+      const res = await fetch("/api/admin/banners");
+      const data = await res.json();
+      if (Array.isArray(data)) setItems(data);
+    } catch {
+      setError("無法載入 Banner");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadItems(); }, []);
+
+  function resetForm() {
+    setTitle("");
+    setSubtitle("");
+    setImageUrl("");
+    setSortOrder(0);
+    setEditingId(null);
+    setShowForm(false);
+    setError("");
+  }
+
+  function startEdit(item: BannerItem) {
+    setTitle(item.title);
+    setSubtitle(item.subtitle);
+    setImageUrl(item.imageUrl);
+    setSortOrder(item.sortOrder);
+    setEditingId(item.id);
+    setShowForm(true);
+    setError("");
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    const url = editingId ? `/api/admin/banners/${editingId}` : "/api/admin/banners";
+    const method = editingId ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, subtitle, imageUrl, sortOrder }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "儲存失敗");
+        setSubmitting(false);
+        return;
+      }
+    } catch {
+      setError("網路連線失敗，請稍後再試");
+      setSubmitting(false);
+      return;
+    }
+
+    setSubmitting(false);
+    resetForm();
+    loadItems();
+  }
+
+  async function toggleActive(item: BannerItem) {
+    const action = item.isActive ? "隱藏" : "顯示";
+    if (!window.confirm(`確定要${action}此 Banner 嗎？`)) return;
+    try {
+      await fetch(`/api/admin/banners/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !item.isActive }),
+      });
+      loadItems();
+    } catch {
+      setError(`${action}失敗，請重試`);
+    }
+  }
+
+  async function handleDelete(item: BannerItem) {
+    if (!window.confirm("確定要刪除此 Banner 嗎？此操作無法復原。")) return;
+    try {
+      await fetch(`/api/admin/banners/${item.id}`, { method: "DELETE" });
+      loadItems();
+    } catch {
+      setError("刪除失敗，請重試");
+    }
+  }
+
+  if (loading) {
+    return <p className="text-espresso-light/50 text-center py-16 text-sm">載入中...</p>;
+  }
+
+  return (
+    <div>
+      {error && <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">Banner 列表</h2>
+        <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary-sm">
+          + 新增 Banner
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6 mb-8 space-y-5">
+          <h3 className="font-serif font-bold text-espresso">
+            {editingId ? "編輯 Banner" : "新增 Banner"}
+          </h3>
+          <div>
+            <label htmlFor="banner-title" className="block text-sm font-medium text-espresso mb-2">
+              標題文字
+            </label>
+            <input
+              id="banner-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input-field"
+              placeholder="例：用愛製作，用心傳遞"
+            />
+          </div>
+          <div>
+            <label htmlFor="banner-subtitle" className="block text-sm font-medium text-espresso mb-2">
+              副標題（選填）
+            </label>
+            <input
+              id="banner-subtitle"
+              type="text"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              className="input-field"
+              placeholder="例：最好的果醬來自最簡單的原料"
+            />
+          </div>
+          <div>
+            <label htmlFor="banner-imageUrl" className="block text-sm font-medium text-espresso mb-2">
+              背景圖片網址
+            </label>
+            <input
+              id="banner-imageUrl"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="input-field"
+              placeholder="https://example.com/banner.jpg"
+            />
+            {imageUrl && (
+              <div className="mt-2">
+                <Image
+                  src={imageUrl}
+                  alt="預覽"
+                  width={320}
+                  height={120}
+                  className="rounded-lg object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            <label htmlFor="banner-sortOrder" className="block text-sm font-medium text-espresso mb-2">
+              排序（數字越小越前面）
+            </label>
+            <input
+              id="banner-sortOrder"
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+              className="input-field w-32"
+            />
+          </div>
+          <div className="flex gap-3">
+            <button type="submit" disabled={submitting} className="btn-primary-sm">
+              {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
+          </div>
+        </form>
+      )}
+
+      {items.length === 0 && !showForm ? (
+        <div className="text-center py-24">
+          <p className="text-espresso-light/50 text-sm">尚無 Banner，點擊上方按鈕新增</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${!item.isActive ? "opacity-40" : ""}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                {item.imageUrl && (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.title}
+                    width={120}
+                    height={48}
+                    className="rounded-lg object-cover shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-serif font-bold text-espresso text-sm truncate">
+                    {item.title || "(無標題)"}
+                    {!item.isActive && <span className="ml-2 text-xs text-rose font-sans font-normal">已隱藏</span>}
+                  </h3>
+                  {item.subtitle && (
+                    <p className="text-xs text-espresso-light/50 truncate mt-0.5">{item.subtitle}</p>
+                  )}
+                  <p className="text-xs text-espresso-light/40 mt-1">排序：{item.sortOrder}</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => startEdit(item)} className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200">
+                    編輯
+                  </button>
+                  <button
+                    onClick={() => toggleActive(item)}
+                    className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${item.isActive ? "text-rose ring-rose/20 hover:bg-rose/5" : "text-sage ring-sage/20 hover:bg-sage/5"}`}
+                  >
+                    {item.isActive ? "隱藏" : "顯示"}
+                  </button>
+                  <button onClick={() => handleDelete(item)} className="text-xs text-rose/60 hover:text-rose px-3 py-2 ring-1 ring-rose/20 rounded-md hover:bg-rose/5 transition-all duration-200">
+                    刪除
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 最新消息管理 ──────────────────── */
 
 interface NewsItem {
   id: number;

@@ -15,6 +15,13 @@
       "when": 1774526792193,
       "tag": "0001_lying_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774527305023,
+      "tag": "0002_panoramic_flatman",
+      "breakpoints": true
     }
   ]
 }

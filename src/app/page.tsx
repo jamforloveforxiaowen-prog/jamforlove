@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import BannerCarousel from "@/components/BannerCarousel";
 
 export default function HomePage() {
 
@@ -72,58 +73,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Banner ─────────────────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, var(--color-rose) 0%, var(--color-rose-dark) 50%, var(--color-wine) 100%)",
-        }}
-      >
-        {/* 裝飾光球 */}
-        <div
-          className="absolute rounded-full opacity-20"
-          style={{ width: 400, height: 400, background: "var(--color-honey-light)", filter: "blur(100px)", top: "-20%", right: "-5%" }}
-        />
-        <div
-          className="absolute rounded-full opacity-15"
-          style={{ width: 300, height: 300, background: "var(--color-rose-light)", filter: "blur(80px)", bottom: "-15%", left: "10%" }}
-        />
-
-        <div className="max-w-5xl mx-auto px-6 py-14 md:py-20 flex flex-col md:flex-row items-center gap-8 md:gap-12 relative z-10">
-          {/* 左側文字 */}
-          <div className="flex-1 text-center md:text-left">
-            <h2
-              className="text-white text-3xl md:text-4xl lg:text-5xl leading-[1.1] mb-4"
-              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300 }}
-            >
-              用愛製作，用心傳遞
-            </h2>
-            <div className="w-10 h-[1.5px] bg-white/30 mx-auto md:mx-0 my-5" />
-            <p className="text-white/75 text-base md:text-lg leading-relaxed font-serif max-w-lg mx-auto md:mx-0">
-              最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
-            </p>
-          </div>
-
-          {/* 右側特色數據 */}
-          <div className="flex gap-6 md:gap-8">
-            <div className="text-center">
-              <div className="text-white text-2xl md:text-3xl font-bold font-serif">100%</div>
-              <div className="text-white/40 text-xs mt-1">天然成分</div>
-            </div>
-            <div className="w-px h-12 bg-white/15" />
-            <div className="text-center">
-              <div className="text-honey-light text-2xl md:text-3xl font-bold font-serif">20+</div>
-              <div className="text-white/40 text-xs mt-1">獨家口味</div>
-            </div>
-            <div className="w-px h-12 bg-white/15" />
-            <div className="text-center">
-              <div className="text-white text-2xl md:text-3xl font-bold font-serif">小批</div>
-              <div className="text-white/40 text-xs mt-1">手工熬煮</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* ── Banner 輪播 ─────────────────── */}
+      <BannerCarousel />
 
     </div>
   );

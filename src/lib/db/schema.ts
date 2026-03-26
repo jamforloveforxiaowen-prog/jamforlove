@@ -79,6 +79,21 @@ export const news = sqliteTable("news", {
     .default(sql`(datetime('now'))`),
 });
 
+export const banners = sqliteTable("banners", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull().default(""),
+  subtitle: text("subtitle").notNull().default(""),
+  imageUrl: text("image_url").notNull().default(""),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const storyBlocks = sqliteTable("story_blocks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   sortOrder: integer("sort_order").notNull().default(0),
