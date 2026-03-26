@@ -69,6 +69,7 @@ export const news = sqliteTable("news", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   content: text("content").notNull(),
+  imageUrl: text("image_url").notNull().default(""),
   isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at")
     .notNull()

@@ -2,9 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+
+interface NewsItem {
+  id: number;
+  title: string;
+  content: string;
+  imageUrl: string;
+  createdAt: string;
+}
+
+const FALLBACK: NewsItem = {
+  id: 0,
+  title: "春季限定果醬熱賣中！",
+  content: "嚴選春季新鮮草莓與桑葚，限量手工熬煮。\n每瓶都是當季最鮮甜的滋味，售完為止！\n\n即日起至 4/30，訂購滿三瓶享免運優惠。",
+  imageUrl: "",
+  createdAt: new Date().toISOString(),
+};
 
 export default function NewsPopup() {
   const pathname = usePathname();
+  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
@@ -21,8 +39,17 @@ export default function NewsPopup() {
       // localStorage 不可用時仍顯示
     }
 
-    const timer = setTimeout(() => setVisible(true), 200);
-    return () => clearTimeout(timer);
+    fetch("/api/news")
+      .then((res) => res.json())
+      .then((data: NewsItem[]) => {
+        const item = (Array.isArray(data) && data.length > 0) ? data[0] : FALLBACK;
+        setNewsItem(item);
+        setTimeout(() => setVisible(true), 200);
+      })
+      .catch(() => {
+        setNewsItem(FALLBACK);
+        setTimeout(() => setVisible(true), 200);
+      });
   }, [isAuthPage]);
 
   function handleClose() {
@@ -36,10 +63,11 @@ export default function NewsPopup() {
     setTimeout(() => {
       setVisible(false);
       setClosing(false);
+      setNewsItem(null);
     }, 300);
   }
 
-  if (!visible) return null;
+  if (!visible || !newsItem) return null;
 
   return (
     <div
@@ -92,17 +120,36 @@ export default function NewsPopup() {
 
         <div className="w-full h-px bg-linen-dark/60 mb-4" />
 
+        {/* 圖片 */}
+        {newsItem.imageUrl && (
+          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-4">
+            <Image
+              src={newsItem.imageUrl}
+              alt={newsItem.title}
+              fill
+              className="object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
+        )}
+
         {/* 內容 */}
         <h3 className="font-serif text-lg font-bold text-espresso mb-2">
-          春季限定果醬熱賣中！
+          {newsItem.title}
         </h3>
         <p className="text-espresso-light text-sm leading-relaxed whitespace-pre-line mb-4">
-          嚴選春季新鮮草莓與桑葚，限量手工熬煮。{"\n"}每瓶都是當季最鮮甜的滋味，售完為止！{"\n\n"}即日起至 4/30，訂購滿三瓶享免運優惠。
+          {newsItem.content}
         </p>
 
         {/* 日期 */}
         <p className="text-espresso-light/40 text-xs mb-5">
-          2026 年 3 月 26 日
+          {new Date(newsItem.createdAt).toLocaleDateString("zh-TW", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </p>
 
         {/* 按鈕 */}

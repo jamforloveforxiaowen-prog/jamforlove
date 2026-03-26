@@ -50,11 +50,12 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "story";
+type Tab = "products" | "orders" | "news" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
+  { key: "news", label: "最新消息" },
   { key: "story", label: "果醬的故事" },
 ];
 
@@ -91,6 +92,7 @@ export default function AdminPage() {
 
       {tab === "products" && <ProductManager />}
       {tab === "orders" && <OrderManager />}
+      {tab === "news" && <NewsManager />}
       {tab === "story" && <StoryManager />}
     </div>
   );
@@ -407,6 +409,7 @@ interface NewsItem {
   id: number;
   title: string;
   content: string;
+  imageUrl: string;
   isPublished: boolean;
   createdAt: string;
 }
@@ -419,6 +422,7 @@ function NewsManager() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
 
   async function loadItems() {
@@ -440,6 +444,7 @@ function NewsManager() {
   function resetForm() {
     setTitle("");
     setContent("");
+    setImageUrl("");
     setEditingId(null);
     setShowForm(false);
     setError("");
@@ -448,6 +453,7 @@ function NewsManager() {
   function startEdit(item: NewsItem) {
     setTitle(item.title);
     setContent(item.content);
+    setImageUrl(item.imageUrl || "");
     setEditingId(item.id);
     setShowForm(true);
     setError("");
@@ -467,7 +473,7 @@ function NewsManager() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ title, content, imageUrl }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -568,6 +574,33 @@ function NewsManager() {
               required
             />
           </div>
+          <div>
+            <label htmlFor="news-imageUrl" className="block text-sm font-medium text-espresso mb-2">
+              圖片網址（選填）
+            </label>
+            <input
+              id="news-imageUrl"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="input-field"
+              placeholder="https://example.com/image.jpg"
+            />
+            {imageUrl && (
+              <div className="mt-2">
+                <Image
+                  src={imageUrl}
+                  alt="預覽"
+                  width={160}
+                  height={100}
+                  className="rounded-lg object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
+          </div>
           <div className="flex gap-3">
             <button type="submit" disabled={submitting} className="btn-primary-sm">
               {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
@@ -593,6 +626,18 @@ function NewsManager() {
               }`}
             >
               <div className="flex items-start justify-between gap-4">
+                {item.imageUrl && (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.title}
+                    width={56}
+                    height={56}
+                    className="rounded-lg object-cover shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                )}
                 <div className="min-w-0 flex-1">
                   <h3 className="font-serif font-bold text-espresso text-sm truncate">
                     {item.title}

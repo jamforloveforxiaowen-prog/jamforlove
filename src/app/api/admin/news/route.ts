@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { title, content, isPublished } = await req.json();
+  const { title, content, imageUrl, isPublished } = await req.json();
 
   if (!title || !content) {
     return NextResponse.json({ error: "請填寫標題和內容" }, { status: 400 });
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const item = await db
     .insert(news)
-    .values({ title, content, isPublished: isPublished ?? false })
+    .values({ title, content, imageUrl: imageUrl ?? "", isPublished: isPublished ?? false })
     .returning()
     .get();
 
