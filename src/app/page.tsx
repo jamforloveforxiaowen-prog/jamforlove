@@ -1,16 +1,7 @@
-import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const allProducts = await db
-    .select()
-    .from(products)
-    .where(eq(products.isActive, true));
+export default function HomePage() {
 
   return (
     <div>
@@ -162,84 +153,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 產品區 ───────────────────────── */}
-      <section className="max-w-6xl mx-auto px-6 pb-28 md:pb-36 pt-8">
-        {/* 標題區：不對稱排版 */}
-        <div className="mb-16 md:mb-20 md:flex md:items-end md:justify-between md:gap-8">
-          <div>
-            <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
-              Our Jams
-            </p>
-            <h2
-              className="text-5xl md:text-6xl lg:text-7xl font-bold text-espresso leading-[0.9]"
-              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300 }}
-            >
-              我們的果醬
-            </h2>
-            <div className="w-20 h-[2px] bg-rose mt-6" />
-          </div>
-          <p className="text-espresso-light/50 text-sm max-w-[16rem] leading-relaxed hidden md:block">
-            每一瓶都承載著對食材的尊重與對味覺的執著
-          </p>
-        </div>
-
-        {allProducts.length === 0 ? (
-          <div className="py-20 text-center">
-            <p className="text-espresso-light text-lg font-serif">
-              新口味正在熬煮中，敬請期待...
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {allProducts.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="product-card group block"
-              >
-                <div className="relative aspect-[4/5] rounded-lg overflow-hidden mb-4 bg-linen-dark">
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                      🍓
-                    </div>
-                  )}
-                  {/* 漸層遮罩 */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-espresso/30 via-espresso/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  {/* 手工標籤 */}
-                  <div className="product-badge">手工製作</div>
-                </div>
-                <div className="px-1 pb-2">
-                  <h3 className="font-serif text-lg font-bold text-espresso group-hover:text-rose transition-colors duration-300 line-clamp-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-espresso-light/50 text-sm mt-1.5 line-clamp-2 leading-relaxed">
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <p
-                      className="text-rose font-semibold text-xl"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      NT$ {product.price}
-                    </p>
-                    <span className="text-espresso-light/30 text-xs font-medium tracking-wider uppercase group-hover:text-rose/60 transition-colors duration-300">
-                      查看詳情 →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
 
     </div>
   );

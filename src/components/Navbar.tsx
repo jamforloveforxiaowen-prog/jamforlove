@@ -160,7 +160,7 @@ export default function Navbar() {
                       href="/order"
                       className={navLinkClass("/order", isActive("/order"))}
                       style={isActive("/order") ? activeCTAStyle : undefined}
-                    >訂購</Link>
+                    >果醬選購</Link>
                     <Link
                       href="/my-orders"
                       className={navLinkClass("/my-orders", isActive("/my-orders"))}
@@ -296,7 +296,7 @@ export default function Navbar() {
               { href: "/", label: "首頁" },
               { href: "/story", label: "果醬的故事" },
               ...(user ? [
-                { href: "/order", label: "訂購" },
+                { href: "/order", label: "果醬選購" },
                 { href: "/my-orders", label: "我的訂單" },
                 ...(user.role === "admin" ? [{ href: "/admin", label: "後台管理" }] : []),
               ] : []),
