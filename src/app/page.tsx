@@ -72,67 +72,57 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 有機波浪分隔 ──────────────────── */}
-      <div className="w-full overflow-hidden leading-[0]">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          className="w-full h-[50px] md:h-[80px]"
-        >
-          <path
-            d="M0 60C180 20 360 90 540 50C720 10 900 80 1080 40C1260 0 1380 60 1440 40V120H0V60Z"
-            fill="var(--color-rose)"
-          />
-        </svg>
-      </div>
+      {/* ── Banner ─────────────────────── */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, var(--color-rose) 0%, var(--color-rose-dark) 50%, var(--color-wine) 100%)",
+        }}
+      >
+        {/* 裝飾光球 */}
+        <div
+          className="absolute rounded-full opacity-20"
+          style={{ width: 400, height: 400, background: "var(--color-honey-light)", filter: "blur(100px)", top: "-20%", right: "-5%" }}
+        />
+        <div
+          className="absolute rounded-full opacity-15"
+          style={{ width: 300, height: 300, background: "var(--color-rose-light)", filter: "blur(80px)", bottom: "-15%", left: "10%" }}
+        />
 
-      {/* ── 品牌故事 ─────────────────────── */}
-      <section className="story-section text-white relative overflow-hidden">
-        {/* 引號裝飾 */}
-        <div className="absolute top-12 md:top-16 left-1/2 -translate-x-1/2 pointer-events-none z-10 select-none">
-          <span
-            className="text-white/[0.07] block leading-none"
-            style={{ fontFamily: "var(--font-display)", fontSize: "clamp(8rem, 20vw, 16rem)", fontStyle: "italic" }}
-            aria-hidden="true"
-          >
-            &ldquo;
-          </span>
-        </div>
+        <div className="max-w-5xl mx-auto px-6 py-14 md:py-20 flex flex-col md:flex-row items-center gap-8 md:gap-12 relative z-10">
+          {/* 左側文字 */}
+          <div className="flex-1 text-center md:text-left">
+            <h2
+              className="text-white text-3xl md:text-4xl lg:text-5xl leading-[1.1] mb-4"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300 }}
+            >
+              用愛製作，用心傳遞
+            </h2>
+            <div className="w-10 h-[1.5px] bg-white/30 mx-auto md:mx-0 my-5" />
+            <p className="text-white/75 text-base md:text-lg leading-relaxed font-serif max-w-lg mx-auto md:mx-0">
+              最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
+            </p>
+          </div>
 
-        <div className="max-w-3xl mx-auto px-6 py-24 md:py-36 text-center relative z-10">
-          <h2
-            className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4"
-            style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 300, textShadow: "0 2px 30px rgba(0,0,0,0.15)" }}
-          >
-            用愛製作，用心傳遞
-          </h2>
-          <div className="w-12 h-[1.5px] bg-white/40 mx-auto my-8" />
-          <p className="text-white/75 text-lg md:text-xl leading-loose max-w-xl mx-auto font-serif">
-            我們相信，最好的果醬來自最簡單的原料——新鮮水果、天然糖分、和滿滿的用心。
-          </p>
-          <p className="text-white/55 text-base leading-loose max-w-lg mx-auto mt-4">
-            每一批果醬都是小量手工熬煮，保留水果最天然的風味與色澤。
-          </p>
+          {/* 右側特色數據 */}
+          <div className="flex gap-6 md:gap-8">
+            <div className="text-center">
+              <div className="text-white text-2xl md:text-3xl font-bold font-serif">100%</div>
+              <div className="text-white/40 text-xs mt-1">天然成分</div>
+            </div>
+            <div className="w-px h-12 bg-white/15" />
+            <div className="text-center">
+              <div className="text-honey-light text-2xl md:text-3xl font-bold font-serif">20+</div>
+              <div className="text-white/40 text-xs mt-1">獨家口味</div>
+            </div>
+            <div className="w-px h-12 bg-white/15" />
+            <div className="text-center">
+              <div className="text-white text-2xl md:text-3xl font-bold font-serif">小批</div>
+              <div className="text-white/40 text-xs mt-1">手工熬煮</div>
+            </div>
+          </div>
         </div>
       </section>
-
-      {/* ── 波浪分隔（下） ────────────────── */}
-      <div className="w-full overflow-hidden leading-[0]">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          className="w-full h-[50px] md:h-[80px]"
-        >
-          <path
-            d="M0 0H1440V60C1260 100 1080 20 900 60C720 100 540 30 360 70C180 110 60 30 0 60V0Z"
-            fill="var(--color-rose)"
-          />
-        </svg>
-      </div>
 
       {/* ── 特色標籤 ───────────────────────── */}
       <section className="py-16 md:py-20">
