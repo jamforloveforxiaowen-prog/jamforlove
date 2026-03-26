@@ -21,7 +21,7 @@ export default function NewsPopup() {
       // localStorage 不可用時仍顯示
     }
 
-    const timer = setTimeout(() => setVisible(true), 800);
+    const timer = setTimeout(() => setVisible(true), 200);
     return () => clearTimeout(timer);
   }, [isAuthPage]);
 
