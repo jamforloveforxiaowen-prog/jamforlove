@@ -128,7 +128,7 @@ export default function Footer() {
                 >
                   Jam For Love
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--color-espresso-light)", letterSpacing: "0.15em" }}>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-linen-dark)", letterSpacing: "0.15em", opacity: 0.5 }}>
                   HANDMADE WITH LOVE
                 </p>
               </div>
@@ -157,10 +157,10 @@ export default function Footer() {
 
             {/* 版權 */}
             <div className="md:col-span-3 md:text-right">
-              <p className="text-xs leading-relaxed" style={{ color: "var(--color-espresso-light)" }}>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--color-linen-dark)", opacity: 0.6 }}>
                 用愛手工熬煮
               </p>
-              <p className="text-xs mt-1" style={{ color: "var(--color-espresso-light)", opacity: 0.6 }}>
+              <p className="text-xs mt-1" style={{ color: "var(--color-linen-dark)", opacity: 0.4 }}>
                 &copy; {new Date().getFullYear()} Jam For Love
               </p>
             </div>
