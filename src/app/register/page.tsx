@@ -44,23 +44,23 @@ export default function RegisterPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]";
+    "w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-honey focus:bg-white/80 focus:shadow-[0_0_0_3px_rgba(200,149,48,0.15)]";
 
   return (
     <div
       className="min-h-screen -mt-14 pt-14 relative overflow-hidden flex"
       style={{
         background:
-          "linear-gradient(135deg, var(--color-linen) 0%, var(--color-parchment) 30%, var(--color-rose-light) 60%, var(--color-rose) 100%)",
+          "linear-gradient(135deg, var(--color-linen) 0%, #f5edd8 30%, var(--color-honey-light) 60%, var(--color-honey) 100%)",
       }}
     >
-      {/* 全螢幕漸層光球裝飾 */}
+      {/* 全螢幕漸層光球裝飾 — 蜂蜜金色調 */}
       <div
-        className="absolute rounded-full opacity-40"
+        className="absolute rounded-full opacity-35"
         style={{
           width: 500,
           height: 500,
-          background: "var(--color-rose)",
+          background: "var(--color-honey)",
           filter: "blur(120px)",
           top: "-12%",
           left: "-8%",
@@ -71,7 +71,7 @@ export default function RegisterPage() {
         style={{
           width: 350,
           height: 350,
-          background: "var(--color-honey)",
+          background: "var(--color-rose-light)",
           filter: "blur(90px)",
           top: "15%",
           right: "5%",
@@ -93,7 +93,7 @@ export default function RegisterPage() {
         style={{
           width: 300,
           height: 300,
-          background: "var(--color-rose-dark)",
+          background: "var(--color-honey-light)",
           filter: "blur(80px)",
           bottom: "10%",
           right: "-5%",
@@ -104,7 +104,7 @@ export default function RegisterPage() {
         style={{
           width: 200,
           height: 200,
-          background: "var(--color-linen)",
+          background: "var(--color-parchment)",
           filter: "blur(60px)",
           top: "50%",
           left: "50%",
@@ -121,19 +121,19 @@ export default function RegisterPage() {
           >
             開啟你的
             <br />
-            <span className="text-rose-dark">果醬旅程</span>
+            <span style={{ color: "var(--color-honey)" }}>果醬旅程</span>
           </h2>
           <p className="text-espresso-light/60 text-base leading-relaxed max-w-sm mx-auto mb-10">
             加入 Jam For Love，探索季節限定口味，享受從產地到餐桌的手作溫度。
           </p>
           <div className="flex justify-center gap-8">
             <div className="text-center">
-              <div className="text-rose-dark text-2xl font-bold font-serif">100%</div>
+              <div style={{ color: "var(--color-honey)" }} className="text-2xl font-bold font-serif">100%</div>
               <div className="text-espresso-light/40 text-xs mt-1">天然成分</div>
             </div>
             <div className="w-px h-10 bg-espresso-light/15" />
             <div className="text-center">
-              <div className="text-honey text-2xl font-bold font-serif">20+</div>
+              <div className="text-rose text-2xl font-bold font-serif">20+</div>
               <div className="text-espresso-light/40 text-xs mt-1">獨家口味</div>
             </div>
             <div className="w-px h-10 bg-espresso-light/15" />
@@ -163,11 +163,12 @@ export default function RegisterPage() {
           {/* 手機版 Logo */}
           <div className="lg:hidden text-center mb-5">
             <span
-              className="text-rose text-2xl"
+              className="text-2xl"
               style={{
                 fontFamily: "var(--font-display)",
                 fontWeight: 300,
                 fontStyle: "italic",
+                color: "var(--color-honey)",
               }}
             >
               Jam For Love
@@ -179,7 +180,7 @@ export default function RegisterPage() {
 
           {/* 標題區 */}
           <div className="mb-7">
-            <p className="text-rose text-[0.6875rem] font-semibold tracking-[0.2em] uppercase mb-2">
+            <p style={{ color: "var(--color-honey)" }} className="text-[0.6875rem] font-semibold tracking-[0.2em] uppercase mb-2">
               建立帳號
             </p>
             <h1 className="font-serif text-2xl font-bold text-espresso mb-1.5">
@@ -272,7 +273,19 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-rose text-white font-semibold text-[0.9375rem] rounded-xl transition-all hover:bg-rose-dark hover:shadow-[0_4px_20px_rgba(196,80,106,0.3)] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none mt-2"
+              className="w-full py-4 text-white font-semibold text-[0.9375rem] rounded-xl transition-all active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none mt-2"
+              style={{
+                background: "var(--color-honey)",
+                boxShadow: "0 4px 20px rgba(200,149,48,0.3)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#b08428";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(200,149,48,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--color-honey)";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(200,149,48,0.3)";
+              }}
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -287,7 +300,8 @@ export default function RegisterPage() {
             已有帳號？{" "}
             <Link
               href="/login"
-              className="text-rose font-medium hover:text-rose-dark transition-colors"
+              className="font-medium transition-colors"
+              style={{ color: "var(--color-honey)" }}
             >
               登入
             </Link>
