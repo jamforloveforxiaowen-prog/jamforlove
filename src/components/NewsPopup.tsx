@@ -29,13 +29,27 @@ export default function NewsPopup() {
     fetch("/api/news")
       .then((res) => res.json())
       .then((data: NewsItem[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setNewsItem(data[0]);
-          // 稍微延遲顯示，讓頁面先載入
-          setTimeout(() => setVisible(true), 600);
-        }
+        const item = (Array.isArray(data) && data.length > 0)
+          ? data[0]
+          : {
+              id: 0,
+              title: "春季限定果醬熱賣中！",
+              content: "嚴選春季新鮮草莓與桑葚，限量手工熬煮。\n每瓶都是當季最鮮甜的滋味，售完為止！\n\n即日起至 4/30，訂購滿三瓶享免運優惠。",
+              createdAt: new Date().toISOString(),
+            };
+        setNewsItem(item);
+        setTimeout(() => setVisible(true), 600);
       })
-      .catch(() => {});
+      .catch(() => {
+        // API 失敗也顯示預設通知
+        setNewsItem({
+          id: 0,
+          title: "春季限定果醬熱賣中！",
+          content: "嚴選春季新鮮草莓與桑葚，限量手工熬煮。\n每瓶都是當季最鮮甜的滋味，售完為止！\n\n即日起至 4/30，訂購滿三瓶享免運優惠。",
+          createdAt: new Date().toISOString(),
+        });
+        setTimeout(() => setVisible(true), 600);
+      });
   }, [isAuthPage]);
 
   function handleClose() {
