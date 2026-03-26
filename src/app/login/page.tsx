@@ -43,7 +43,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-3.5rem)] relative overflow-hidden flex"
+      className="min-h-screen -mt-14 pt-14 relative overflow-hidden flex"
       style={{
         background:
           "linear-gradient(135deg, var(--color-linen) 0%, var(--color-parchment) 30%, var(--color-rose-light) 60%, var(--color-rose) 100%)",

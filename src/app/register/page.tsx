@@ -48,7 +48,7 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-3.5rem)] relative overflow-hidden flex"
+      className="min-h-screen -mt-14 pt-14 relative overflow-hidden flex"
       style={{
         background:
           "linear-gradient(135deg, var(--color-wine) 0%, #2a1018 30%, #1a0a10 60%, var(--color-espresso) 100%)",
