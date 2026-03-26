@@ -1,7 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/login" || pathname === "/register") return null;
+
   return (
     <footer className="border-t border-linen-dark/60">
       {/* 關於我們 */}
