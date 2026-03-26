@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/contexts/CartContext";
-import DynamicIsland from "./DynamicIsland";
 
 interface User { id: number; username: string; role: string; name: string }
 
@@ -112,10 +111,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
-      {/* 左側：動態島（首頁、登入/註冊頁不顯示） */}
-      {!isAuthPage && pathname !== "/" && <DynamicIsland />}
-
-      {/* 右側：導覽列（ml-auto 確保永遠靠右）*/}
+      {/* 導覽列（ml-auto 確保永遠靠右）*/}
       <div
         className="pointer-events-auto ml-auto transition-all duration-500 ease-out"
         style={{
