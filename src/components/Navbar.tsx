@@ -112,8 +112,8 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-start gap-2 pt-3 pointer-events-none max-w-6xl mx-auto px-6">
-      {/* 左側：動態島 */}
-      <DynamicIsland />
+      {/* 左側：動態島（登入/註冊頁不顯示） */}
+      {!isAuthPage && <DynamicIsland />}
 
       {/* 右側：導覽列（ml-auto 確保永遠靠右）*/}
       <div
