@@ -23,6 +23,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -117,6 +118,12 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-0">
             {isAuthPage ? (
               <Link href="/" className={navLinkClass("/", true)} style={activeCTAStyle}>首頁</Link>
+            ) : isAdmin ? (
+              <Link
+                href="/admin"
+                className={navLinkClass("/admin", isActive("/admin"))}
+                style={isActive("/admin") ? activeCTAStyle : undefined}
+              >後台管理</Link>
             ) : (
               <>
                 <Link
@@ -130,16 +137,6 @@ export default function Navbar() {
                   className={navLinkClass("/story", isActive("/story"))}
                   style={isActive("/story") ? activeCTAStyle : undefined}
                 >果醬的故事</Link>
-                {user && user.role === "admin" && (
-                  <>
-                    <Dot />
-                    <Link
-                      href="/admin"
-                      className={navLinkClass("/admin", isActive("/admin"))}
-                      style={isActive("/admin") ? activeCTAStyle : undefined}
-                    >後台管理</Link>
-                  </>
-                )}
               </>
             )}
           </div>
@@ -184,42 +181,46 @@ export default function Navbar() {
                             padding: "6px",
                           }}
                         >
-                          <Link
-                            href="/"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
-                          >
-                            首頁
-                          </Link>
-                          <Link
-                            href="/story"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
-                          >
-                            果醬的故事
-                          </Link>
-                          <Link
-                            href="/order"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
-                          >
-                            果醬選購
-                          </Link>
-                          <Link
-                            href="/my-orders"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
-                          >
-                            我的訂單
-                          </Link>
-                          <Link
-                            href="/profile"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
-                          >
-                            個人資料
-                          </Link>
-                          <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--color-linen-dark), transparent)" }} />
+                          {!isAdmin && (
+                            <>
+                              <Link
+                                href="/"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                              >
+                                首頁
+                              </Link>
+                              <Link
+                                href="/story"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                              >
+                                果醬的故事
+                              </Link>
+                              <Link
+                                href="/order"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                              >
+                                果醬選購
+                              </Link>
+                              <Link
+                                href="/my-orders"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                              >
+                                我的訂單
+                              </Link>
+                              <Link
+                                href="/profile"
+                                onClick={() => setUserMenuOpen(false)}
+                                className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                              >
+                                個人資料
+                              </Link>
+                              <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--color-linen-dark), transparent)" }} />
+                            </>
+                          )}
                           <button
                             onClick={handleLogout}
                             className="w-full text-left px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
@@ -294,16 +295,17 @@ export default function Navbar() {
           aria-live="polite"
         >
           <div className="space-y-0.5">
-            {[
+            {(isAdmin ? [
+              { href: "/admin", label: "後台管理" },
+            ] : [
               { href: "/", label: "首頁" },
               { href: "/story", label: "果醬的故事" },
               ...(user ? [
                 { href: "/order", label: "果醬選購" },
                 { href: "/my-orders", label: "我的訂單" },
                 { href: "/profile", label: "個人資料" },
-                ...(user.role === "admin" ? [{ href: "/admin", label: "後台管理" }] : []),
               ] : []),
-            ].map((link, i) => (
+            ]).map((link, i) => (
               <Link
                 key={link.href}
                 href={link.href}
