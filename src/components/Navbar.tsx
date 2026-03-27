@@ -198,6 +198,13 @@ export default function Navbar() {
                           >
                             我的訂單
                           </Link>
+                          <Link
+                            href="/profile"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            個人資料
+                          </Link>
                           <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--color-linen-dark), transparent)" }} />
                           <button
                             onClick={handleLogout}
@@ -279,6 +286,7 @@ export default function Navbar() {
               ...(user ? [
                 { href: "/order", label: "果醬選購" },
                 { href: "/my-orders", label: "我的訂單" },
+                { href: "/profile", label: "個人資料" },
                 ...(user.role === "admin" ? [{ href: "/admin", label: "後台管理" }] : []),
               ] : []),
             ].map((link, i) => (

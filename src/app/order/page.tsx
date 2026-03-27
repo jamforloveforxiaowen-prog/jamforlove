@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
 
 /* ─── 資料定義 ─────────────────────────────────── */
 
@@ -54,15 +56,46 @@ export default function OrderPage() {
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
+  const [zipcode, setZipcode] = useState("");
+  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
+  const [addressDetail, setAddressDetail] = useState("");
+  const [pickupNote, setPickupNote] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
   const [notes, setNotes] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
+  const handleChangeZipcode = useCallback((v: string) => setZipcode(v), []);
+  const handleChangeCity = useCallback((v: string) => setCity(v), []);
+  const handleChangeDistrict = useCallback((v: string) => setDistrict(v), []);
+  const handleChangeDetail = useCallback((v: string) => setAddressDetail(v), []);
+
+  function parseAndFillAddress(addr: string) {
+    if (!addr) return;
+    let remaining = addr;
+    const zipMatch = remaining.match(/^(\d{3})\s*/);
+    if (zipMatch) {
+      setZipcode(zipMatch[1]);
+      remaining = remaining.slice(zipMatch[0].length);
+    }
+    const cityMatch = remaining.match(/^([\u4e00-\u9fff]{2,3}[市縣])/);
+    if (cityMatch) {
+      setCity(cityMatch[1]);
+      remaining = remaining.slice(cityMatch[0].length);
+      const distMatch = remaining.match(/^([\u4e00-\u9fff]{2,4}[區鄉鎮市])/);
+      if (distMatch) {
+        setDistrict(distMatch[1]);
+        remaining = remaining.slice(distMatch[0].length);
+      }
+    }
+    setAddressDetail(remaining.trim());
+  }
+
+  function loadProfile() {
     fetch("/api/auth/me")
       .then((res) => res.json())
       .then((data) => {
@@ -70,11 +103,16 @@ export default function OrderPage() {
           if (data.user.name) setCustomerName(data.user.name);
           if (data.user.phone) setPhone(data.user.phone);
           if (data.user.email) setEmail(data.user.email);
-          if (data.user.address) setAddress(data.user.address);
+          if (data.user.address) parseAndFillAddress(data.user.address);
+          setProfileLoaded(true);
+          setTimeout(() => setProfileLoaded(false), 2000);
         }
       })
       .catch(() => {});
-  }, []);
+  }
+
+  // 頁面載入時自動帶入
+  useEffect(() => { loadProfile(); }, []);
 
   const comboTotal = useMemo(
     () => Object.entries(comboSelections).reduce((sum, [id, qty]) => {
@@ -126,7 +164,13 @@ export default function OrderPage() {
       const res = await fetch("/api/fundraise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerName, phone, email, address, deliveryMethod, combos, addons, notes, total: grandTotal }),
+        body: JSON.stringify({
+          customerName, phone, email,
+          address: deliveryMethod === "shipping"
+            ? `${zipcode} ${city}${district}${addressDetail}`.trim()
+            : pickupNote,
+          deliveryMethod, combos, addons, notes, total: grandTotal,
+        }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); setLoading(false); return; }
@@ -303,7 +347,26 @@ export default function OrderPage() {
             >
               3
             </div>
-            <h2 className="font-serif text-2xl font-bold text-espresso mb-1">填寫資料</h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-serif text-2xl font-bold text-espresso">填寫資料</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={loadProfile}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all"
+                  style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}
+                >
+                  {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
+                </button>
+                <Link
+                  href="/profile"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all"
+                  style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}
+                >
+                  編輯
+                </Link>
+              </div>
+            </div>
             <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
 
             <div className="space-y-1">
@@ -347,12 +410,22 @@ export default function OrderPage() {
                 </div>
               </div>
 
-              <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">
-                  {deliveryMethod === "shipping" ? "收件地址" : "取貨地點"} *
-                </label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} placeholder={deliveryMethod === "shipping" ? "請填寫完整地址" : "例：暨大校內取貨"} required />
-              </div>
+              {/* 地址 */}
+              {deliveryMethod === "shipping" ? (
+                <div className="pt-2">
+                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 mb-2">收件地址 *</label>
+                  <TaiwanAddressSelector
+                    zipcode={zipcode} city={city} district={district} detail={addressDetail}
+                    onChangeZipcode={handleChangeZipcode} onChangeCity={handleChangeCity}
+                    onChangeDistrict={handleChangeDistrict} onChangeDetail={handleChangeDetail}
+                  />
+                </div>
+              ) : (
+                <div className={inputBorderFocus} style={inputBorder}>
+                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">取貨地點 *</label>
+                  <input type="text" value={pickupNote} onChange={(e) => setPickupNote(e.target.value)} className={inputClass} placeholder="例：暨大校內取貨" required />
+                </div>
+              )}
 
               <div className={inputBorderFocus} style={inputBorder}>
                 <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">備註</label>
