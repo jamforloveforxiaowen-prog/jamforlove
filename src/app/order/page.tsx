@@ -250,10 +250,6 @@ export default function OrderPage() {
     <div className="max-w-3xl mx-auto px-5 py-10 md:py-16">
       {/* ─── 活動標頭 ───────────────────────────── */}
       <div className="mb-12 animate-reveal-up">
-        <div className="flex items-center gap-2 mb-3">
-          <Tag color="rose">114-2 學期</Tag>
-          <Tag color="honey">募資活動</Tag>
-        </div>
         <h1 className="font-serif text-3xl md:text-4xl font-bold text-espresso leading-tight">
           Jam for Love 2026
         </h1>
