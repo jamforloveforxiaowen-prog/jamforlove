@@ -185,6 +185,20 @@ export default function Navbar() {
                           }}
                         >
                           <Link
+                            href="/"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            首頁
+                          </Link>
+                          <Link
+                            href="/story"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            果醬的故事
+                          </Link>
+                          <Link
                             href="/order"
                             onClick={() => setUserMenuOpen(false)}
                             className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"

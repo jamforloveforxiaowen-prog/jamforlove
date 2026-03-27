@@ -1382,37 +1382,51 @@ function OrderManager() {
     );
   }
 
+  function exportToExcel() {
+    const header = ["訂單編號", "姓名", "帳號", "電話", "地址", "備註", "狀態", "總金額", "商品明細", "建立時間"];
+    const rows = orders.map((o) => [
+      o.id,
+      o.customerName,
+      o.username || "",
+      o.phone,
+      o.address,
+      o.notes,
+      STATUS_LABELS[o.status] || o.status,
+      o.total,
+      o.items.map((it) => `${it.productName || "商品"} ×${it.quantity} $${it.price}`).join("; "),
+      new Date(o.createdAt).toLocaleString("zh-TW"),
+    ]);
+    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `訂單_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div>
-      <h2 className="font-serif text-lg font-bold text-espresso mb-6">
-        訂單列表
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">
+          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
+        </h2>
+        <button
+          onClick={exportToExcel}
+          className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
+        >
+          匯出 Excel
+        </button>
+      </div>
       {error && (
         <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
       )}
 
       {orders.length === 0 ? (
-        <div className="text-center py-24">
-          <div className="w-16 h-16 rounded-full bg-linen-dark/50 flex items-center justify-center mx-auto mb-6">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="text-espresso-light/40"
-            >
-              <path
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <p className="font-serif text-espresso text-lg">
-            還沒有訂單，等待第一位客人上門
-          </p>
+        <div className="text-center py-16">
+          <p className="text-espresso-light/40 text-sm">目前共 0 筆訂單</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -1532,10 +1546,25 @@ interface FundraiseOrder {
   createdAt: string;
 }
 
+const FORM_DESIGNS = [
+  { id: 1, name: "雜誌編排", desc: "大標題、serif 字型、editorial 風格" },
+  { id: 2, name: "卡片浮起", desc: "白色卡片 + 陰影，Material 質感" },
+  { id: 3, name: "深色沉穩", desc: "深色背景、金色點綴" },
+  { id: 4, name: "手感塗鴉", desc: "虛線邊框、紙張質感、童趣" },
+  { id: 5, name: "圓角柔和", desc: "超圓角、粉彩泡泡感" },
+  { id: 6, name: "線框極簡", desc: "純線框、大留白、瑞士風" },
+  { id: 7, name: "漸層毛玻璃", desc: "半透明毛玻璃 + 彩色漸層" },
+  { id: 8, name: "標籤貼紙", desc: "色塊標籤、左側色條、文具風" },
+  { id: 9, name: "步驟時間軸", desc: "垂直時間軸 + 圓形節點" },
+  { id: 10, name: "格線目錄", desc: "雙欄網格、圖鑑式排列" },
+  { id: 11, name: "手感 × 時間軸", desc: "目前使用：虛線塗鴉 + 時間軸步驟" },
+];
+
 function FundraiseManager() {
   const [orders, setOrders] = useState<FundraiseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [currentDesign] = useState(11);
 
   useEffect(() => {
     fetch("/api/admin/fundraise")
@@ -1553,18 +1582,87 @@ function FundraiseManager() {
     setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
   }
 
+  function exportToExcel() {
+    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "加購", "備註", "狀態", "總金額", "建立時間"];
+    const rows = orders.map((o) => [
+      o.id,
+      o.customerName,
+      o.phone,
+      o.email,
+      o.address,
+      o.deliveryMethod === "pickup" ? "面交" : "郵寄",
+      o.combos.map((c) => `${c.name}(${c.items.join("+")}) ×${c.quantity}`).join("; "),
+      o.addons.map((a) => `${a.name} ×${a.quantity} $${a.price}`).join("; "),
+      o.notes,
+      STATUS_LABELS[o.status] || o.status,
+      o.total,
+      new Date(o.createdAt).toLocaleString("zh-TW"),
+    ]);
+    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `預購訂單_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
 
   return (
     <div>
+      {/* 表單風格選擇器 */}
+      <div className="mb-8 bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-serif text-base font-bold text-espresso">表單設計風格</h3>
+          <a
+            href="/order-preview"
+            target="_blank"
+            className="text-xs text-rose hover:text-rose-dark transition-colors"
+          >
+            預覽所有風格 →
+          </a>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {FORM_DESIGNS.map((d) => (
+            <div
+              key={d.id}
+              className={`rounded-lg px-3 py-2.5 text-left transition-all ${
+                currentDesign === d.id
+                  ? "ring-2 ring-rose bg-rose/5"
+                  : "ring-1 ring-linen-dark/40 hover:ring-espresso-light/30"
+              }`}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-espresso">{d.name}</span>
+                {currentDesign === d.id && (
+                  <span className="text-[0.6rem] bg-rose text-white px-1.5 py-0.5 rounded-full font-bold">使用中</span>
+                )}
+              </div>
+              <p className="text-[0.65rem] text-espresso-light/40 mt-0.5 leading-tight">{d.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-espresso-light/30 mt-3">如需切換風格，請告知管理員套用</p>
+      </div>
+
+      {/* 訂單列表 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-lg font-bold text-espresso">
-          預購表單訂單 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
+          預購訂單 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
         </h2>
+        <button
+          onClick={exportToExcel}
+          className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
+        >
+          匯出 Excel
+        </button>
       </div>
 
       {orders.length === 0 ? (
-        <p className="text-espresso-light/40 text-sm py-8 text-center">目前沒有預購訂單</p>
+        <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆預購訂單</p>
       ) : (
         <div className="space-y-3">
           {[...orders].reverse().map((order) => {
