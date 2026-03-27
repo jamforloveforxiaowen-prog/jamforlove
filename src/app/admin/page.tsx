@@ -50,11 +50,12 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "banners" | "news" | "about" | "story";
+type Tab = "products" | "orders" | "fundraise" | "banners" | "news" | "about" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
+  { key: "fundraise", label: "預購表單" },
   { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
   { key: "about", label: "關於我們" },
@@ -94,6 +95,7 @@ export default function AdminPage() {
 
       {tab === "products" && <ProductManager />}
       {tab === "orders" && <OrderManager />}
+      {tab === "fundraise" && <FundraiseManager />}
       {tab === "banners" && <BannerManager />}
       {tab === "news" && <NewsManager />}
       {tab === "about" && <AboutManager />}
@@ -1505,6 +1507,143 @@ function OrderManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 預購表單管理 ──────────────────────── */
+
+interface FundraiseOrder {
+  id: number;
+  userId: number;
+  username: string | null;
+  customerName: string;
+  phone: string;
+  email: string;
+  address: string;
+  deliveryMethod: string;
+  combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
+  addons: { id: number; name: string; quantity: number; price: number }[];
+  notes: string;
+  total: number;
+  status: string;
+  createdAt: string;
+}
+
+function FundraiseManager() {
+  const [orders, setOrders] = useState<FundraiseOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/fundraise")
+      .then((res) => res.json())
+      .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  async function updateStatus(id: number, status: string) {
+    await fetch(`/api/admin/fundraise/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
+  }
+
+  if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">
+          預購表單訂單 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
+        </h2>
+      </div>
+
+      {orders.length === 0 ? (
+        <p className="text-espresso-light/40 text-sm py-8 text-center">目前沒有預購訂單</p>
+      ) : (
+        <div className="space-y-3">
+          {[...orders].reverse().map((order) => {
+            const isExpanded = expandedId === order.id;
+            return (
+              <div key={order.id} className="bg-white rounded-lg ring-1 ring-linen-dark/60 overflow-hidden">
+                <div
+                  className="p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-linen/30 transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-espresso text-sm">#{order.id}</span>
+                      <span className="text-espresso text-sm">{order.customerName}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[order.status] || ""}`}>
+                        {STATUS_LABELS[order.status] || order.status}
+                      </span>
+                      <span className="text-espresso-light/30 text-xs">
+                        {order.deliveryMethod === "pickup" ? "面交" : "郵寄"}
+                      </span>
+                    </div>
+                    <p className="text-espresso-light/40 text-xs mt-0.5">
+                      {new Date(order.createdAt).toLocaleString("zh-TW")} · {order.phone}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-rose font-bold text-sm">NT$ {order.total}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform text-espresso-light/30 ${isExpanded ? "rotate-180" : ""}`}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="px-4 pb-4 border-t border-linen-dark/30 pt-3">
+                    {order.combos.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">組合</p>
+                        {order.combos.map((c, i) => (
+                          <div key={i} className="flex justify-between text-sm py-0.5">
+                            <span className="text-espresso-light">{c.name}（{c.items.join("、")}）× {c.quantity}</span>
+                            <span className="text-espresso font-medium tabular-nums">NT$ {c.price * c.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {order.addons.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">加購</p>
+                        {order.addons.map((a, i) => (
+                          <div key={i} className="flex justify-between text-sm py-0.5">
+                            <span className="text-espresso-light">{a.name} × {a.quantity}</span>
+                            <span className="text-espresso font-medium tabular-nums">NT$ {a.price * a.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mb-3 text-sm text-espresso-light/60 space-y-0.5">
+                      <p>地址：{order.address}</p>
+                      {order.email && <p>Email：{order.email}</p>}
+                      {order.notes && <p>備註：{order.notes}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-espresso-light/40">狀態：</label>
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateStatus(order.id, e.target.value)}
+                        className="text-sm border border-linen-dark rounded-md px-2 py-1 outline-none focus:border-rose bg-white"
+                      >
+                        {STATUS_OPTIONS.map((s) => (
+                          <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
