@@ -131,8 +131,8 @@ export default function OrderPage() {
   );
 
   const grandTotal = comboTotal + addonTotal;
-  const hasSelection = Object.values(comboSelections).some((q) => q > 0) ||
-    Object.values(addonSelections).some((q) => q > 0);
+  const hasCombo = Object.values(comboSelections).some((q) => q > 0);
+  const hasSelection = hasCombo;
 
   function updateCombo(id: number, delta: number) {
     setComboSelections((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
@@ -144,7 +144,7 @@ export default function OrderPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!hasSelection) { setError("請至少選擇一項產品組合或加購商品"); return; }
+    if (!hasCombo) { setError("請至少選擇一項產品組合"); return; }
     setError(""); setLoading(true);
 
     const combos = Object.entries(comboSelections)
@@ -290,7 +290,9 @@ export default function OrderPage() {
             </div>
           </div>
 
-          {/* ─── Step 2：加購商品 ─────────────────── */}
+          {/* ─── Step 2：加購商品（需先選組合） ───── */}
+          {hasCombo && (
+          <>
           <div className="relative mb-10 animate-reveal-up" style={{ animationDelay: "0.05s" }}>
             <div
               className="absolute -left-11 md:-left-14 w-[34px] md:w-[42px] h-[34px] md:h-[42px] rounded-full flex items-center justify-center font-serif font-bold text-white text-sm"
@@ -470,6 +472,8 @@ export default function OrderPage() {
               </div>
             </div>
           )}
+          </>
+          )}
         </div>
 
         {/* ─── 送出 ──────────────────────────────── */}
@@ -486,7 +490,7 @@ export default function OrderPage() {
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
               送出中...
             </span>
-          ) : hasSelection ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇產品"}
+          ) : hasCombo ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇產品組合"}
         </button>
         <p className="text-center text-espresso-light/30 text-sm mt-4">送出後我們會以電話或 Email 確認訂單 ♥</p>
       </form>
