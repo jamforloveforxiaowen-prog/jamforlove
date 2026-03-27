@@ -156,7 +156,7 @@ export default function OrderPage() {
 
   /* ─── 輸入欄位 ──────────────────────────────────── */
 
-  const inputClass = "w-full py-3 px-0 bg-transparent text-sm text-espresso outline-none placeholder:text-espresso-light/30 transition-colors focus:border-rose";
+  const inputClass = "w-full py-3 px-0 bg-transparent text-base text-espresso outline-none placeholder:text-espresso-light/30 transition-colors focus:border-rose";
   const inputBorder = { borderBottom: "2px dashed rgba(30,15,8,0.12)" };
   const inputBorderFocus = "focus-within:[border-bottom-color:var(--color-rose)]";
 
@@ -167,13 +167,13 @@ export default function OrderPage() {
         <h1 className="font-serif text-3xl md:text-4xl font-bold text-espresso" style={{ fontStyle: "italic" }}>
           Jam for Love
         </h1>
-        <p className="text-espresso-light/40 text-sm mt-1">~ 用愛手工熬煮 ~</p>
+        <p className="text-espresso-light/40 text-base mt-1">~ 用愛手工熬煮 ~</p>
         <div className="flex items-center justify-center gap-3 mt-4">
           <span className="w-10 h-px bg-rose/30" />
           <span className="text-rose text-sm">♥</span>
           <span className="w-10 h-px bg-rose/30" />
         </div>
-        <p className="text-espresso-light/50 text-sm mt-4 leading-relaxed max-w-md mx-auto">
+        <p className="text-espresso-light/50 text-base mt-4 leading-relaxed max-w-md mx-auto">
           每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。
         </p>
       </div>
@@ -196,8 +196,8 @@ export default function OrderPage() {
               1
             </div>
             <div className="mb-1">
-              <h2 className="font-serif text-xl font-bold text-espresso">選擇產品組合</h2>
-              <p className="text-espresso-light/40 text-sm">每組 NT$500，可複選多組</p>
+              <h2 className="font-serif text-2xl font-bold text-espresso">選擇產品組合</h2>
+              <p className="text-espresso-light/40 text-base">每組 NT$500，可複選多組</p>
             </div>
 
             <div className="space-y-2.5 mt-4">
@@ -215,20 +215,20 @@ export default function OrderPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="font-serif font-bold text-espresso">{combo.name}</span>
-                          <span className="text-espresso-light/30 text-xs">限 {combo.limit} 組</span>
+                          <span className="font-serif font-bold text-espresso text-base">{combo.name}</span>
+                          <span className="text-espresso-light/30 text-sm">限 {combo.limit} 組</span>
                         </div>
-                        <p className="text-espresso-light/50 text-sm">{combo.items.join(" + ")}</p>
+                        <p className="text-espresso-light/50 text-[0.95rem]">{combo.items.join(" + ")}</p>
                       </div>
                       <div className="shrink-0">
                         {isSelected ? (
                           <div className="flex items-center gap-1.5">
-                            <button type="button" onClick={() => updateCombo(combo.id, -1)} className="w-8 h-8 rounded-lg text-espresso-light hover:text-rose active:scale-90 transition-all flex items-center justify-center" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
-                            <span className="w-6 text-center font-bold text-espresso tabular-nums text-sm">{qty}</span>
-                            <button type="button" onClick={() => updateCombo(combo.id, 1)} className="w-8 h-8 rounded-lg text-espresso-light hover:text-rose active:scale-90 transition-all flex items-center justify-center" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
+                            <button type="button" onClick={() => updateCombo(combo.id, -1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose active:scale-90 transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
+                            <span className="w-7 text-center font-bold text-espresso tabular-nums text-base">{qty}</span>
+                            <button type="button" onClick={() => updateCombo(combo.id, 1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose active:scale-90 transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
                           </div>
                         ) : (
-                          <button type="button" onClick={() => updateCombo(combo.id, 1)} className="px-3 py-1.5 rounded-lg text-[0.8rem] font-medium text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed rgba(196,80,106,0.3)" }}>
+                          <button type="button" onClick={() => updateCombo(combo.id, 1)} className="px-4 py-2 rounded-lg text-[0.9rem] font-medium text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed rgba(196,80,106,0.3)" }}>
                             選擇
                           </button>
                         )}
@@ -236,8 +236,8 @@ export default function OrderPage() {
                     </div>
                     {isSelected && (
                       <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-                        <span className="text-espresso-light/40 text-xs">{qty} 組 × NT$500</span>
-                        <span className="text-rose font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>NT$ {qty * combo.price}</span>
+                        <span className="text-espresso-light/40 text-sm">{qty} 組 × NT$500</span>
+                        <span className="text-rose font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>NT$ {qty * combo.price}</span>
                       </div>
                     )}
                   </div>
@@ -255,8 +255,8 @@ export default function OrderPage() {
               2
             </div>
             <div className="mb-1">
-              <h2 className="font-serif text-xl font-bold text-espresso">加購好物</h2>
-              <p className="text-espresso-light/40 text-sm">可自由搭配，不限數量</p>
+              <h2 className="font-serif text-2xl font-bold text-espresso">加購好物</h2>
+              <p className="text-espresso-light/40 text-base">可自由搭配，不限數量</p>
             </div>
 
             <div className="space-y-2 mt-4">
@@ -271,14 +271,14 @@ export default function OrderPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-espresso text-sm font-medium">{addon.name}</span>
-                        {addon.spec && <span className="text-espresso-light/30 text-xs">({addon.spec})</span>}
-                        {addon.limit && <span className="text-sage text-[0.65rem] font-semibold">限量 {addon.limit}{addon.unit}</span>}
+                        <span className="text-espresso text-[0.95rem] font-medium">{addon.name}</span>
+                        {addon.spec && <span className="text-espresso-light/30 text-sm">({addon.spec})</span>}
+                        {addon.limit && <span className="text-sage text-xs font-semibold">限量 {addon.limit}{addon.unit}</span>}
                       </div>
                       {addon.note && <p className="text-rose/60 text-xs mt-0.5">{addon.note}</p>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-sm font-bold tabular-nums" style={{ color: "var(--color-honey)", fontFamily: "var(--font-display)" }}>${addon.price}</span>
+                      <span className="text-base font-bold tabular-nums" style={{ color: "var(--color-honey)", fontFamily: "var(--font-display)" }}>${addon.price}</span>
                       {isSelected ? (
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => updateAddon(addon.id, -1)} className="w-7 h-7 rounded-md text-espresso-light hover:text-[var(--color-honey)] active:scale-90 transition-all flex items-center justify-center text-sm" style={{ border: "1.5px dashed rgba(30,15,8,0.12)" }}>−</button>
@@ -303,29 +303,29 @@ export default function OrderPage() {
             >
               3
             </div>
-            <h2 className="font-serif text-xl font-bold text-espresso mb-1">填寫資料</h2>
-            <p className="text-espresso-light/40 text-sm mb-5">請填寫正確資訊以便寄送</p>
+            <h2 className="font-serif text-2xl font-bold text-espresso mb-1">填寫資料</h2>
+            <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
 
             <div className="space-y-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                 <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">姓名 *</label>
+                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">姓名 *</label>
                   <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={inputClass} required />
                 </div>
                 <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">電話 *</label>
+                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">電話 *</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} required />
                 </div>
               </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">Email</label>
+                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="選填，用於訂單通知" />
               </div>
 
               {/* 取貨方式 */}
               <div className="pt-4 pb-2">
-                <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 mb-3">取貨方式 *</label>
+                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 mb-3">取貨方式 *</label>
                 <div className="flex gap-3">
                   {([
                     { value: "shipping" as const, label: "郵寄", icon: "📦" },
@@ -335,7 +335,7 @@ export default function OrderPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setDeliveryMethod(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg text-base font-medium transition-all duration-200 ${
                         deliveryMethod === opt.value ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"
                       }`}
                       style={{ border: deliveryMethod === opt.value ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}
@@ -348,14 +348,14 @@ export default function OrderPage() {
               </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">
+                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">
                   {deliveryMethod === "shipping" ? "收件地址" : "取貨地點"} *
                 </label>
                 <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass} placeholder={deliveryMethod === "shipping" ? "請填寫完整地址" : "例：暨大校內取貨"} required />
               </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-[0.65rem] font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">備註</label>
+                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">備註</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} placeholder="例如：金盞花或玫瑰花乳霜的偏好" />
               </div>
             </div>
@@ -374,12 +374,12 @@ export default function OrderPage() {
                 className="rounded-lg p-5"
                 style={{ border: "2px dashed rgba(30,15,8,0.1)", background: "rgba(255,255,255,0.4)" }}
               >
-                <h3 className="font-serif text-lg font-bold text-espresso mb-3">訂單摘要</h3>
+                <h3 className="font-serif text-xl font-bold text-espresso mb-3">訂單摘要</h3>
                 <div className="space-y-1.5">
                   {Object.entries(comboSelections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
                     const combo = COMBOS.find((c) => c.id === Number(id))!;
                     return (
-                      <div key={`c${id}`} className="flex justify-between text-sm">
+                      <div key={`c${id}`} className="flex justify-between text-[0.95rem]">
                         <span className="text-espresso-light">{combo.name}（{combo.items.join("、")}）× {qty}</span>
                         <span className="text-espresso font-medium tabular-nums">NT$ {combo.price * qty}</span>
                       </div>
@@ -388,7 +388,7 @@ export default function OrderPage() {
                   {Object.entries(addonSelections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
                     const addon = ADDONS.find((a) => a.id === Number(id))!;
                     return (
-                      <div key={`a${id}`} className="flex justify-between text-sm">
+                      <div key={`a${id}`} className="flex justify-between text-[0.95rem]">
                         <span className="text-espresso-light">{addon.name} × {qty}</span>
                         <span className="text-espresso font-medium tabular-nums">NT$ {addon.price * qty}</span>
                       </div>
