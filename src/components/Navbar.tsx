@@ -154,29 +154,19 @@ export default function Navbar() {
                     <div className="relative" ref={userMenuRef}>
                       <button
                         onClick={() => setUserMenuOpen(!userMenuOpen)}
-                        className="flex items-center gap-1.5 pl-1 pr-2.5 py-0.5 rounded-full text-[0.8rem] font-medium transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                        style={{
-                          background: userMenuOpen ? "var(--color-rose)" : "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))",
-                          color: "white",
-                          boxShadow: userMenuOpen
-                            ? "0 2px 8px rgba(196,80,106,0.3), inset 0 1px 0 rgba(255,255,255,0.15)"
-                            : "0 2px 10px rgba(196,80,106,0.2), inset 0 1px 0 rgba(255,255,255,0.15)",
-                        }}
+                        className="flex items-center gap-1.5 px-2 py-1 text-[0.8rem] font-medium transition-all duration-300 group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
                         title={user.name}
                       >
                         <span
-                          className="flex items-center justify-center w-[22px] h-[22px] rounded-full text-[0.65rem] font-bold"
-                          style={{
-                            background: "rgba(255,255,255,0.25)",
-                            backdropFilter: "blur(4px)",
-                          }}
-                        >
-                          {user.name.charAt(0).toUpperCase()}
+                          className="w-[6px] h-[6px] rounded-full transition-colors duration-300"
+                          style={{ background: userMenuOpen ? "var(--color-rose)" : "var(--color-sage)" }}
+                        />
+                        <span className="text-espresso-light group-hover:text-espresso transition-colors">
+                          {user.name}
                         </span>
-                        <span className="max-w-[72px] truncate">{user.name}</span>
                         <svg
-                          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                          className={`transition-transform duration-200 opacity-70 ${userMenuOpen ? "rotate-180" : ""}`}
+                          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          className={`opacity-30 group-hover:opacity-60 transition-all duration-200 ${userMenuOpen ? "rotate-180 opacity-60" : ""}`}
                         >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
