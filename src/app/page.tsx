@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BannerCarousel from "@/components/BannerCarousel";
+import AboutSection from "@/components/AboutSection";
 
 export default function HomePage() {
 
@@ -75,6 +76,9 @@ export default function HomePage() {
 
       {/* ── Banner 輪播 ─────────────────── */}
       <BannerCarousel />
+
+      {/* ── 關於我們 ───────────────────── */}
+      <AboutSection />
 
     </div>
   );
