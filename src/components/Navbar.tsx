@@ -2,38 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useCart } from "@/contexts/CartContext";
-
+import { useEffect, useState, useCallback } from "react";
 interface User { id: number; username: string; role: string; name: string }
-
-/** 購物車徽章 - 數量變化時彈跳 */
-function CartBadge({ count }: { count: number }) {
-  const [animate, setAnimate] = useState(false);
-  const prevCount = useRef(count);
-
-  useEffect(() => {
-    if (count !== prevCount.current && count > 0) {
-      setAnimate(true);
-      const timer = setTimeout(() => setAnimate(false), 400);
-      prevCount.current = count;
-      return () => clearTimeout(timer);
-    }
-    prevCount.current = count;
-  }, [count]);
-
-  if (count <= 0) return null;
-
-  return (
-    <span
-      className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose text-white text-[10px] font-bold flex items-center justify-center leading-none ${
-        animate ? "animate-pulse-badge" : ""
-      }`}
-    >
-      {count > 99 ? "99+" : count}
-    </span>
-  );
-}
 
 function Dot() {
   return (
@@ -50,7 +20,6 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { totalCount } = useCart();
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
@@ -250,27 +219,6 @@ export default function Navbar() {
           )}
         </div>
       </div>
-
-      {/* 獨立購物車按鈕 — 登入後才顯示 */}
-      {user && !isAuthPage && (
-        <Link
-          href="/order"
-          className="pointer-events-auto relative flex items-center justify-center w-[40px] h-[40px] rounded-full transition-all duration-500 ease-out"
-          style={{
-            background: "rgba(248,243,235,0.92)",
-            backdropFilter: "blur(16px) saturate(1.4)",
-            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
-            border: "1px solid rgba(235,226,212,0.8)",
-            boxShadow: s ? "0 6px 24px rgba(30,15,8,0.06), 0 1px 2px rgba(30,15,8,0.03)" : "0 4px 20px rgba(0,0,0,0.03)",
-          }}
-          aria-label={`購物車，${totalCount} 件商品`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ color: "var(--color-espresso-light)" }}>
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <CartBadge count={totalCount} />
-        </Link>
-      )}
 
       {/* 手機版浮動面板 — 修正 top 為實際高度 */}
       {menuOpen && !isAuthPage && (
