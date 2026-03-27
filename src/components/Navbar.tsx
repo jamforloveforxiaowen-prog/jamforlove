@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 interface User { id: number; username: string; role: string; name: string }
 
 function Dot() {
@@ -19,7 +19,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   useEffect(() => {
@@ -36,7 +38,17 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => { setMenuOpen(false); setUserMenuOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -118,29 +130,14 @@ export default function Navbar() {
                   className={navLinkClass("/story", isActive("/story"))}
                   style={isActive("/story") ? activeCTAStyle : undefined}
                 >果醬的故事</Link>
-                {user && (
+                {user && user.role === "admin" && (
                   <>
                     <Dot />
                     <Link
-                      href="/order"
-                      className={navLinkClass("/order", isActive("/order"))}
-                      style={isActive("/order") ? activeCTAStyle : undefined}
-                    >果醬選購</Link>
-                    <Link
-                      href="/my-orders"
-                      className={navLinkClass("/my-orders", isActive("/my-orders"))}
-                      style={isActive("/my-orders") ? activeCTAStyle : undefined}
-                    >我的訂單</Link>
-                    {user.role === "admin" && (
-                      <>
-                        <Dot />
-                        <Link
-                          href="/admin"
-                          className={navLinkClass("/admin", isActive("/admin"))}
-                          style={isActive("/admin") ? activeCTAStyle : undefined}
-                        >後台管理</Link>
-                      </>
-                    )}
+                      href="/admin"
+                      className={navLinkClass("/admin", isActive("/admin"))}
+                      style={isActive("/admin") ? activeCTAStyle : undefined}
+                    >後台管理</Link>
                   </>
                 )}
               </>
@@ -154,23 +151,58 @@ export default function Navbar() {
                 {user ? (
                   <>
                     <Dot />
-                    <span
-                      className="px-2 py-1 text-[0.8rem] max-w-[80px] truncate"
-                      style={{ color: "var(--color-espresso-light)" }}
-                      title={user.name}
-                    >
-                      {user.name}
-                    </span>
-                    <button
-                      onClick={handleLogout}
-                      className="px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-colors duration-250 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
-                      style={{
-                        border: "1px solid var(--color-linen-dark)",
-                        color: "var(--color-espresso-light)",
-                      }}
-                    >
-                      登出
-                    </button>
+                    <div className="relative" ref={userMenuRef}>
+                      <button
+                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.8rem] font-medium transition-all duration-250 hover:bg-rose/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose/50"
+                        style={{ color: "var(--color-espresso-light)" }}
+                        title={user.name}
+                      >
+                        <span className="max-w-[80px] truncate">{user.name}</span>
+                        <svg
+                          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          className={`transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      {userMenuOpen && (
+                        <div
+                          className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden animate-slide-down"
+                          style={{
+                            minWidth: 160,
+                            background: "rgba(248,243,235,0.96)",
+                            backdropFilter: "blur(20px) saturate(1.4)",
+                            WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+                            border: "1px solid rgba(235,226,212,0.8)",
+                            boxShadow: "0 10px 32px rgba(30,15,8,0.1), 0 2px 4px rgba(30,15,8,0.03)",
+                            padding: "6px",
+                          }}
+                        >
+                          <Link
+                            href="/order"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            果醬選購
+                          </Link>
+                          <Link
+                            href="/my-orders"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            我的訂單
+                          </Link>
+                          <div className="my-1" style={{ height: 1, background: "linear-gradient(90deg, transparent, var(--color-linen-dark), transparent)" }} />
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-3 py-2 text-[0.8rem] font-medium rounded-lg transition-colors duration-200 text-espresso-light hover:text-rose hover:bg-rose/10"
+                          >
+                            登出
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
