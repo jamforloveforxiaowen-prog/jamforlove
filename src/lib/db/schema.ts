@@ -131,6 +131,30 @@ export const cartItems = sqliteTable("cart_items", {
     .default(sql`(datetime('now'))`),
 });
 
+export const fundraiseOrders = sqliteTable("fundraise_orders", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  customerName: text("customer_name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull().default(""),
+  address: text("address").notNull(),
+  deliveryMethod: text("delivery_method", {
+    enum: ["shipping", "pickup"],
+  }).notNull().default("shipping"),
+  combos: text("combos").notNull().default("[]"),
+  addons: text("addons").notNull().default("[]"),
+  notes: text("notes").notNull().default(""),
+  total: integer("total").notNull(),
+  status: text("status", {
+    enum: ["pending", "confirmed", "shipped", "completed"],
+  }).notNull().default("pending"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const orderItems = sqliteTable("order_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: integer("order_id")
