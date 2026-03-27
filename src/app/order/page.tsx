@@ -168,7 +168,7 @@ export default function OrderPage() {
           customerName, phone, email,
           address: deliveryMethod === "shipping"
             ? `${zipcode} ${city}${district}${addressDetail}`.trim()
-            : pickupNote,
+            : "面交 / 暨大取貨",
           deliveryMethod, combos, addons, notes, total: grandTotal,
         }),
       });
@@ -189,7 +189,7 @@ export default function OrderPage() {
           <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl animate-reveal-up" style={{ background: "var(--color-rose)", color: "white" }}>✓</div>
           <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.1s", fontStyle: "italic" }}>訂單已送出！</h1>
           <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.2s" }}>感謝你支持 Jam for Love！</p>
-          <p className="text-espresso-light/40 text-sm mb-10 animate-reveal-up" style={{ animationDelay: "0.25s" }}>
+          <p className="text-espresso-light/40 text-base mb-10 animate-reveal-up" style={{ animationDelay: "0.25s" }}>
             訂單金額 <span className="text-rose font-bold">NT$ {grandTotal}</span>，我們會盡快與你確認。
           </p>
           <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.35s" }}>回到首頁</button>
@@ -200,7 +200,7 @@ export default function OrderPage() {
 
   /* ─── 輸入欄位 ──────────────────────────────────── */
 
-  const inputClass = "w-full py-3 px-0 bg-transparent text-base text-espresso outline-none placeholder:text-espresso-light/30 transition-colors focus:border-rose";
+  const inputClass = "w-full py-3 px-0 bg-transparent text-lg text-espresso outline-none placeholder:text-espresso-light/30 transition-colors focus:border-rose";
   const inputBorder = { borderBottom: "2px dashed rgba(30,15,8,0.12)" };
   const inputBorderFocus = "focus-within:[border-bottom-color:var(--color-rose)]";
 
@@ -240,7 +240,7 @@ export default function OrderPage() {
               1
             </div>
             <div className="mb-1">
-              <h2 className="font-serif text-2xl font-bold text-espresso">選擇產品組合</h2>
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">選擇產品組合</h2>
               <p className="text-espresso-light/40 text-base">每組 NT$500，可複選多組</p>
             </div>
 
@@ -259,10 +259,10 @@ export default function OrderPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="font-serif font-bold text-espresso text-base">{combo.name}</span>
-                          <span className="text-espresso-light/30 text-sm">限 {combo.limit} 組</span>
+                          <span className="font-serif font-bold text-espresso text-lg">{combo.name}</span>
+                          <span className="text-espresso-light/30 text-base">限 {combo.limit} 組</span>
                         </div>
-                        <p className="text-espresso-light/50 text-[0.95rem]">{combo.items.join(" + ")}</p>
+                        <p className="text-espresso-light/50 text-[1.05rem]">{combo.items.join(" + ")}</p>
                       </div>
                       <div className="shrink-0">
                         {isSelected ? (
@@ -272,7 +272,7 @@ export default function OrderPage() {
                             <button type="button" onClick={() => updateCombo(combo.id, 1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose active:scale-90 transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
                           </div>
                         ) : (
-                          <button type="button" onClick={() => updateCombo(combo.id, 1)} className="px-4 py-2 rounded-lg text-[0.9rem] font-medium text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed rgba(196,80,106,0.3)" }}>
+                          <button type="button" onClick={() => updateCombo(combo.id, 1)} className="px-4 py-2 rounded-lg text-base font-medium text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed rgba(196,80,106,0.3)" }}>
                             選擇
                           </button>
                         )}
@@ -280,7 +280,7 @@ export default function OrderPage() {
                     </div>
                     {isSelected && (
                       <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-                        <span className="text-espresso-light/40 text-sm">{qty} 組 × NT$500</span>
+                        <span className="text-espresso-light/40 text-base">{qty} 組 × NT$500</span>
                         <span className="text-rose font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>NT$ {qty * combo.price}</span>
                       </div>
                     )}
@@ -299,7 +299,7 @@ export default function OrderPage() {
               2
             </div>
             <div className="mb-1">
-              <h2 className="font-serif text-2xl font-bold text-espresso">加購好物</h2>
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">加購好物</h2>
               <p className="text-espresso-light/40 text-base">可自由搭配，不限數量</p>
             </div>
 
@@ -315,14 +315,14 @@ export default function OrderPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-espresso text-[0.95rem] font-medium">{addon.name}</span>
+                        <span className="text-espresso text-[1.05rem] font-medium">{addon.name}</span>
                         {addon.spec && <span className="text-espresso-light/30 text-sm">({addon.spec})</span>}
-                        {addon.limit && <span className="text-sage text-xs font-semibold">限量 {addon.limit}{addon.unit}</span>}
+                        {addon.limit && <span className="text-sage text-sm font-semibold">限量 {addon.limit}{addon.unit}</span>}
                       </div>
-                      {addon.note && <p className="text-rose/60 text-xs mt-0.5">{addon.note}</p>}
+                      {addon.note && <p className="text-rose/60 text-sm mt-0.5">{addon.note}</p>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-base font-bold tabular-nums" style={{ color: "var(--color-honey)", fontFamily: "var(--font-display)" }}>${addon.price}</span>
+                      <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)", fontFamily: "var(--font-display)" }}>${addon.price}</span>
                       {isSelected ? (
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => updateAddon(addon.id, -1)} className="w-7 h-7 rounded-md text-espresso-light hover:text-[var(--color-honey)] active:scale-90 transition-all flex items-center justify-center text-sm" style={{ border: "1.5px dashed rgba(30,15,8,0.12)" }}>−</button>
@@ -348,7 +348,7 @@ export default function OrderPage() {
               3
             </div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="font-serif text-2xl font-bold text-espresso">填寫資料</h2>
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">填寫資料</h2>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -372,23 +372,23 @@ export default function OrderPage() {
             <div className="space-y-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                 <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">姓名 *</label>
+                  <label className="block text-sm font-semibold text-espresso-light/50 pt-2">姓名 *</label>
                   <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={inputClass} required />
                 </div>
                 <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">電話 *</label>
+                  <label className="block text-sm font-semibold text-espresso-light/50 pt-2">電話 *</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} required />
                 </div>
               </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">Email</label>
+                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">Email</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="選填，用於訂單通知" />
               </div>
 
               {/* 取貨方式 */}
               <div className="pt-4 pb-2">
-                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 mb-3">取貨方式 *</label>
+                <label className="block text-sm font-semibold text-espresso-light/50 mb-3">取貨方式 *</label>
                 <div className="flex gap-3">
                   {([
                     { value: "shipping" as const, label: "郵寄", icon: "📦" },
@@ -398,7 +398,7 @@ export default function OrderPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setDeliveryMethod(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg text-base font-medium transition-all duration-200 ${
+                      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg text-lg font-medium transition-all duration-200 ${
                         deliveryMethod === opt.value ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"
                       }`}
                       style={{ border: deliveryMethod === opt.value ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}
@@ -410,25 +410,20 @@ export default function OrderPage() {
                 </div>
               </div>
 
-              {/* 地址 */}
-              {deliveryMethod === "shipping" ? (
+              {/* 地址（僅郵寄時顯示） */}
+              {deliveryMethod === "shipping" && (
                 <div className="pt-2">
-                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 mb-2">收件地址 *</label>
+                  <label className="block text-sm font-semibold text-espresso-light/50 mb-2">收件地址 *</label>
                   <TaiwanAddressSelector
                     zipcode={zipcode} city={city} district={district} detail={addressDetail}
                     onChangeZipcode={handleChangeZipcode} onChangeCity={handleChangeCity}
                     onChangeDistrict={handleChangeDistrict} onChangeDetail={handleChangeDetail}
                   />
                 </div>
-              ) : (
-                <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">取貨地點 *</label>
-                  <input type="text" value={pickupNote} onChange={(e) => setPickupNote(e.target.value)} className={inputClass} placeholder="例：暨大校內取貨" required />
-                </div>
               )}
 
               <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">備註</label>
+                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">備註</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} placeholder="例如：金盞花或玫瑰花乳霜的偏好" />
               </div>
             </div>
@@ -447,12 +442,12 @@ export default function OrderPage() {
                 className="rounded-lg p-5"
                 style={{ border: "2px dashed rgba(30,15,8,0.1)", background: "rgba(255,255,255,0.4)" }}
               >
-                <h3 className="font-serif text-xl font-bold text-espresso mb-3">訂單摘要</h3>
+                <h3 className="font-serif text-2xl font-bold text-espresso mb-3">訂單摘要</h3>
                 <div className="space-y-1.5">
                   {Object.entries(comboSelections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
                     const combo = COMBOS.find((c) => c.id === Number(id))!;
                     return (
-                      <div key={`c${id}`} className="flex justify-between text-[0.95rem]">
+                      <div key={`c${id}`} className="flex justify-between text-base">
                         <span className="text-espresso-light">{combo.name}（{combo.items.join("、")}）× {qty}</span>
                         <span className="text-espresso font-medium tabular-nums">NT$ {combo.price * qty}</span>
                       </div>
@@ -461,7 +456,7 @@ export default function OrderPage() {
                   {Object.entries(addonSelections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
                     const addon = ADDONS.find((a) => a.id === Number(id))!;
                     return (
-                      <div key={`a${id}`} className="flex justify-between text-[0.95rem]">
+                      <div key={`a${id}`} className="flex justify-between text-base">
                         <span className="text-espresso-light">{addon.name} × {qty}</span>
                         <span className="text-espresso font-medium tabular-nums">NT$ {addon.price * qty}</span>
                       </div>
@@ -483,7 +478,7 @@ export default function OrderPage() {
         <button
           type="submit"
           disabled={loading || !hasSelection}
-          className="w-full py-4 bg-rose text-white font-serif font-bold text-[0.95rem] rounded-lg transition-all hover:bg-rose-dark active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+          className="w-full py-4 bg-rose text-white font-serif font-bold text-lg rounded-lg transition-all hover:bg-rose-dark active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
           style={{ border: "2px dashed rgba(196,80,106,0.3)", boxShadow: "0 4px 16px rgba(196,80,106,0.2)" }}
         >
           {loading ? (
@@ -493,7 +488,7 @@ export default function OrderPage() {
             </span>
           ) : hasSelection ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇產品"}
         </button>
-        <p className="text-center text-espresso-light/30 text-xs mt-4">送出後我們會以電話或 Email 確認訂單 ♥</p>
+        <p className="text-center text-espresso-light/30 text-sm mt-4">送出後我們會以電話或 Email 確認訂單 ♥</p>
       </form>
     </div>
   );

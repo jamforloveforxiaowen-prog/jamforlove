@@ -70,14 +70,14 @@ export default function TaiwanAddressSelector({
     onChangeDistrict(newDistrict);
   }
 
-  const selectClass = "w-full py-3 px-1 bg-transparent text-base text-espresso outline-none appearance-none cursor-pointer";
+  const selectClass = "w-full py-3 px-1 bg-transparent text-lg text-espresso outline-none appearance-none cursor-pointer";
 
   return (
     <div className="space-y-1">
       {/* 縣市 + 區域 + 郵遞區號 */}
       <div className="grid grid-cols-[1fr_1fr_80px] gap-3">
         <div style={{ borderBottom: "2px dashed rgba(30,15,8,0.12)" }} className="focus-within:[border-bottom-color:var(--color-rose)]">
-          <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">縣市 *</label>
+          <label className="block text-sm font-semibold text-espresso-light/50 pt-2">縣市 *</label>
           <select
             value={city}
             onChange={(e) => handleCityChange(e.target.value)}
@@ -90,7 +90,7 @@ export default function TaiwanAddressSelector({
         </div>
 
         <div style={{ borderBottom: "2px dashed rgba(30,15,8,0.12)" }} className="focus-within:[border-bottom-color:var(--color-rose)]">
-          <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">區域 *</label>
+          <label className="block text-sm font-semibold text-espresso-light/50 pt-2">區域 *</label>
           <select
             value={district}
             onChange={(e) => handleDistrictChange(e.target.value)}
@@ -104,12 +104,12 @@ export default function TaiwanAddressSelector({
         </div>
 
         <div style={{ borderBottom: "2px dashed rgba(30,15,8,0.12)" }}>
-          <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">郵遞區號</label>
+          <label className="block text-sm font-semibold text-espresso-light/50 pt-2">郵遞區號</label>
           <input
             type="text"
             value={zipcode}
             readOnly
-            className="w-full py-3 px-1 bg-transparent text-base text-rose font-bold outline-none tabular-nums"
+            className="w-full py-3 px-1 bg-transparent text-lg text-rose font-bold outline-none tabular-nums"
             placeholder="自動"
           />
         </div>
@@ -117,12 +117,12 @@ export default function TaiwanAddressSelector({
 
       {/* 詳細地址 */}
       <div style={{ borderBottom: "2px dashed rgba(30,15,8,0.12)" }} className="focus-within:[border-bottom-color:var(--color-rose)]">
-        <label className="block text-xs font-semibold tracking-wider uppercase text-espresso-light/40 pt-2">詳細地址 *</label>
+        <label className="block text-sm font-semibold text-espresso-light/50 pt-2">詳細地址 *</label>
         <input
           type="text"
           value={detail}
           onChange={(e) => onChangeDetail(e.target.value)}
-          className="w-full py-3 px-0 bg-transparent text-base text-espresso outline-none placeholder:text-espresso-light/30"
+          className="w-full py-3 px-0 bg-transparent text-lg text-espresso outline-none placeholder:text-espresso-light/30"
           placeholder="路/街、巷弄號、樓層"
           required
         />
