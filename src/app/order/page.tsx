@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
-import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
 /* ─── 資料定義 ─────────────────────────────────── */
 
@@ -186,45 +185,54 @@ export default function OrderPage() {
   if (submitted) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6 relative overflow-hidden">
-        {/* 背景慶祝彩帶動畫 */}
-        <div className="absolute inset-0 pointer-events-none">
-          <LottieAnimation
-            src={LOTTIE_URLS.confetti}
-            loop={false}
-            autoplay
-            className="w-full h-full opacity-60"
-          />
+        {/* 背景飄落愛心 */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute text-rose/20 animate-[falling_3s_ease-in_forwards]"
+              style={{
+                left: `${8 + i * 8}%`,
+                top: "-5%",
+                fontSize: `${14 + (i % 4) * 6}px`,
+                animationDelay: `${0.2 + i * 0.15}s`,
+              }}
+            >
+              ♥
+            </span>
+          ))}
         </div>
 
         <div className="text-center max-w-md relative z-10">
-          {/* 成功打勾 Lottie 動畫 */}
-          <div className="w-32 h-32 mx-auto mb-4">
-            <LottieAnimation
-              src={LOTTIE_URLS.success}
-              loop={false}
-              autoplay
-              className="w-full h-full"
+          {/* 成功打勾動畫 — 圓圈縮放 + 勾勾描繪 */}
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div
+              className="w-24 h-24 rounded-full flex items-center justify-center animate-[success-circle_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+              style={{ background: "var(--color-rose)", transform: "scale(0)", boxShadow: "0 0 0 0 rgba(196,80,106,0.3)" }}
+            >
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="animate-[check-draw_0.4s_ease_0.5s_forwards]" style={{ strokeDasharray: 24, strokeDashoffset: 24 }}>
+                <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            {/* 成功圈圈脈衝環 */}
+            <div
+              className="absolute inset-0 rounded-full animate-[success-ring_1s_ease-out_0.3s_forwards]"
+              style={{ border: "3px solid var(--color-rose)", opacity: 0, transform: "scale(0.8)" }}
             />
           </div>
 
-          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.3s", fontStyle: "italic" }}>訂單已送出！</h1>
-          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.4s" }}>感謝你支持 Jam for Love！</p>
-          <p className="text-espresso-light/40 text-base mb-6 animate-reveal-up" style={{ animationDelay: "0.5s" }}>
+          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.5s", fontStyle: "italic" }}>訂單已送出！</h1>
+          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.6s" }}>感謝你支持 Jam for Love！</p>
+          <p className="text-espresso-light/40 text-base mb-3 animate-reveal-up" style={{ animationDelay: "0.7s" }}>
             訂單金額 <span className="text-rose font-bold text-lg">NT$ {grandTotal}</span>，我們會盡快與你確認。
           </p>
 
-          {/* 愛心浮動裝飾 */}
-          <div className="w-16 h-16 mx-auto mb-6 animate-reveal-up" style={{ animationDelay: "0.6s" }}>
-            <LottieAnimation
-              src={LOTTIE_URLS.heartBeat}
-              loop
-              autoplay
-              speed={0.8}
-              className="w-full h-full opacity-70"
-            />
+          {/* 愛心跳動 */}
+          <div className="text-3xl mb-8 animate-reveal-up" style={{ animationDelay: "0.8s" }}>
+            <span className="inline-block animate-[heartbeat_1.2s_ease-in-out_infinite]">♥</span>
           </div>
 
-          <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.7s" }}>回到首頁</button>
+          <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.9s" }}>回到首頁</button>
         </div>
       </div>
     );
