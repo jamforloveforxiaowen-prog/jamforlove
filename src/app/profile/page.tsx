@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><p className="text-espresso-light/50">載入中...</p></div>}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromOrder = searchParams.get("from") === "order";
