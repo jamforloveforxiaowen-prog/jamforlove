@@ -38,7 +38,10 @@ export default function LoginPage() {
     }
 
     setLoading(false);
-    router.push("/");
+    // 管理員直接進後台，一般用戶進首頁
+    const meRes = await fetch("/api/auth/me");
+    const meData = await meRes.json();
+    router.push(meData.user?.role === "admin" ? "/admin" : "/");
     router.refresh();
   }
 
