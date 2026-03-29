@@ -449,8 +449,9 @@ function BannerManager() {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [sortOrder, setSortOrder] = useState(0);
   const [error, setError] = useState("");
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   async function loadItems() {
     try {
@@ -470,7 +471,6 @@ function BannerManager() {
     setTitle("");
     setSubtitle("");
     setImageUrl("");
-    setSortOrder(0);
     setEditingId(null);
     setShowForm(false);
     setError("");
@@ -480,7 +480,6 @@ function BannerManager() {
     setTitle(item.title);
     setSubtitle(item.subtitle);
     setImageUrl(item.imageUrl);
-    setSortOrder(item.sortOrder);
     setEditingId(item.id);
     setShowForm(true);
     setError("");
@@ -490,6 +489,10 @@ function BannerManager() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
+
+    const sortOrder = editingId
+      ? items.find(i => i.id === editingId)?.sortOrder ?? items.length
+      : items.length;
 
     const url = editingId ? `/api/admin/banners/${editingId}` : "/api/admin/banners";
     const method = editingId ? "PUT" : "POST";
@@ -517,21 +520,6 @@ function BannerManager() {
     loadItems();
   }
 
-  async function toggleActive(item: BannerItem) {
-    const action = item.isActive ? "隱藏" : "顯示";
-    if (!window.confirm(`確定要${action}此 Banner 嗎？`)) return;
-    try {
-      await fetch(`/api/admin/banners/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !item.isActive }),
-      });
-      loadItems();
-    } catch {
-      setError(`${action}失敗，請重試`);
-    }
-  }
-
   async function handleDelete(item: BannerItem) {
     if (!window.confirm("確定要刪除此 Banner 嗎？此操作無法復原。")) return;
     try {
@@ -542,6 +530,50 @@ function BannerManager() {
     }
   }
 
+  // 拖曳排序
+  function handleDragStart(id: number) {
+    setDragId(id);
+  }
+
+  function handleDragOver(e: React.DragEvent, id: number) {
+    e.preventDefault();
+    setDragOverId(id);
+  }
+
+  async function handleDrop(targetId: number) {
+    if (dragId === null || dragId === targetId) {
+      setDragId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const oldIndex = items.findIndex(i => i.id === dragId);
+    const newIndex = items.findIndex(i => i.id === targetId);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // 重新排列
+    const reordered = [...items];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    // 即時更新 UI
+    setItems(reordered);
+    setDragId(null);
+    setDragOverId(null);
+
+    // 批次更新 sortOrder 到後端
+    await Promise.all(
+      reordered.map((item, i) =>
+        fetch(`/api/admin/banners/${item.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder: i }),
+        })
+      )
+    );
+    loadItems();
+  }
+
   if (loading) {
     return <p className="text-espresso-light/50 text-center py-16 text-sm">載入中...</p>;
   }
@@ -550,7 +582,10 @@ function BannerManager() {
     <div>
       {error && <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">Banner 列表</h2>
+        <div>
+          <h2 className="font-serif text-lg font-bold text-espresso">Banner 列表</h2>
+          {items.length > 1 && <p className="text-xs text-espresso-light/40 mt-1">拖曳卡片可調整順序</p>}
+        </div>
         <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary-sm">
           + 新增 Banner
         </button>
@@ -562,44 +597,14 @@ function BannerManager() {
             {editingId ? "編輯 Banner" : "新增 Banner"}
           </h3>
           <div>
-            <label htmlFor="banner-title" className="block text-sm font-medium text-espresso mb-2">
-              標題文字
-            </label>
-            <input
-              id="banner-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="input-field"
-              placeholder="例：用愛製作，用心傳遞"
-            />
+            <label htmlFor="banner-title" className="block text-sm font-medium text-espresso mb-2">標題文字</label>
+            <input id="banner-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input-field" placeholder="例：用愛製作，用心傳遞" />
           </div>
           <div>
-            <label htmlFor="banner-subtitle" className="block text-sm font-medium text-espresso mb-2">
-              副標題（選填）
-            </label>
-            <input
-              id="banner-subtitle"
-              type="text"
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-              className="input-field"
-              placeholder="例：最好的果醬來自最簡單的原料"
-            />
+            <label htmlFor="banner-subtitle" className="block text-sm font-medium text-espresso mb-2">副標題（選填）</label>
+            <input id="banner-subtitle" type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className="input-field" placeholder="例：最好的果醬來自最簡單的原料" />
           </div>
-          <ImageUploader value={imageUrl} onChange={setImageUrl} label="背景圖片" previewWidth={160} previewHeight={60} />
-          <div>
-            <label htmlFor="banner-sortOrder" className="block text-sm font-medium text-espresso mb-2">
-              排序（數字越小越前面）
-            </label>
-            <input
-              id="banner-sortOrder"
-              type="number"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(Number(e.target.value))}
-              className="input-field w-32"
-            />
-          </div>
+          <ImageUploader value={imageUrl} onChange={setImageUrl} label="背景圖片（自動裁切為 21:9）" previewWidth={210} previewHeight={90} targetWidth={1920} targetHeight={823} />
           <div className="flex gap-3">
             <button type="submit" disabled={submitting} className="btn-primary-sm">
               {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
@@ -618,40 +623,58 @@ function BannerManager() {
           {items.map((item) => (
             <div
               key={item.id}
-              className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${!item.isActive ? "opacity-40" : ""}`}
+              draggable
+              onDragStart={() => handleDragStart(item.id)}
+              onDragOver={(e) => handleDragOver(e, item.id)}
+              onDrop={() => handleDrop(item.id)}
+              onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+              className={`bg-white rounded-lg ring-1 overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                dragOverId === item.id && dragId !== item.id ? "ring-rose ring-2 scale-[1.01]" : "ring-linen-dark/60"
+              } ${dragId === item.id ? "opacity-50" : ""}`}
             >
-              <div className="flex items-start justify-between gap-4">
-                {item.imageUrl && (
+              {/* Banner 預覽（21:9 比例） */}
+              <div className="relative w-full" style={{ aspectRatio: "21/9" }}>
+                {item.imageUrl ? (
                   <Image
                     src={item.imageUrl}
                     alt={item.title}
-                    width={120}
-                    height={48}
-                    className="rounded-lg object-cover shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    fill
+                    className="object-cover"
+                    unoptimized={item.imageUrl.startsWith("data:")}
                   />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, var(--color-rose), var(--color-rose-dark))" }} />
                 )}
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-serif font-bold text-espresso text-sm truncate">
-                    {item.title || "(無標題)"}
-                    {!item.isActive && <span className="ml-2 text-xs text-rose font-sans font-normal">已隱藏</span>}
-                  </h3>
-                  {item.subtitle && (
-                    <p className="text-xs text-espresso-light/50 truncate mt-0.5">{item.subtitle}</p>
-                  )}
-                  <p className="text-xs text-espresso-light/40 mt-1">排序：{item.sortOrder}</p>
+                <div className="absolute inset-0 bg-black/20" />
+                {/* 標題覆蓋在圖片上 */}
+                <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+                  <div>
+                    {item.title && (
+                      <p className="text-white font-serif text-lg md:text-xl font-bold" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+                        {item.title}
+                      </p>
+                    )}
+                    {item.subtitle && (
+                      <p className="text-white/70 text-xs mt-1" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+                        {item.subtitle}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => startEdit(item)} className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200">
+                {/* 拖曳提示 */}
+                <div className="absolute top-2 left-2 bg-black/40 text-white/70 rounded px-2 py-0.5 text-xs backdrop-blur-sm">
+                  ⠿ 拖曳排序
+                </div>
+              </div>
+
+              {/* 操作列 */}
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-espresso-light/40">#{items.indexOf(item) + 1}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => startEdit(item)} className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-1.5 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all">
                     編輯
                   </button>
-                  <button
-                    onClick={() => toggleActive(item)}
-                    className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${item.isActive ? "text-rose ring-rose/20 hover:bg-rose/5" : "text-sage ring-sage/20 hover:bg-sage/5"}`}
-                  >
-                    {item.isActive ? "隱藏" : "顯示"}
-                  </button>
-                  <button onClick={() => handleDelete(item)} className="text-xs text-rose/60 hover:text-rose px-3 py-2 ring-1 ring-rose/20 rounded-md hover:bg-rose/5 transition-all duration-200">
+                  <button onClick={() => handleDelete(item)} className="text-xs text-rose/60 hover:text-rose px-3 py-1.5 ring-1 ring-rose/20 rounded-md hover:bg-rose/5 transition-all">
                     刪除
                   </button>
                 </div>

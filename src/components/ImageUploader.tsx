@@ -9,13 +9,22 @@ interface ImageUploaderProps {
   label?: string;
   previewWidth?: number;
   previewHeight?: number;
+  /** 指定目標裁切尺寸（例如 banner: 1920x823） */
+  targetWidth?: number;
+  targetHeight?: number;
 }
 
-// 前端壓縮圖片到目標大小（預設 800KB 以內）
-function compressImage(file: File, maxSizeKB = 800, maxDim = 1600): Promise<File> {
+// 前端自動調整圖片尺寸，確保不超過 Vercel 4.5MB 限制
+// targetWidth/targetHeight 可指定目標尺寸（例如 banner 21:9）
+function processImage(
+  file: File,
+  options: { maxSizeKB?: number; maxDim?: number; targetWidth?: number; targetHeight?: number } = {}
+): Promise<File> {
+  const { maxSizeKB = 1500, maxDim = 1920, targetWidth, targetHeight } = options;
+
   return new Promise((resolve) => {
-    // 如果檔案已經夠小，直接回傳
-    if (file.size <= maxSizeKB * 1024) {
+    // 小於限制且沒有指定目標尺寸，直接回傳
+    if (file.size <= maxSizeKB * 1024 && !targetWidth) {
       resolve(file);
       return;
     }
@@ -25,30 +34,56 @@ function compressImage(file: File, maxSizeKB = 800, maxDim = 1600): Promise<File
     img.onload = () => {
       URL.revokeObjectURL(url);
 
-      // 計算縮放尺寸
-      let { width, height } = img;
-      if (width > maxDim || height > maxDim) {
-        const ratio = Math.min(maxDim / width, maxDim / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
+      let canvasW: number;
+      let canvasH: number;
+
+      if (targetWidth && targetHeight) {
+        // Banner 模式：裁切為指定比例，cover 填滿
+        canvasW = targetWidth;
+        canvasH = targetHeight;
+      } else {
+        // 一般模式：等比縮放
+        canvasW = img.width;
+        canvasH = img.height;
+        if (canvasW > maxDim || canvasH > maxDim) {
+          const ratio = Math.min(maxDim / canvasW, maxDim / canvasH);
+          canvasW = Math.round(canvasW * ratio);
+          canvasH = Math.round(canvasH * ratio);
+        }
       }
 
       const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = canvasW;
+      canvas.height = canvasH;
       const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, width, height);
 
-      // 逐步降低品質直到小於目標大小
-      let quality = 0.85;
+      if (targetWidth && targetHeight) {
+        // Cover 裁切：計算來源裁切區域
+        const srcRatio = img.width / img.height;
+        const dstRatio = canvasW / canvasH;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (srcRatio > dstRatio) {
+          sw = img.height * dstRatio;
+          sx = (img.width - sw) / 2;
+        } else {
+          sh = img.width / dstRatio;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvasW, canvasH);
+      } else {
+        ctx.drawImage(img, 0, 0, canvasW, canvasH);
+      }
+
+      // 高品質輸出，逐步降低品質到目標大小
+      let quality = 0.92;
       const tryCompress = () => {
         canvas.toBlob(
           (blob) => {
             if (!blob) { resolve(file); return; }
-            if (blob.size <= maxSizeKB * 1024 || quality <= 0.3) {
+            if (blob.size <= maxSizeKB * 1024 || quality <= 0.4) {
               resolve(new File([blob], file.name, { type: "image/jpeg" }));
             } else {
-              quality -= 0.1;
+              quality -= 0.08;
               tryCompress();
             }
           },
@@ -69,6 +104,8 @@ export default function ImageUploader({
   label = "圖片",
   previewWidth = 80,
   previewHeight = 80,
+  targetWidth,
+  targetHeight,
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -81,8 +118,8 @@ export default function ImageUploader({
     setError("");
     setUploading(true);
 
-    // 前端先壓縮
-    const compressed = await compressImage(file);
+    // 前端先處理圖片（調整尺寸）
+    const compressed = await processImage(file, { targetWidth, targetHeight });
 
     const formData = new FormData();
     formData.append("file", compressed);
