@@ -39,4 +39,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# images
 *.png
+*.jpg
+*.JPG
+*.jpeg
+
+# test artifacts
+/playwright-report/
+/test-results/
+/e2e/
+
+# preview files
+/login-previews/
+/order-preview/
+/animation-preview/
+
+# misc data files
+歷年的銷售記錄/
