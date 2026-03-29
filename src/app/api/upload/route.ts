@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
+// Vercel body size 限制需在 route config 設定
+export const config = {
+  api: { bodyParser: false },
+};
+
 // 最大 10MB
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -11,7 +16,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const formData = await req.formData();
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json({ error: "圖片太大或格式錯誤，請壓縮後再試" }, { status: 400 });
+  }
+
   const file = formData.get("file") as File | null;
 
   if (!file) {
@@ -23,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (file.size > MAX_SIZE) {
-    return NextResponse.json({ error: "File too large (max 2MB)" }, { status: 400 });
+    return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
   }
 
   const bytes = await file.arrayBuffer();

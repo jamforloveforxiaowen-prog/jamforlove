@@ -11,6 +11,58 @@ interface ImageUploaderProps {
   previewHeight?: number;
 }
 
+// 前端壓縮圖片到目標大小（預設 800KB 以內）
+function compressImage(file: File, maxSizeKB = 800, maxDim = 1600): Promise<File> {
+  return new Promise((resolve) => {
+    // 如果檔案已經夠小，直接回傳
+    if (file.size <= maxSizeKB * 1024) {
+      resolve(file);
+      return;
+    }
+
+    const img = document.createElement("img");
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      // 計算縮放尺寸
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // 逐步降低品質直到小於目標大小
+      let quality = 0.85;
+      const tryCompress = () => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return; }
+            if (blob.size <= maxSizeKB * 1024 || quality <= 0.3) {
+              resolve(new File([blob], file.name, { type: "image/jpeg" }));
+            } else {
+              quality -= 0.1;
+              tryCompress();
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      tryCompress();
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+}
+
 export default function ImageUploader({
   value,
   onChange,
@@ -29,8 +81,11 @@ export default function ImageUploader({
     setError("");
     setUploading(true);
 
+    // 前端先壓縮
+    const compressed = await compressImage(file);
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", compressed);
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
@@ -45,7 +100,6 @@ export default function ImageUploader({
     }
 
     setUploading(false);
-    // 清除 input 讓同一檔案可以重新選
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -53,7 +107,6 @@ export default function ImageUploader({
     <div>
       <label className="block text-sm font-medium text-espresso mb-2">{label}</label>
       <div className="flex items-center gap-4">
-        {/* 預覽 */}
         {value ? (
           <Image
             src={value}
@@ -80,7 +133,7 @@ export default function ImageUploader({
             disabled={uploading}
             className="text-xs px-3 py-2 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all disabled:opacity-40"
           >
-            {uploading ? "上傳中..." : value ? "更換圖片" : "選擇圖片"}
+            {uploading ? "壓縮上傳中..." : value ? "更換圖片" : "選擇圖片"}
           </button>
           {value && (
             <button
@@ -102,7 +155,7 @@ export default function ImageUploader({
         />
       </div>
       {error && <p className="text-rose text-xs mt-2">{error}</p>}
-      <p className="text-espresso-light/30 text-xs mt-1">支援 JPG、PNG、WebP、GIF，最大 10MB</p>
+      <p className="text-espresso-light/30 text-xs mt-1">支援 JPG、PNG、WebP、GIF，大圖會自動壓縮</p>
     </div>
   );
 }

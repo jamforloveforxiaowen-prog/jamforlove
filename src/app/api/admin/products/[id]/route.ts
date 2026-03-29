@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
+import { products, orderItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { sql } from "drizzle-orm";
@@ -64,9 +64,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
   }
 
-  await db
-    .delete(products)
-    .where(eq(products.id, productId));
+  // 先刪除關聯的 order_items，避免 FK 約束
+  await db.delete(orderItems).where(eq(orderItems.productId, productId));
+  await db.delete(products).where(eq(products.id, productId));
 
   return NextResponse.json({ success: true });
 }
