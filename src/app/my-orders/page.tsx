@@ -19,19 +19,7 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "待確認",
-  confirmed: "已確認",
-  shipped: "已出貨",
-  completed: "已完成",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  pending: "bg-honey/15 text-honey",
-  confirmed: "bg-sage/10 text-sage",
-  shipped: "bg-rose/10 text-rose",
-  completed: "bg-sage/15 text-sage",
-};
+const CUSTOMER_SERVICE_EMAIL = "jamforloveforxiaowen@gmail.com";
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -134,12 +122,8 @@ export default function MyOrdersPage() {
                     {order.deliveryMethod === "pickup" ? "面交" : "郵寄"}
                   </span>
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-md text-xs font-semibold ${
-                    STATUS_STYLES[order.status] || "bg-linen-dark text-espresso-light"
-                  }`}
-                >
-                  {STATUS_LABELS[order.status] || order.status}
+                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-sage/15 text-sage">
+                  已下單
                 </span>
               </div>
 
@@ -190,6 +174,16 @@ export default function MyOrdersPage() {
           ))}
         </div>
       )}
+
+      {/* 客服聯繫 */}
+      <div className="mt-12 text-center animate-reveal-up" style={{ animationDelay: "0.3s" }}>
+        <p className="text-espresso-light/40 text-sm">
+          訂單問題？歡迎來信{" "}
+          <a href={`mailto:${CUSTOMER_SERVICE_EMAIL}`} className="text-rose hover:underline">
+            {CUSTOMER_SERVICE_EMAIL}
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

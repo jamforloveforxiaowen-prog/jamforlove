@@ -1331,17 +1331,8 @@ function OrderManager() {
       .catch(() => setLoading(false));
   }, []);
 
-  async function updateStatus(id: number, status: string) {
-    await fetch(`/api/admin/orders/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
-  }
-
   function exportToExcel() {
-    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "加購", "備註", "狀態", "總金額", "建立時間"];
+    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "加購", "備註", "總金額", "建立時間"];
     const rows = orders.map((o) => [
       o.id,
       o.customerName,
@@ -1352,7 +1343,6 @@ function OrderManager() {
       o.combos.map((c) => `${c.name}(${c.items.join("+")}) ×${c.quantity}`).join("; "),
       o.addons.map((a) => `${a.name} ×${a.quantity} $${a.price}`).join("; "),
       o.notes,
-      STATUS_LABELS[o.status] || o.status,
       o.total,
       new Date(o.createdAt).toLocaleString("zh-TW"),
     ]);
@@ -1399,8 +1389,8 @@ function OrderManager() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-espresso text-sm">#{order.id}</span>
                       <span className="text-espresso text-sm">{order.customerName}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[order.status] || ""}`}>
-                        {STATUS_LABELS[order.status] || order.status}
+                      <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-sage/15 text-sage">
+                        已下單
                       </span>
                       <span className="text-espresso-light/30 text-xs">
                         {order.deliveryMethod === "pickup" ? "面交" : "郵寄"}
@@ -1446,18 +1436,6 @@ function OrderManager() {
                       <p>地址：{order.address}</p>
                       {order.email && <p>Email：{order.email}</p>}
                       {order.notes && <p>備註：{order.notes}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs text-espresso-light/40">狀態：</label>
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateStatus(order.id, e.target.value)}
-                        className="text-sm border border-linen-dark rounded-md px-2 py-1 outline-none focus:border-rose bg-white"
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                        ))}
-                      </select>
                     </div>
                   </div>
                 )}
