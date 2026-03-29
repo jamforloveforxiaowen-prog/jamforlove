@@ -42,7 +42,7 @@ export default function Footer() {
             </div>
 
             {/* 連結 */}
-            <div className="md:col-span-4 flex items-center gap-6 md:justify-center">
+            <div className="md:col-span-4 flex flex-col items-start gap-3 md:items-center">
               <a
                 href="https://www.facebook.com/groups/229394627478779/"
                 target="_blank"
@@ -58,6 +58,22 @@ export default function Footer() {
                   style={{ color: "var(--color-linen)" }}
                 >
                   Facebook 社團
+                </span>
+              </a>
+              <a
+                href="mailto:jamforloveforxiaowen@gmail.com"
+                className="group flex items-center gap-2.5 transition-opacity duration-300 hover:opacity-100 opacity-60"
+                aria-label="客服信箱"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--color-linen)" }}>
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+                <span
+                  className="text-sm font-medium group-hover:underline underline-offset-4"
+                  style={{ color: "var(--color-linen)" }}
+                >
+                  jamforloveforxiaowen@gmail.com
                 </span>
               </a>
             </div>
