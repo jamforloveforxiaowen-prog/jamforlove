@@ -102,7 +102,7 @@ export default function ImageUploader({
         />
       </div>
       {error && <p className="text-rose text-xs mt-2">{error}</p>}
-      <p className="text-espresso-light/30 text-xs mt-1">支援 JPG、PNG、WebP、GIF，最大 2MB</p>
+      <p className="text-espresso-light/30 text-xs mt-1">支援 JPG、PNG、WebP、GIF，最大 10MB</p>
     </div>
   );
 }

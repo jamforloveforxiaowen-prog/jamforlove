@@ -189,19 +189,14 @@ function ProductManager() {
     loadProducts();
   }
 
-  async function toggleActive(product: Product) {
-    const action = product.isActive ? "下架" : "上架";
-    if (!window.confirm(`確定要${action}「${product.name}」嗎？`)) return;
+  async function deleteProduct(product: Product) {
+    if (!window.confirm(`確定要刪除「${product.name}」嗎？此操作無法復原。`)) return;
 
     try {
-      await fetch(`/api/admin/products/${product.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !product.isActive }),
-      });
+      await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
       loadProducts();
     } catch {
-      setError(`${action}失敗，請重試`);
+      setError("刪除失敗，請重試");
     }
   }
 
@@ -221,26 +216,21 @@ function ProductManager() {
     }
   }
 
-  async function batchSetActive(isActive: boolean) {
-    const action = isActive ? "上架" : "下架";
+  async function batchDelete() {
     const count = selectedIds.size;
     if (count === 0) return;
-    if (!window.confirm(`確定要批次${action} ${count} 項產品嗎？`)) return;
+    if (!window.confirm(`確定要刪除 ${count} 項產品嗎？此操作無法復原。`)) return;
 
     try {
       await Promise.all(
         Array.from(selectedIds).map(id =>
-          fetch(`/api/admin/products/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isActive }),
-          })
+          fetch(`/api/admin/products/${id}`, { method: "DELETE" })
         )
       );
       setSelectedIds(new Set());
       loadProducts();
     } catch {
-      setError(`批次${action}失敗，請重試`);
+      setError("批次刪除失敗，請重試");
     }
   }
 
@@ -279,11 +269,8 @@ function ProductManager() {
           {selectedIds.size > 0 && (
             <>
               <span className="text-xs text-espresso-light/50">已選 {selectedIds.size} 項</span>
-              <button onClick={() => batchSetActive(false)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/20 text-rose hover:bg-rose/5 transition-all">
-                批次下架
-              </button>
-              <button onClick={() => batchSetActive(true)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-sage/20 text-sage hover:bg-sage/5 transition-all">
-                批次上架
+              <button onClick={batchDelete} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/20 text-rose hover:bg-rose/5 transition-all">
+                批次刪除
               </button>
             </>
           )}
@@ -384,9 +371,7 @@ function ProductManager() {
         {products.map((product) => (
           <div
             key={product.id}
-            className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 flex items-center justify-between transition-opacity duration-200 ${
-              !product.isActive ? "opacity-40" : ""
-            }`}
+            className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 flex items-center justify-between"
           >
             <div className="flex items-center gap-4 min-w-0">
               <input
@@ -411,11 +396,6 @@ function ProductManager() {
               <div className="min-w-0">
                 <h3 className="font-serif font-bold text-espresso text-sm truncate">
                   {product.name}
-                  {!product.isActive && (
-                    <span className="ml-2 text-xs text-rose font-sans font-normal">
-                      已下架
-                    </span>
-                  )}
                 </h3>
                 <p className="text-xs text-espresso-light/50 line-clamp-1 mt-0.5">
                   {product.description}
@@ -436,14 +416,10 @@ function ProductManager() {
                 編輯
               </button>
               <button
-                onClick={() => toggleActive(product)}
-                className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${
-                  product.isActive
-                    ? "text-rose ring-rose/20 hover:bg-rose/5"
-                    : "text-sage ring-sage/20 hover:bg-sage/5"
-                }`}
+                onClick={() => deleteProduct(product)}
+                className="text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 text-rose ring-rose/20 hover:bg-rose/5"
               >
-                {product.isActive ? "下架" : "上架"}
+                刪除
               </button>
             </div>
           </div>

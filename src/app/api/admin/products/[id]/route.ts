@@ -64,10 +64,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
   }
 
-  // 軟刪除：設為不上架
   await db
-    .update(products)
-    .set({ isActive: false, updatedAt: sql`(datetime('now'))` })
+    .delete(products)
     .where(eq(products.id, productId));
 
   return NextResponse.json({ success: true });
