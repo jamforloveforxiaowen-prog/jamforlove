@@ -3,9 +3,15 @@ import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "crypto";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const getResend = () => new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
@@ -46,8 +52,8 @@ export async function POST(req: NextRequest) {
         : "http://localhost:3000";
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
-    await getResend().emails.send({
-      from: "Jam For Love <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: `"Jam for Love" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: "重設您的密碼 — Jam For Love",
       html: `

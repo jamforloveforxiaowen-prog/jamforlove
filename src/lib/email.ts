@@ -1,6 +1,12 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const getResend = () => new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 interface OrderItem {
   name: string;
@@ -115,9 +121,11 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
       </table>
 
       <!-- 合計 -->
-      <div style="margin-top: 16px; padding-top: 16px; border-top: 2px dashed #c4506a40; display: flex; justify-content: space-between; align-items: baseline;">
-        <span style="font-size: 16px; color: #1e0f08; font-weight: 600;">合計</span>
-        <span style="font-size: 22px; color: #c4506a; font-weight: 700;">NT$ ${total}</span>
+      <div style="margin-top: 16px; padding-top: 16px; border-top: 2px dashed rgba(196,80,106,0.25);">
+        <table style="width: 100%;"><tr>
+          <td style="font-size: 16px; color: #1e0f08; font-weight: 600;">合計</td>
+          <td style="font-size: 22px; color: #c4506a; font-weight: 700; text-align: right;">NT$ ${total}</td>
+        </tr></table>
       </div>
     </div>
 
@@ -167,8 +175,8 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
 </body>
 </html>`;
 
-  await getResend().emails.send({
-    from: "Jam For Love <onboarding@resend.dev>",
+  await transporter.sendMail({
+    from: `"Jam for Love" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: `收到你的心意了！— 訂單 #${orderId} 確認`,
     html,
