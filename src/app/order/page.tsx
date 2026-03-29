@@ -250,7 +250,7 @@ export default function OrderPage() {
           </div>
 
           <div className="flex gap-3 justify-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.75s_both]">
-            <button onClick={() => router.push("/fundraise")} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>繼續逛逛</button>
+            <button onClick={() => { setSubmitted(false); window.scrollTo(0, 0); }} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>繼續逛逛</button>
             <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
           </div>
         </div>
