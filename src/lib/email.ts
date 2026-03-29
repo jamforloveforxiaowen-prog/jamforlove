@@ -8,6 +8,54 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/* ── 寄信防濫用機制 ──────────────────────── */
+
+// 全域：每小時最多寄 30 封
+const GLOBAL_LIMIT = 30;
+const GLOBAL_WINDOW_MS = 60 * 60 * 1000;
+let globalSendCount = 0;
+let globalWindowStart = Date.now();
+
+// 每個收件人：每小時最多 3 封
+const PER_RECIPIENT_LIMIT = 3;
+const recipientStore = new Map<string, { count: number; windowStart: number }>();
+
+function checkEmailRateLimit(recipient: string): { allowed: boolean; reason?: string } {
+  const now = Date.now();
+
+  // 全域限制
+  if (now - globalWindowStart >= GLOBAL_WINDOW_MS) {
+    globalSendCount = 0;
+    globalWindowStart = now;
+  }
+  if (globalSendCount >= GLOBAL_LIMIT) {
+    return { allowed: false, reason: `Global email limit exceeded (${GLOBAL_LIMIT}/hr)` };
+  }
+
+  // 單一收件人限制
+  const key = recipient.toLowerCase();
+  const record = recipientStore.get(key);
+  if (record && now - record.windowStart < GLOBAL_WINDOW_MS) {
+    if (record.count >= PER_RECIPIENT_LIMIT) {
+      return { allowed: false, reason: `Per-recipient limit exceeded for ${key}` };
+    }
+    record.count += 1;
+  } else {
+    recipientStore.set(key, { count: 1, windowStart: now });
+  }
+
+  globalSendCount += 1;
+  return { allowed: true };
+}
+
+// 驗證 email 格式，防止注入
+function isValidEmail(email: string): boolean {
+  if (email.length > 254) return false;
+  // 基本格式檢查 + 禁止換行符（防止 header injection）
+  const emailRegex = /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/;
+  return emailRegex.test(email);
+}
+
 interface OrderItem {
   name: string;
   items?: string[];
@@ -72,6 +120,19 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   } = data;
 
   if (!email) return;
+
+  // 驗證 email 格式
+  if (!isValidEmail(email)) {
+    console.error("Invalid email format, skipping:", email);
+    return;
+  }
+
+  // 檢查寄信頻率限制
+  const rateCheck = checkEmailRateLimit(email);
+  if (!rateCheck.allowed) {
+    console.error("Email rate limit hit:", rateCheck.reason);
+    return;
+  }
 
   const deliveryText = deliveryMethod === "shipping" ? "郵寄" : "面交 / 暨大取貨";
   const safeNotes = notes ? esc(notes) : "";

@@ -23,6 +23,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // 驗證 email 格式，防止 header injection
+  const emailRegex = /^[^\s@\r\n]+@[^\s@\r\n]+\.[^\s@\r\n]+$/;
+  if (typeof email !== "string" || email.length > 254 || !emailRegex.test(email)) {
+    return NextResponse.json(
+      { error: "Email 格式不正確" },
+      { status: 400 }
+    );
+  }
+
   // 不管 email 是否存在都回傳成功（防止帳號列舉攻擊）
   const user = await db
     .select()
