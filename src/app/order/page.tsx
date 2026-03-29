@@ -111,8 +111,23 @@ export default function OrderPage() {
       .catch(() => {});
   }
 
-  // 頁面載入時自動帶入
+  // 頁面載入時自動帶入個人資料
   useEffect(() => { loadProfile(); }, []);
+
+  // 從 sessionStorage 恢復之前的選擇（從編輯個人資料回來時）
+  useEffect(() => {
+    const saved = sessionStorage.getItem("order_selections");
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.combos) setComboSelections(data.combos);
+        if (data.addons) setAddonSelections(data.addons);
+        if (data.deliveryMethod) setDeliveryMethod(data.deliveryMethod);
+        if (data.notes) setNotes(data.notes);
+      } catch { /* ignore */ }
+      sessionStorage.removeItem("order_selections");
+    }
+  }, []);
 
   const comboTotal = useMemo(
     () => Object.entries(comboSelections).reduce((sum, [id, qty]) => {
@@ -422,6 +437,14 @@ export default function OrderPage() {
                 </button>
                 <Link
                   href="/profile?from=order"
+                  onClick={() => {
+                    sessionStorage.setItem("order_selections", JSON.stringify({
+                      combos: comboSelections,
+                      addons: addonSelections,
+                      deliveryMethod,
+                      notes,
+                    }));
+                  }}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all"
                   style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}
                 >
