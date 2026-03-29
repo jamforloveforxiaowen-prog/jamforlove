@@ -39,9 +39,6 @@ export default function Footer() {
               <p className="text-sm mt-1.5" style={{ color: "var(--color-linen-dark)", opacity: 0.6 }}>
                 用愛手工熬煮
               </p>
-              <p className="text-xs mt-1" style={{ color: "var(--color-linen-dark)", opacity: 0.4 }}>
-                國立暨南大學
-              </p>
             </div>
 
             {/* 右欄：聯繫 + 版權 */}
