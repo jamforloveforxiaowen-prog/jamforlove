@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import ImageUploader from "@/components/ImageUploader";
 
 interface Product {
   id: number;
@@ -108,6 +109,7 @@ function ProductManager() {
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   async function loadProducts() {
     try {
@@ -203,6 +205,45 @@ function ProductManager() {
     }
   }
 
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map(p => p.id)));
+    }
+  }
+
+  async function batchSetActive(isActive: boolean) {
+    const action = isActive ? "上架" : "下架";
+    const count = selectedIds.size;
+    if (count === 0) return;
+    if (!window.confirm(`確定要批次${action} ${count} 項產品嗎？`)) return;
+
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map(id =>
+          fetch(`/api/admin/products/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive }),
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      loadProducts();
+    } catch {
+      setError(`批次${action}失敗，請重試`);
+    }
+  }
+
   if (loading) {
     return (
       <p className="text-espresso-light/50 text-center py-16 text-sm" role="status" aria-label="載入中">
@@ -230,19 +271,32 @@ function ProductManager() {
       {error && (
         <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
       )}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h2 className="font-serif text-lg font-bold text-espresso">
           產品列表
         </h2>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="btn-primary-sm"
-        >
-          + 新增產品
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-xs text-espresso-light/50">已選 {selectedIds.size} 項</span>
+              <button onClick={() => batchSetActive(false)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/20 text-rose hover:bg-rose/5 transition-all">
+                批次下架
+              </button>
+              <button onClick={() => batchSetActive(true)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-sage/20 text-sage hover:bg-sage/5 transition-all">
+                批次上架
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+            className="btn-primary-sm"
+          >
+            + 新增產品
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -282,31 +336,7 @@ function ProductManager() {
               />
             </div>
           </div>
-          <div>
-            <label htmlFor="admin-imageUrl" className="block text-sm font-medium text-espresso mb-2">
-              圖片網址
-            </label>
-            <input
-              id="admin-imageUrl"
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="input-field"
-              placeholder="https://example.com/jam.jpg"
-            />
-            {imageUrl && (
-              <Image
-                src={imageUrl}
-                alt="預覽"
-                width={80}
-                height={80}
-                className="mt-3 w-20 h-20 object-cover rounded-md ring-1 ring-linen-dark/60"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            )}
-          </div>
+          <ImageUploader value={imageUrl} onChange={setImageUrl} label="產品圖片" />
           <div>
             <label htmlFor="admin-description" className="block text-sm font-medium text-espresso mb-2">
               說明
@@ -337,6 +367,19 @@ function ProductManager() {
         </form>
       )}
 
+      {/* 全選 */}
+      {products.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="checkbox"
+            checked={selectedIds.size === products.length && products.length > 0}
+            onChange={toggleSelectAll}
+            className="w-4 h-4 accent-rose cursor-pointer"
+          />
+          <span className="text-xs text-espresso-light/50">全選</span>
+        </div>
+      )}
+
       <div className="space-y-3">
         {products.map((product) => (
           <div
@@ -346,6 +389,12 @@ function ProductManager() {
             }`}
           >
             <div className="flex items-center gap-4 min-w-0">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(product.id)}
+                onChange={() => toggleSelect(product.id)}
+                className="w-4 h-4 accent-rose cursor-pointer shrink-0"
+              />
               {product.imageUrl ? (
                 <Image
                   src={product.imageUrl}
@@ -562,31 +611,7 @@ function BannerManager() {
               placeholder="例：最好的果醬來自最簡單的原料"
             />
           </div>
-          <div>
-            <label htmlFor="banner-imageUrl" className="block text-sm font-medium text-espresso mb-2">
-              背景圖片網址
-            </label>
-            <input
-              id="banner-imageUrl"
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="input-field"
-              placeholder="https://example.com/banner.jpg"
-            />
-            {imageUrl && (
-              <div className="mt-2">
-                <Image
-                  src={imageUrl}
-                  alt="預覽"
-                  width={320}
-                  height={120}
-                  className="rounded-lg object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-            )}
-          </div>
+          <ImageUploader value={imageUrl} onChange={setImageUrl} label="背景圖片" previewWidth={160} previewHeight={60} />
           <div>
             <label htmlFor="banner-sortOrder" className="block text-sm font-medium text-espresso mb-2">
               排序（數字越小越前面）
@@ -1332,7 +1357,7 @@ function OrderManager() {
   }, []);
 
   function exportToExcel() {
-    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "加購", "備註", "總金額", "建立時間"];
+    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "組合數量", "加購", "加購數量", "備註", "總金額", "建立時間"];
     const rows = orders.map((o) => [
       o.id,
       o.customerName,
@@ -1341,12 +1366,50 @@ function OrderManager() {
       o.address,
       o.deliveryMethod === "pickup" ? "面交" : "郵寄",
       o.combos.map((c) => `${c.name}(${c.items.join("+")}) ×${c.quantity}`).join("; "),
+      o.combos.reduce((s, c) => s + c.quantity, 0),
       o.addons.map((a) => `${a.name} ×${a.quantity} $${a.price}`).join("; "),
+      o.addons.reduce((s, a) => s + a.quantity, 0),
       o.notes,
       o.total,
       new Date(o.createdAt).toLocaleString("zh-TW"),
     ]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+
+    // 統計列
+    const totalOrders = orders.length;
+    const totalAmount = orders.reduce((s, o) => s + o.total, 0);
+    const totalComboQty = orders.reduce((s, o) => s + o.combos.reduce((cs, c) => cs + c.quantity, 0), 0);
+    const totalAddonQty = orders.reduce((s, o) => s + o.addons.reduce((as, a) => as + a.quantity, 0), 0);
+    const shippingCount = orders.filter(o => o.deliveryMethod === "shipping").length;
+    const pickupCount = orders.filter(o => o.deliveryMethod === "pickup").length;
+
+    // 各組合統計
+    const comboStats: Record<string, number> = {};
+    orders.forEach(o => o.combos.forEach(c => {
+      comboStats[c.name] = (comboStats[c.name] || 0) + c.quantity;
+    }));
+    const addonStats: Record<string, number> = {};
+    orders.forEach(o => o.addons.forEach(a => {
+      addonStats[a.name] = (addonStats[a.name] || 0) + a.quantity;
+    }));
+
+    const statsRows = [
+      [],
+      ["═══ 統計摘要 ═══"],
+      ["總訂單數", totalOrders],
+      ["總金額", `NT$ ${totalAmount}`],
+      ["組合總數量", totalComboQty],
+      ["加購總數量", totalAddonQty],
+      ["郵寄", shippingCount, "面交", pickupCount],
+      [],
+      ["═══ 各組合銷量 ═══"],
+      ...Object.entries(comboStats).map(([name, qty]) => [name, qty]),
+      [],
+      ["═══ 各加購銷量 ═══"],
+      ...Object.entries(addonStats).map(([name, qty]) => [name, qty]),
+    ];
+
+    const allRows = [header, ...rows, ...statsRows];
+    const csv = allRows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const bom = "\uFEFF";
     const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -1372,6 +1435,28 @@ function OrderManager() {
           匯出 Excel
         </button>
       </div>
+
+      {/* 統計面板 */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+            <p className="text-2xl font-bold text-espresso">{orders.length}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">總訂單數</p>
+          </div>
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+            <p className="text-2xl font-bold text-rose">NT$ {orders.reduce((s, o) => s + o.total, 0).toLocaleString()}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">總金額</p>
+          </div>
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+            <p className="text-2xl font-bold text-honey">{orders.reduce((s, o) => s + o.combos.reduce((cs, c) => cs + c.quantity, 0), 0)}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">組合總數</p>
+          </div>
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+            <p className="text-2xl font-bold text-sage">{orders.reduce((s, o) => s + o.addons.reduce((as, a) => as + a.quantity, 0), 0)}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">加購總數</p>
+          </div>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
