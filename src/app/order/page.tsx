@@ -421,7 +421,7 @@ export default function OrderPage() {
                   {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
                 </button>
                 <Link
-                  href="/profile"
+                  href="/profile?from=order"
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all"
                   style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}
                 >

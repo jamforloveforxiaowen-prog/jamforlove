@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromOrder = searchParams.get("from") === "order";
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -82,7 +84,12 @@ export default function ProfilePage() {
         setError(data.error || "儲存失敗");
       } else {
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        if (fromOrder) {
+          // 從訂購頁來的，儲存後自動跳回
+          setTimeout(() => router.push("/order"), 800);
+        } else {
+          setTimeout(() => setSaved(false), 3000);
+        }
       }
     } catch {
       setError("網路連線失敗");
