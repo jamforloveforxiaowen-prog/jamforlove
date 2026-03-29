@@ -509,23 +509,51 @@ h1, h2, h3, h4 {
   transform: translateY(0) translateX(0) scale(1);
 }
 
-/* ── 訂單成功動畫 ────────────────────── */
+/* ── 烘焙時光動畫 ────────────────────── */
 
-@keyframes success-circle {
-  0% { transform: scale(0); box-shadow: 0 0 0 0 rgba(196,80,106,0.4); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); box-shadow: 0 4px 24px rgba(196,80,106,0.25); }
+/* 搖擺出場 — 像從烤箱端出來 */
+@keyframes bakeSwing {
+  0% { opacity: 0; transform: translateY(24px) rotate(-2deg); }
+  40% { transform: translateY(-4px) rotate(1deg); }
+  70% { transform: translateY(2px) rotate(-0.5deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0); }
 }
 
-@keyframes success-ring {
-  0% { opacity: 0.6; transform: scale(0.8); }
-  100% { opacity: 0; transform: scale(1.8); }
+/* 彈跳出場 — 蛋糕 */
+@keyframes bakeBounce {
+  0% { opacity: 0; transform: translateY(30px) scale(0.8); }
+  60% { transform: translateY(-8px) scale(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes falling {
-  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateY(80vh) rotate(720deg); opacity: 0; }
+/* 選中時的微震 */
+@keyframes bakeSelect {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.02) rotate(-0.5deg); }
+  60% { transform: scale(0.99) rotate(0.3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* 增減按鈕的叮 */
+@keyframes bakeDing {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.85); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* 蠟燭火焰閃爍 */
+@keyframes flicker {
+  0% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.15) translateY(-1px); }
+  100% { transform: scale(0.95) translateY(1px); }
+}
+
+/* 愛心煙火飛散 */
+@keyframes sparkFly {
+  0% { opacity: 0; transform: translate(0, 0) scale(0); }
+  30% { opacity: 1; transform: translate(calc(var(--spark-x) * 0.3), calc(var(--spark-y) * 0.3)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(0.5); }
 }
 
 @keyframes heartbeat {
