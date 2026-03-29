@@ -221,18 +221,29 @@ export default function OrderPage() {
             />
           </div>
 
-          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.5s", fontStyle: "italic" }}>訂單已送出！</h1>
-          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.6s" }}>感謝你支持 Jam for Love！</p>
+          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.5s", fontStyle: "italic" }}>收到你的心意了！</h1>
+          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.6s" }}>你的每一份支持，都是我們繼續做下去的動力</p>
           <p className="text-espresso-light/40 text-base mb-3 animate-reveal-up" style={{ animationDelay: "0.7s" }}>
-            訂單金額 <span className="text-rose font-bold text-lg">NT$ {grandTotal}</span>，我們會盡快與你確認。
+            訂單金額 <span className="text-rose font-bold text-lg">NT$ {grandTotal}</span>
           </p>
+          <p className="text-espresso-light/40 text-base mb-3 animate-reveal-up" style={{ animationDelay: "0.75s" }}>
+            訂單已收到囉，我們會用心為你準備
+          </p>
+          {email && (
+            <p className="text-espresso-light/40 text-sm mb-3 animate-reveal-up" style={{ animationDelay: "0.8s" }}>
+              確認信已寄送至 <span className="text-espresso font-medium">{email}</span>
+            </p>
+          )}
 
           {/* 愛心跳動 */}
-          <div className="text-3xl mb-8 animate-reveal-up" style={{ animationDelay: "0.8s" }}>
+          <div className="text-3xl mb-8 animate-reveal-up" style={{ animationDelay: "0.85s" }}>
             <span className="inline-block animate-[heartbeat_1.2s_ease-in-out_infinite]">♥</span>
           </div>
 
-          <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.9s" }}>回到首頁</button>
+          <div className="flex gap-3 justify-center animate-reveal-up" style={{ animationDelay: "0.95s" }}>
+            <button onClick={() => router.push("/fundraise")} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white transition-all" style={{ border: "2px dashed var(--color-rose)" }}>繼續逛逛</button>
+            <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
+          </div>
         </div>
       </div>
     );

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { fundraiseOrders } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -43,6 +44,23 @@ export async function POST(req: NextRequest) {
     })
     .returning()
     .get();
+
+  // 寄送訂單確認信（非同步，不阻塞回應）
+  if (email) {
+    sendOrderConfirmationEmail({
+      customerName,
+      email,
+      combos: combos || [],
+      addons: addons || [],
+      total,
+      deliveryMethod: deliveryMethod || "shipping",
+      address,
+      notes: notes || "",
+      orderId: order.id,
+    }).catch((err) => {
+      console.error("Failed to send order confirmation email:", err);
+    });
+  }
 
   return NextResponse.json({ success: true, orderId: order.id });
 }
