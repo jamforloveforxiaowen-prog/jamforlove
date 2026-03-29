@@ -931,33 +931,7 @@ function NewsManager() {
               required
             />
           </div>
-          <div>
-            <label htmlFor="news-imageUrl" className="block text-sm font-medium text-espresso mb-2">
-              圖片網址（選填）
-            </label>
-            <input
-              id="news-imageUrl"
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="input-field"
-              placeholder="https://example.com/image.jpg"
-            />
-            {imageUrl && (
-              <div className="mt-2">
-                <Image
-                  src={imageUrl}
-                  alt="預覽"
-                  width={160}
-                  height={100}
-                  className="rounded-lg object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <ImageUploader value={imageUrl} onChange={setImageUrl} label="消息圖片（選填）" />
           <div className="flex gap-3">
             <button type="submit" disabled={submitting} className="btn-primary-sm">
               {submitting ? "儲存中..." : editingId ? "儲存" : "新增"}
@@ -1058,8 +1032,9 @@ function StoryManager() {
   const [heading, setHeading] = useState("");
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [sortOrder, setSortOrder] = useState("0");
   const [error, setError] = useState("");
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   async function loadItems() {
     try {
@@ -1081,7 +1056,6 @@ function StoryManager() {
     setHeading("");
     setContent("");
     setImageUrl("");
-    setSortOrder("0");
     setEditingId(null);
     setShowForm(false);
     setError("");
@@ -1091,7 +1065,6 @@ function StoryManager() {
     setHeading(item.heading);
     setContent(item.content);
     setImageUrl(item.imageUrl);
-    setSortOrder(String(item.sortOrder));
     setEditingId(item.id);
     setShowForm(true);
     setError("");
@@ -1107,6 +1080,10 @@ function StoryManager() {
       : "/api/admin/story";
     const method = editingId ? "PUT" : "POST";
 
+    const sortOrder = editingId
+      ? items.find(i => i.id === editingId)?.sortOrder ?? items.length
+      : items.length;
+
     try {
       const res = await fetch(url, {
         method,
@@ -1115,7 +1092,7 @@ function StoryManager() {
           heading,
           content,
           imageUrl,
-          sortOrder: Number(sortOrder),
+          sortOrder,
         }),
       });
       if (!res.ok) {
@@ -1135,19 +1112,48 @@ function StoryManager() {
     loadItems();
   }
 
-  async function togglePublish(item: StoryBlock) {
-    const action = item.isPublished ? "取消發佈" : "發佈";
-    if (!window.confirm(`確定要${action}此段落嗎？`)) return;
-    try {
-      await fetch(`/api/admin/story/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublished: !item.isPublished }),
-      });
-      loadItems();
-    } catch {
-      setError(`${action}失敗，請重試`);
+  // 拖曳排序
+  function handleDragStart(id: number) {
+    setDragId(id);
+  }
+
+  function handleDragOver(e: React.DragEvent, id: number) {
+    e.preventDefault();
+    setDragOverId(id);
+  }
+
+  async function handleDrop(targetId: number) {
+    if (dragId === null || dragId === targetId) {
+      setDragId(null);
+      setDragOverId(null);
+      return;
     }
+
+    const oldIndex = items.findIndex(i => i.id === dragId);
+    const newIndex = items.findIndex(i => i.id === targetId);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // 重新排列
+    const reordered = [...items];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    // 即時更新 UI
+    setItems(reordered);
+    setDragId(null);
+    setDragOverId(null);
+
+    // 批次更新 sortOrder 到後端
+    await Promise.all(
+      reordered.map((item, i) =>
+        fetch(`/api/admin/story/${item.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder: i }),
+        })
+      )
+    );
+    loadItems();
   }
 
   async function handleDelete(item: StoryBlock) {
@@ -1174,7 +1180,10 @@ function StoryManager() {
         <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
       )}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">故事段落</h2>
+        <div>
+          <h2 className="font-serif text-lg font-bold text-espresso">故事段落</h2>
+          {items.length > 1 && <p className="text-xs text-espresso-light/40 mt-1">拖曳卡片可調整順序</p>}
+        </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
           className="btn-primary-sm"
@@ -1191,57 +1200,19 @@ function StoryManager() {
           <h3 className="font-serif font-bold text-espresso">
             {editingId ? "編輯段落" : "新增段落"}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="story-heading" className="block text-sm font-medium text-espresso mb-2">
-                標題（選填）
-              </label>
-              <input
-                id="story-heading"
-                type="text"
-                value={heading}
-                onChange={(e) => setHeading(e.target.value)}
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label htmlFor="story-sortOrder" className="block text-sm font-medium text-espresso mb-2">
-                排序（數字越小越前面）
-              </label>
-              <input
-                id="story-sortOrder"
-                type="number"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="input-field"
-              />
-            </div>
-          </div>
           <div>
-            <label htmlFor="story-imageUrl" className="block text-sm font-medium text-espresso mb-2">
-              圖片網址（選填）
+            <label htmlFor="story-heading" className="block text-sm font-medium text-espresso mb-2">
+              標題（選填）
             </label>
             <input
-              id="story-imageUrl"
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              id="story-heading"
+              type="text"
+              value={heading}
+              onChange={(e) => setHeading(e.target.value)}
               className="input-field"
-              placeholder="https://example.com/photo.jpg"
             />
-            {imageUrl && (
-              <Image
-                src={imageUrl}
-                alt="預覽"
-                width={80}
-                height={80}
-                className="mt-3 w-20 h-20 object-cover rounded-md ring-1 ring-linen-dark/60"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            )}
           </div>
+          <ImageUploader value={imageUrl} onChange={setImageUrl} label="故事圖片（選填）" />
           <div>
             <label htmlFor="story-content" className="block text-sm font-medium text-espresso mb-2">
               內容
@@ -1275,15 +1246,17 @@ function StoryManager() {
           {items.map((item) => (
             <div
               key={item.id}
-              className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${
-                !item.isPublished ? "opacity-40" : ""
-              }`}
+              draggable
+              onDragStart={() => handleDragStart(item.id)}
+              onDragOver={(e) => handleDragOver(e, item.id)}
+              onDrop={() => handleDrop(item.id)}
+              onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+              className={`bg-white rounded-lg ring-1 p-4 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                dragOverId === item.id && dragId !== item.id ? "ring-rose ring-2" : "ring-linen-dark/60"
+              } ${dragId === item.id ? "opacity-50" : ""}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 min-w-0 flex-1">
-                  <span className="text-xs text-espresso-light/40 font-mono shrink-0 pt-0.5">
-                    #{item.sortOrder}
-                  </span>
                   {item.imageUrl && (
                     <Image
                       src={item.imageUrl}
@@ -1297,13 +1270,7 @@ function StoryManager() {
                     {item.heading && (
                       <h3 className="font-serif font-bold text-espresso text-sm truncate">
                         {item.heading}
-                        {!item.isPublished && (
-                          <span className="ml-2 text-xs text-rose font-sans font-normal">未發佈</span>
-                        )}
                       </h3>
-                    )}
-                    {!item.heading && !item.isPublished && (
-                      <span className="text-xs text-rose font-sans">未發佈</span>
                     )}
                     <p className="text-xs text-espresso-light/50 line-clamp-2 mt-0.5">
                       {item.content}
@@ -1316,16 +1283,6 @@ function StoryManager() {
                     className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200"
                   >
                     編輯
-                  </button>
-                  <button
-                    onClick={() => togglePublish(item)}
-                    className={`text-xs px-3 py-2 rounded-md ring-1 transition-all duration-200 ${
-                      item.isPublished
-                        ? "text-rose ring-rose/20 hover:bg-rose/5"
-                        : "text-sage ring-sage/20 hover:bg-sage/5"
-                    }`}
-                  >
-                    {item.isPublished ? "取消發佈" : "發佈"}
                   </button>
                   <button
                     onClick={() => handleDelete(item)}
