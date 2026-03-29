@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
+import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
 /* ─── 資料定義 ─────────────────────────────────── */
 
@@ -184,15 +185,46 @@ export default function OrderPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl animate-reveal-up" style={{ background: "var(--color-rose)", color: "white" }}>✓</div>
-          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.1s", fontStyle: "italic" }}>訂單已送出！</h1>
-          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.2s" }}>感謝你支持 Jam for Love！</p>
-          <p className="text-espresso-light/40 text-base mb-10 animate-reveal-up" style={{ animationDelay: "0.25s" }}>
-            訂單金額 <span className="text-rose font-bold">NT$ {grandTotal}</span>，我們會盡快與你確認。
+      <div className="min-h-[70vh] flex items-center justify-center px-6 relative overflow-hidden">
+        {/* 背景慶祝彩帶動畫 */}
+        <div className="absolute inset-0 pointer-events-none">
+          <LottieAnimation
+            src={LOTTIE_URLS.confetti}
+            loop={false}
+            autoplay
+            className="w-full h-full opacity-60"
+          />
+        </div>
+
+        <div className="text-center max-w-md relative z-10">
+          {/* 成功打勾 Lottie 動畫 */}
+          <div className="w-32 h-32 mx-auto mb-4">
+            <LottieAnimation
+              src={LOTTIE_URLS.success}
+              loop={false}
+              autoplay
+              className="w-full h-full"
+            />
+          </div>
+
+          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-reveal-up" style={{ animationDelay: "0.3s", fontStyle: "italic" }}>訂單已送出！</h1>
+          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-reveal-up" style={{ animationDelay: "0.4s" }}>感謝你支持 Jam for Love！</p>
+          <p className="text-espresso-light/40 text-base mb-6 animate-reveal-up" style={{ animationDelay: "0.5s" }}>
+            訂單金額 <span className="text-rose font-bold text-lg">NT$ {grandTotal}</span>，我們會盡快與你確認。
           </p>
-          <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.35s" }}>回到首頁</button>
+
+          {/* 愛心浮動裝飾 */}
+          <div className="w-16 h-16 mx-auto mb-6 animate-reveal-up" style={{ animationDelay: "0.6s" }}>
+            <LottieAnimation
+              src={LOTTIE_URLS.heartBeat}
+              loop
+              autoplay
+              speed={0.8}
+              className="w-full h-full opacity-70"
+            />
+          </div>
+
+          <button onClick={() => router.push("/")} className="btn-primary animate-reveal-up" style={{ animationDelay: "0.7s" }}>回到首頁</button>
         </div>
       </div>
     );
