@@ -15,10 +15,8 @@ export default function AboutSection() {
 
   if (!content) return null;
 
-  // 將內容依換行分段
   const paragraphs = content.split("\n").filter((p) => p.trim());
 
-  // 每段的引言（風格6：大字引言）
   const quotes = [
     "我們的起心動念很單純",
     "成為一份溫柔而堅定的陪伴力量",
@@ -27,60 +25,52 @@ export default function AboutSection() {
 
   return (
     <section className="py-20 md:py-28">
-      <div className="max-w-3xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-6">
         {/* 標題 */}
         <ScrollReveal>
-          <div className="text-center mb-14">
+          <div className="mb-16">
             <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
               About Us
             </p>
             <h2 className="font-serif text-3xl md:text-4xl font-bold text-espresso">
               關於我們
             </h2>
-            <div className="w-12 h-[2px] bg-rose mt-5 mx-auto" />
+            <div className="w-12 h-[2px] bg-rose mt-5" />
           </div>
         </ScrollReveal>
 
-        {/* 段落：雜誌編排（首字放大） + 全幅引言 */}
-        <div className="space-y-12">
+        {/* 左右排版：左引言 + 右正文 */}
+        <div className="space-y-14 md:space-y-16">
           {paragraphs.map((para, i) => (
-            <ScrollReveal key={i} delay={i * 0.1}>
-              <div>
-                {/* 引言（風格6） */}
-                {quotes[i] && (
-                  <p
-                    className="mb-4 font-serif font-bold text-rose"
-                    style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", lineHeight: 1.4 }}
-                  >
-                    「{quotes[i]}」
-                  </p>
-                )}
-
-                {/* 正文（風格2：第一段首字放大） */}
-                <p className="text-[1.05rem] leading-[1.9] text-espresso-light/70">
-                  {i === 0 ? (
-                    <>
-                      <span
-                        className="float-left mr-3 mt-1 text-5xl font-bold leading-none text-rose"
-                        style={{ fontFamily: "serif" }}
-                      >
-                        {para.charAt(0)}
-                      </span>
-                      {para.slice(1)}
-                    </>
-                  ) : (
-                    para
+            <ScrollReveal key={i} delay={i * 0.12}>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-start">
+                {/* 左欄：一句話引言 */}
+                <div className="md:col-span-4 md:sticky md:top-24">
+                  {quotes[i] && (
+                    <p
+                      className="font-serif font-bold text-rose leading-snug"
+                      style={{ fontSize: "clamp(1.4rem, 3vw, 1.7rem)" }}
+                    >
+                      「{quotes[i]}」
+                    </p>
                   )}
-                </p>
+                  {/* 裝飾虛線 */}
+                  <div
+                    className="hidden md:block mt-4 w-10"
+                    style={{ borderTop: "2px dashed rgba(196,80,106,0.3)" }}
+                  />
+                </div>
+
+                {/* 右欄：正文 */}
+                <div className="md:col-span-8">
+                  <p className="text-[1.05rem] leading-[1.9] text-espresso-light/70">
+                    {para}
+                  </p>
+                </div>
               </div>
             </ScrollReveal>
           ))}
         </div>
-
-        {/* 底部裝飾線（風格2） */}
-        <ScrollReveal delay={0.3}>
-          <div className="mt-12 h-1 w-16 bg-rose" />
-        </ScrollReveal>
       </div>
     </section>
   );
