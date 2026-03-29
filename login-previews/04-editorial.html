@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login #4 — 雜誌社論風</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --linen: #f8f3eb; --linen-dark: #ebe2d4; --espresso: #1e0f08;
+    --espresso-light: #5c3d2e; --rose: #c4506a; --rose-dark: #a03050;
+    --rose-muted: #c4506a1a; --wine: #4a1828;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    min-height: 100vh; background: var(--linen);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    width: 100%; max-width: 480px; padding: 60px 48px;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .brand-mark {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 48px;
+  }
+  .brand-line { width: 40px; height: 2px; background: var(--rose); }
+  .brand-name {
+    font-family: 'Outfit', sans-serif; font-weight: 300; font-style: italic;
+    font-size: 0.875rem; color: var(--rose); letter-spacing: 0.1em;
+  }
+  h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 3rem; font-weight: 700; line-height: 1.1;
+    color: var(--espresso); margin-bottom: 12px;
+  }
+  .desc {
+    font-size: 0.9375rem; color: var(--espresso-light); opacity: 0.5;
+    margin-bottom: 48px; line-height: 1.6;
+  }
+  /* 分隔線 */
+  .divider {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 36px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--linen-dark);
+  }
+  .divider span {
+    font-size: 0.6875rem; color: var(--espresso-light); opacity: 0.4;
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: var(--espresso); letter-spacing: 0.1em; text-transform: uppercase; }
+  input {
+    width: 100%;
+    border: none; border-bottom: 2px solid var(--linen-dark);
+    background: transparent;
+    padding: 12px 0; font-size: 1rem;
+    color: var(--espresso); outline: none;
+    transition: border-color 0.3s;
+  }
+  input:focus { border-bottom-color: var(--rose); }
+  .field { margin-bottom: 28px; }
+  .forgot { text-align: right; margin-top: 8px; }
+  .forgot a { font-size: 0.75rem; color: var(--espresso-light); opacity: 0.4; text-decoration: none; letter-spacing: 0.05em; }
+  .forgot a:hover { color: var(--rose); opacity: 1; }
+  .btn {
+    width: 100%; padding: 18px;
+    background: var(--espresso); color: var(--linen);
+    border: none; border-radius: 0;
+    font-size: 0.8125rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.3s;
+    margin-top: 12px;
+  }
+  .btn:hover { background: var(--rose); }
+  .btn:active { transform: scale(0.98); }
+  .bottom {
+    text-align: center; font-size: 0.8125rem;
+    color: var(--espresso-light); opacity: 0.5;
+    margin-top: 36px;
+  }
+  .bottom a { color: var(--rose); font-weight: 500; text-decoration: none; }
+  .tag { position: fixed; top: 16px; left: 16px; background: var(--espresso); color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="tag">#4 雜誌社論風（Editorial）</div>
+<div class="container">
+  <div class="brand-mark">
+    <div class="brand-line"></div>
+    <span class="brand-name">Jam For Love</span>
+  </div>
+  <h1>歡迎<br>回來</h1>
+  <p class="desc">登入你的帳號，繼續享受手工果醬的美好</p>
+  <div class="divider"><span>帳號登入</span></div>
+  <form>
+    <div class="field"><label>帳號</label><input type="text"></div>
+    <div class="field"><label>密碼</label><input type="password"><div class="forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn" type="button">登入</button>
+  </form>
+  <p class="bottom">還沒有帳號？ <a href="#">註冊</a></p>
+</div>
+</body>
+</html>

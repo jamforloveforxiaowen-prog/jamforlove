@@ -1,12 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { orders, orderItems, products } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { fundraiseOrders } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
+import { eq } from "drizzle-orm";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
-interface OrderItemInput {
-  productId: number;
-  quantity: number;
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "請先登入再下單" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { customerName, phone, email, address, deliveryMethod, combos, addons, notes, total } = body;
+
+  if (!customerName || !phone || !address) {
+    return NextResponse.json(
+      { error: "請填寫姓名、電話和地址" },
+      { status: 400 }
+    );
+  }
+
+  if ((!combos || combos.length === 0) && (!addons || addons.length === 0)) {
+    return NextResponse.json(
+      { error: "請至少選擇一項產品組合或加購商品" },
+      { status: 400 }
+    );
+  }
+
+  const order = await db
+    .insert(fundraiseOrders)
+    .values({
+      userId: session.id,
+      customerName,
+      phone,
+      email: email || "",
+      address,
+      deliveryMethod: deliveryMethod || "shipping",
+      combos: JSON.stringify(combos || []),
+      addons: JSON.stringify(addons || []),
+      notes: notes || "",
+      total,
+    })
+    .returning()
+    .get();
+
+  // 寄送訂單確認信（非同步，不阻塞回應）
+  if (email) {
+    sendOrderConfirmationEmail({
+      customerName,
+      email,
+      combos: combos || [],
+      addons: addons || [],
+      total,
+      deliveryMethod: deliveryMethod || "shipping",
+      address,
+      notes: notes || "",
+      orderId: order.id,
+    }).catch((err) => {
+      console.error("Failed to send order confirmation email:", err);
+    });
+  }
+
+  return NextResponse.json({ success: true, orderId: order.id });
 }
 
 export async function GET() {
@@ -17,111 +73,15 @@ export async function GET() {
 
   const userOrders = await db
     .select()
-    .from(orders)
-    .where(eq(orders.userId, session.id))
-    .orderBy(orders.createdAt);
+    .from(fundraiseOrders)
+    .where(eq(fundraiseOrders.userId, session.id))
+    .orderBy(fundraiseOrders.createdAt);
 
-  // 取得每筆訂單的明細
-  const result = await Promise.all(
-    userOrders.map(async (order) => {
-      const items = await db
-        .select({
-          id: orderItems.id,
-          productId: orderItems.productId,
-          quantity: orderItems.quantity,
-          price: orderItems.price,
-          productName: products.name,
-        })
-        .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, order.id));
-
-      return { ...order, items };
-    })
-  );
+  const result = userOrders.map((o) => ({
+    ...o,
+    combos: JSON.parse(o.combos),
+    addons: JSON.parse(o.addons),
+  }));
 
   return NextResponse.json(result);
-}
-
-export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { customerName, phone, address, notes, items } = await req.json();
-
-  if (!customerName || !phone || !address) {
-    return NextResponse.json(
-      { error: "請填寫姓名、電話和地址" },
-      { status: 400 }
-    );
-  }
-
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return NextResponse.json(
-      { error: "請至少選擇一項產品" },
-      { status: 400 }
-    );
-  }
-
-  // 驗證產品並計算總價
-  let total = 0;
-  const validatedItems: { productId: number; quantity: number; price: number }[] = [];
-
-  for (const item of items as OrderItemInput[]) {
-    if (!item.productId || !item.quantity || item.quantity < 1) {
-      return NextResponse.json(
-        { error: "商品資料有誤，請重新選擇" },
-        { status: 400 }
-      );
-    }
-
-    const product = await db
-      .select()
-      .from(products)
-      .where(and(eq(products.id, item.productId), eq(products.isActive, true)))
-      .get();
-
-    if (!product) {
-      return NextResponse.json(
-        { error: "部分商品已下架，請重新選擇" },
-        { status: 400 }
-      );
-    }
-
-    const subtotal = product.price * item.quantity;
-    total += subtotal;
-    validatedItems.push({
-      productId: product.id,
-      quantity: item.quantity,
-      price: product.price,
-    });
-  }
-
-  // 建立訂單
-  const order = await db
-    .insert(orders)
-    .values({
-      userId: session.id,
-      customerName,
-      phone,
-      address,
-      notes: notes || "",
-      total,
-    })
-    .returning()
-    .get();
-
-  // 建立訂單明細
-  await Promise.all(
-    validatedItems.map((item) =>
-      db.insert(orderItems).values({
-        orderId: order.id,
-        ...item,
-      })
-    )
-  );
-
-  return NextResponse.json({ success: true, orderId: order.id });
 }

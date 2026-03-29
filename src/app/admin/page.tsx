@@ -12,26 +12,21 @@ interface Product {
   isActive: boolean;
 }
 
-interface OrderItem {
-  id: number;
-  productId: number;
-  quantity: number;
-  price: number;
-  productName: string | null;
-}
-
 interface Order {
   id: number;
   userId: number;
   username: string | null;
   customerName: string;
   phone: string;
+  email: string;
   address: string;
+  deliveryMethod: string;
+  combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
+  addons: { id: number; name: string; quantity: number; price: number }[];
   notes: string;
-  status: string;
   total: number;
+  status: string;
   createdAt: string;
-  items: OrderItem[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -50,12 +45,11 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "fundraise" | "banners" | "news" | "about" | "story";
+type Tab = "products" | "orders" | "banners" | "news" | "about" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "products", label: "產品管理" },
   { key: "orders", label: "訂單管理" },
-  { key: "fundraise", label: "預購表單" },
   { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
   { key: "about", label: "關於我們" },
@@ -95,7 +89,6 @@ export default function AdminPage() {
 
       {tab === "products" && <ProductManager />}
       {tab === "orders" && <OrderManager />}
-      {tab === "fundraise" && <FundraiseManager />}
       {tab === "banners" && <BannerManager />}
       {tab === "news" && <NewsManager />}
       {tab === "about" && <AboutManager />}
@@ -1329,252 +1322,17 @@ function StoryManager() {
 function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  async function loadOrders() {
-    try {
-      const res = await fetch("/api/admin/orders");
-      const data = await res.json();
-      if (Array.isArray(data)) setOrders(data.reverse());
-    } catch {
-      setError("無法載入訂單列表");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  async function updateStatus(orderId: number, status: string) {
-    try {
-      await fetch(`/api/admin/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      loadOrders();
-    } catch {
-      setError("更新狀態失敗，請重試");
-    }
-  }
-
-  if (loading) {
-    return (
-      <p className="text-espresso-light/50 text-center py-16 text-sm" role="status" aria-label="載入中">
-        載入中...
-      </p>
-    );
-  }
-
-  if (!loading && error && orders.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
-        <button
-          onClick={() => { setError(""); setLoading(true); loadOrders(); }}
-          className="btn-primary-sm"
-        >
-          重新載入
-        </button>
-      </div>
-    );
-  }
-
-  function exportToExcel() {
-    const header = ["訂單編號", "姓名", "帳號", "電話", "地址", "備註", "狀態", "總金額", "商品明細", "建立時間"];
-    const rows = orders.map((o) => [
-      o.id,
-      o.customerName,
-      o.username || "",
-      o.phone,
-      o.address,
-      o.notes,
-      STATUS_LABELS[o.status] || o.status,
-      o.total,
-      o.items.map((it) => `${it.productName || "商品"} ×${it.quantity} $${it.price}`).join("; "),
-      new Date(o.createdAt).toLocaleString("zh-TW"),
-    ]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const bom = "\uFEFF";
-    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `訂單_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">
-          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
-        </h2>
-        <button
-          onClick={exportToExcel}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
-        >
-          匯出 Excel
-        </button>
-      </div>
-      {error && (
-        <p className="text-rose text-sm font-medium mb-4" role="alert">{error}</p>
-      )}
-
-      {orders.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-espresso-light/40 text-sm">目前共 0 筆訂單</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6"
-            >
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span
-                    className="font-bold text-espresso"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontSize: "1.1rem",
-                    }}
-                  >
-                    #{order.id}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-md text-xs font-semibold ${
-                      STATUS_STYLES[order.status] || ""
-                    }`}
-                  >
-                    {STATUS_LABELS[order.status]}
-                  </span>
-                  <span className="text-xs text-espresso-light/40">
-                    {order.createdAt}
-                  </span>
-                  <span className="text-xs text-espresso-light/40">
-                    {order.username || `#${order.userId}`}
-                  </span>
-                </div>
-                <select
-                  value={order.status}
-                  onChange={(e) => updateStatus(order.id, e.target.value)}
-                  className="input-field !w-auto !py-2 !px-3 !text-sm"
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="text-sm space-y-1 min-w-0 break-words">
-                  <p className="text-espresso">
-                    <span className="text-espresso-light/50">收件人</span>{" "}
-                    {order.customerName}
-                  </p>
-                  <p className="text-espresso">
-                    <span className="text-espresso-light/50">電話</span>{" "}
-                    {order.phone}
-                  </p>
-                  <p className="text-espresso break-words">
-                    <span className="text-espresso-light/50">地址</span>{" "}
-                    {order.address}
-                  </p>
-                  {order.notes && (
-                    <p className="text-espresso-light/40 break-words">
-                      備註：{order.notes}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  {order.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex justify-between text-sm py-0.5"
-                    >
-                      <span className="text-espresso-light/60">
-                        {item.productName || `產品 #${item.productId}`} ×{" "}
-                        {item.quantity}
-                      </span>
-                      <span className="text-espresso font-medium">
-                        NT$ {item.price * item.quantity}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="border-t border-linen-dark/40 mt-2 pt-2 flex justify-between font-bold">
-                    <span className="text-espresso text-sm">總計</span>
-                    <span
-                      className="text-rose"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      NT$ {order.total}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── 預購表單管理 ──────────────────────── */
-
-interface FundraiseOrder {
-  id: number;
-  userId: number;
-  username: string | null;
-  customerName: string;
-  phone: string;
-  email: string;
-  address: string;
-  deliveryMethod: string;
-  combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
-  addons: { id: number; name: string; quantity: number; price: number }[];
-  notes: string;
-  total: number;
-  status: string;
-  createdAt: string;
-}
-
-const FORM_DESIGNS = [
-  { id: 1, name: "雜誌編排", desc: "大標題、serif 字型、editorial 風格" },
-  { id: 2, name: "卡片浮起", desc: "白色卡片 + 陰影，Material 質感" },
-  { id: 3, name: "深色沉穩", desc: "深色背景、金色點綴" },
-  { id: 4, name: "手感塗鴉", desc: "虛線邊框、紙張質感、童趣" },
-  { id: 5, name: "圓角柔和", desc: "超圓角、粉彩泡泡感" },
-  { id: 6, name: "線框極簡", desc: "純線框、大留白、瑞士風" },
-  { id: 7, name: "漸層毛玻璃", desc: "半透明毛玻璃 + 彩色漸層" },
-  { id: 8, name: "標籤貼紙", desc: "色塊標籤、左側色條、文具風" },
-  { id: 9, name: "步驟時間軸", desc: "垂直時間軸 + 圓形節點" },
-  { id: 10, name: "格線目錄", desc: "雙欄網格、圖鑑式排列" },
-  { id: 11, name: "手感 × 時間軸", desc: "目前使用：虛線塗鴉 + 時間軸步驟" },
-];
-
-function FundraiseManager() {
-  const [orders, setOrders] = useState<FundraiseOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [currentDesign] = useState(11);
 
   useEffect(() => {
-    fetch("/api/admin/fundraise")
+    fetch("/api/admin/orders")
       .then((res) => res.json())
       .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   async function updateStatus(id: number, status: string) {
-    await fetch(`/api/admin/fundraise/${id}`, {
+    await fetch(`/api/admin/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -1604,7 +1362,7 @@ function FundraiseManager() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `預購訂單_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `訂單_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1613,45 +1371,9 @@ function FundraiseManager() {
 
   return (
     <div>
-      {/* 表單風格選擇器 */}
-      <div className="mb-8 bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-serif text-base font-bold text-espresso">表單設計風格</h3>
-          <a
-            href="/order-preview"
-            target="_blank"
-            className="text-xs text-rose hover:text-rose-dark transition-colors"
-          >
-            預覽所有風格 →
-          </a>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {FORM_DESIGNS.map((d) => (
-            <div
-              key={d.id}
-              className={`rounded-lg px-3 py-2.5 text-left transition-all ${
-                currentDesign === d.id
-                  ? "ring-2 ring-rose bg-rose/5"
-                  : "ring-1 ring-linen-dark/40 hover:ring-espresso-light/30"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-espresso">{d.name}</span>
-                {currentDesign === d.id && (
-                  <span className="text-[0.6rem] bg-rose text-white px-1.5 py-0.5 rounded-full font-bold">使用中</span>
-                )}
-              </div>
-              <p className="text-[0.65rem] text-espresso-light/40 mt-0.5 leading-tight">{d.desc}</p>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-espresso-light/30 mt-3">如需切換風格，請告知管理員套用</p>
-      </div>
-
-      {/* 訂單列表 */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-lg font-bold text-espresso">
-          預購訂單 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
+          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
         </h2>
         <button
           onClick={exportToExcel}
@@ -1662,7 +1384,7 @@ function FundraiseManager() {
       </div>
 
       {orders.length === 0 ? (
-        <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆預購訂單</p>
+        <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
       ) : (
         <div className="space-y-3">
           {[...orders].reverse().map((order) => {
@@ -1747,3 +1469,5 @@ function FundraiseManager() {
     </div>
   );
 }
+
+

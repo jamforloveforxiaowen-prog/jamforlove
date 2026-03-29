@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login #10 — 堆疊式溫暖</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --linen: #f8f3eb; --linen-dark: #ebe2d4; --espresso: #1e0f08;
+    --espresso-light: #5c3d2e; --rose: #c4506a; --rose-dark: #a03050;
+    --rose-muted: #c4506a1a; --honey: #c89530;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    min-height: 100vh; background: var(--linen);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px;
+  }
+  .hero-section {
+    text-align: center; margin-bottom: 40px;
+    animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .logo-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 20px;
+  }
+  .logo-img {
+    width: 48px; height: 48px; border-radius: 50%;
+    object-fit: cover; box-shadow: 0 2px 8px rgba(30,15,8,0.1);
+  }
+  .logo-text {
+    font-family: 'Outfit', sans-serif; font-weight: 300; font-style: italic;
+    font-size: 1.5rem; color: var(--rose);
+  }
+  .hero-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 2.25rem; font-weight: 700;
+    color: var(--espresso); line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .hero-desc {
+    font-size: 0.9375rem; color: var(--espresso-light); opacity: 0.5;
+  }
+  .form-card {
+    width: 100%; max-width: 400px; padding: 40px 36px;
+    background: white; border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(30,15,8,0.06);
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* 分隔線 ornament */
+  .ornament {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  .ornament::before, .ornament::after {
+    content: ''; flex: 1; height: 1px; background: var(--linen-dark);
+  }
+  .ornament span {
+    font-size: 0.6875rem; color: var(--espresso-light); opacity: 0.4;
+    letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap;
+  }
+  label { display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 8px; color: var(--espresso); }
+  input {
+    width: 100%; border: 1.5px solid var(--linen-dark);
+    background: var(--linen); border-radius: 10px;
+    padding: 14px 16px; font-size: 0.9375rem;
+    color: var(--espresso); outline: none; transition: all 0.2s;
+  }
+  input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .field { margin-bottom: 20px; }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .remember { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--espresso-light); }
+  .remember input { width: auto; }
+  .forgot a { font-size: 0.75rem; color: var(--espresso-light); opacity: 0.4; text-decoration: none; }
+  .forgot a:hover { color: var(--rose); opacity: 1; }
+  .btn {
+    width: 100%; padding: 16px;
+    background: var(--rose); color: white;
+    border: none; border-radius: 10px;
+    font-size: 0.9375rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 16px;
+  }
+  .btn:hover { background: var(--rose-dark); box-shadow: 0 4px 20px rgba(196,80,106,0.25); }
+  .btn:active { transform: scale(0.97); }
+  .bottom-section {
+    width: 100%; max-width: 400px;
+    text-align: center; margin-top: 24px;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+  }
+  .bottom-section p {
+    font-size: 0.875rem; color: var(--espresso-light); opacity: 0.5;
+  }
+  .bottom-section a {
+    color: var(--rose); font-weight: 500; text-decoration: none;
+  }
+  .features {
+    display: flex; justify-content: center; gap: 32px;
+    margin-top: 16px;
+  }
+  .feature {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; color: var(--espresso-light); opacity: 0.4;
+  }
+  .feature-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--rose); opacity: 0.5; }
+  .tag { position: fixed; top: 16px; left: 16px; background: var(--espresso); color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="tag">#10 堆疊式溫暖（Logo + 表單）</div>
+<div class="hero-section">
+  <div class="logo-row">
+    <img class="logo-img" src="/logo.jpg" alt="Jam For Love" onerror="this.style.background='#c4506a';this.style.display='flex';this.alt='🍓'">
+    <span class="logo-text">Jam For Love</span>
+  </div>
+  <h1 class="hero-title">歡迎回來</h1>
+  <p class="hero-desc">登入以查看訂單或訂購果醬</p>
+</div>
+<div class="form-card">
+  <div class="ornament"><span>帳號登入</span></div>
+  <form>
+    <div class="field"><label>帳號</label><input type="text"></div>
+    <div class="field">
+      <label>密碼</label>
+      <input type="password">
+      <div class="row">
+        <label class="remember"><input type="checkbox"> 記住我</label>
+        <div class="forgot"><a href="#">忘記密碼？</a></div>
+      </div>
+    </div>
+    <button class="btn" type="button">登入</button>
+  </form>
+</div>
+<div class="bottom-section">
+  <p>還沒有帳號？ <a href="#">註冊</a></p>
+  <div class="features">
+    <div class="feature"><div class="feature-dot"></div>天然手工</div>
+    <div class="feature"><div class="feature-dot"></div>當季水果</div>
+    <div class="feature"><div class="feature-dot"></div>用愛熬煮</div>
+  </div>
+</div>
+</body>
+</html>

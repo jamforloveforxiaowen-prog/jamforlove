@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jam For Love — Login 設計預覽</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: #0a0a0a; color: white;
+    -webkit-font-smoothing: antialiased;
+    padding: 60px 40px;
+  }
+  h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: rgba(255,255,255,0.4); margin-bottom: 48px; font-size: 1rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+  }
+  .preview-card {
+    background: #141414; border-radius: 16px;
+    overflow: hidden; border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.3s; cursor: pointer;
+    text-decoration: none; color: white;
+    display: block;
+  }
+  .preview-card:hover {
+    border-color: #c4506a;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(196,80,106,0.15);
+  }
+  .preview-frame {
+    width: 100%; height: 280px; border: none;
+    pointer-events: none;
+    transform: scale(0.5); transform-origin: top left;
+    width: 200%; height: 560px;
+  }
+  .preview-frame-wrap {
+    width: 100%; height: 280px; overflow: hidden;
+    background: #1a1a1a;
+  }
+  .preview-info { padding: 20px 24px; }
+  .preview-num {
+    font-size: 0.6875rem; font-weight: 600;
+    color: #c4506a; letter-spacing: 0.15em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .preview-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 4px; }
+  .preview-desc { font-size: 0.8125rem; color: rgba(255,255,255,0.4); }
+  .preview-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 12px; font-size: 0.8125rem;
+    color: #c4506a; font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<h1>Login Page 設計預覽</h1>
+<p class="sub">Jam For Love — 共 10 種設計，點擊卡片開啟全螢幕預覽</p>
+<div class="grid">
+  <a class="preview-card" href="01-centered-minimal.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="01-centered-minimal.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#01</div>
+      <div class="preview-title">極簡居中卡片</div>
+      <div class="preview-desc">白色卡片居中，Logo + 表單，乾淨簡潔</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="02-split-photo.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="02-split-photo.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#02</div>
+      <div class="preview-title">左圖右表單</div>
+      <div class="preview-desc">左側果醬意象圖，右側登入表單（現有設計進化版）</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="03-glassmorphism.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="03-glassmorphism.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#03</div>
+      <div class="preview-title">毛玻璃風</div>
+      <div class="preview-desc">Glassmorphism 效果，漸層背景 + 模糊卡片</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="04-editorial.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="04-editorial.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#04</div>
+      <div class="preview-title">雜誌社論風</div>
+      <div class="preview-desc">大標題、底線 input、方形按鈕，排版如精品雜誌</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="05-warm-gradient.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="05-warm-gradient.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#05</div>
+      <div class="preview-title">暖色漸層 + 圓角</div>
+      <div class="preview-desc">暖色背景漸層、emoji icon、超圓角卡片</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="06-dark-elegant.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="06-dark-elegant.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#06</div>
+      <div class="preview-title">深色優雅</div>
+      <div class="preview-desc">Dark Mode 風格，酒紅底色，精緻奢華感</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="07-split-diagonal.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="07-split-diagonal.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#07</div>
+      <div class="preview-title">斜切分割</div>
+      <div class="preview-desc">對角線分割畫面，品牌色 + 亞麻色</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="08-floating-card.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="08-floating-card.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#08</div>
+      <div class="preview-title">玫瑰底 + 浮動水果</div>
+      <div class="preview-desc">整面玫瑰色背景，水果 emoji 浮動動畫</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="09-asymmetric.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="09-asymmetric.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#09</div>
+      <div class="preview-title">不對稱佈局</div>
+      <div class="preview-desc">左側大文案品牌宣言，右側表單，資訊層次分明</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+  <a class="preview-card" href="10-stacked-warm.html" target="_blank">
+    <div class="preview-frame-wrap"><iframe class="preview-frame" src="10-stacked-warm.html"></iframe></div>
+    <div class="preview-info">
+      <div class="preview-num">#10</div>
+      <div class="preview-title">堆疊式溫暖</div>
+      <div class="preview-desc">Logo + 標題在上方，表單卡片在下，底部品牌特色標籤</div>
+      <div class="preview-link">開啟預覽 →</div>
+    </div>
+  </a>
+</div>
+</body>
+</html>

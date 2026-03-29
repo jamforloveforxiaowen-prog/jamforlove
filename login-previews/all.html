@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jam For Love — 10 種 Login 設計預覽</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --linen: #f8f3eb; --linen-dark: #ebe2d4; --espresso: #1e0f08;
+    --espresso-light: #5c3d2e; --rose: #c4506a; --rose-dark: #a03050;
+    --rose-muted: #c4506a1a; --sage: #5a7c52; --honey: #c89530; --wine: #4a1828;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Outfit', system-ui, sans-serif; background: #0a0a0a; color: white; -webkit-font-smoothing: antialiased; }
+
+  /* ── 導覽 ── */
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,10,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 24px; display: flex; align-items: center; gap: 12px; overflow-x: auto; }
+  .nav-title { font-weight: 700; font-size: 0.875rem; white-space: nowrap; margin-right: 8px; }
+  .nav a { padding: 6px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; color: rgba(255,255,255,0.5); text-decoration: none; white-space: nowrap; border: 1px solid rgba(255,255,255,0.08); transition: all 0.2s; }
+  .nav a:hover { color: white; border-color: var(--rose); background: rgba(196,80,106,0.1); }
+
+  /* ── 每個設計區塊 ── */
+  .design { min-height: 100vh; position: relative; overflow: hidden; }
+  .design-label { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.8125rem; font-weight: 600; backdrop-filter: blur(8px); }
+  .design-label small { display: block; font-weight: 400; opacity: 0.5; font-size: 0.6875rem; margin-top: 2px; }
+
+  /* ── 共用表單樣式 ── */
+  .f-label { display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 8px; }
+  .f-input { width: 100%; padding: 14px 16px; font-size: 0.9375rem; outline: none; transition: all 0.2s; font-family: inherit; }
+  .f-field { margin-bottom: 20px; }
+  .f-forgot { text-align: right; margin-top: 6px; }
+  .f-forgot a { font-size: 0.75rem; text-decoration: none; }
+  .f-bottom { text-align: center; font-size: 0.875rem; margin-top: 28px; }
+  .f-bottom a { font-weight: 500; text-decoration: none; }
+
+  /* ══════════════════════════════════════════
+     #1 極簡居中
+  ══════════════════════════════════════════ */
+  .d1 { background: var(--linen); display: flex; align-items: center; justify-content: center; }
+  .d1 .card { width: 100%; max-width: 400px; padding: 48px 40px; background: white; border-radius: 20px; box-shadow: 0 4px 40px rgba(30,15,8,0.06); }
+  .d1 .logo { font-weight: 300; font-style: italic; font-size: 2rem; color: var(--rose); text-align: center; margin-bottom: 8px; }
+  .d1 .tagline { text-align: center; font-size: 0.8rem; color: var(--espresso-light); opacity: 0.5; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 40px; }
+  .d1 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.5rem; font-weight: 700; color: var(--espresso); margin-bottom: 6px; }
+  .d1 .desc { font-size: 0.875rem; color: var(--espresso-light); opacity: 0.6; margin-bottom: 32px; }
+  .d1 .f-label { color: var(--espresso); }
+  .d1 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 10px; color: var(--espresso); }
+  .d1 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d1 .f-forgot a { color: var(--espresso-light); opacity: 0.5; }
+  .d1 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 10px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+  .d1 .btn:hover { background: var(--rose-dark); }
+  .d1 .f-bottom { color: var(--espresso-light); opacity: 0.6; }
+  .d1 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #2 左圖右表單
+  ══════════════════════════════════════════ */
+  .d2 { display: flex; }
+  .d2-photo { width: 50%; position: relative; overflow: hidden; background: linear-gradient(135deg, #c4506a 0%, #a03050 50%, #4a1828 100%); }
+  .d2-photo img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; mix-blend-mode: multiply; }
+  .d2-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 60px; }
+  .d2-overlay h2 { font-weight: 300; font-style: italic; font-size: 3.5rem; color: white; line-height: 0.9; margin-bottom: 16px; }
+  .d2-overlay p { color: rgba(255,255,255,0.6); font-size: 0.875rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .d2-form { width: 50%; display: flex; align-items: center; justify-content: center; padding: 40px; background: white; }
+  .d2-wrap { width: 100%; max-width: 380px; }
+  .d2 h2 { font-family: 'Noto Serif TC', serif; font-size: 2rem; font-weight: 700; color: var(--espresso); margin-bottom: 8px; }
+  .d2 .desc { font-size: 0.875rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 40px; }
+  .d2 .f-label { color: var(--espresso); }
+  .d2 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 8px; color: var(--espresso); }
+  .d2 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d2 .f-forgot a { color: var(--espresso-light); opacity: 0.5; }
+  .d2 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+  .d2 .btn:hover { background: var(--rose-dark); }
+  .d2 .f-bottom { color: var(--espresso-light); opacity: 0.6; }
+  .d2 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #3 毛玻璃
+  ══════════════════════════════════════════ */
+  .d3 { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8f3eb 0%, #ebe2d4 30%, #d87a90 60%, #c4506a 100%); position: relative; }
+  .d3 .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; }
+  .d3 .b1 { width: 400px; height: 400px; background: #c4506a; top: -100px; left: -100px; }
+  .d3 .b2 { width: 300px; height: 300px; background: #c89530; bottom: -80px; right: -60px; }
+  .d3 .b3 { width: 250px; height: 250px; background: #5a7c52; top: 50%; right: 20%; }
+  .d3 .glass { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 48px 40px; background: rgba(255,255,255,0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.4); border-radius: 24px; box-shadow: 0 8px 48px rgba(30,15,8,0.08); }
+  .d3 .logo { font-weight: 300; font-style: italic; font-size: 1.8rem; color: var(--rose); text-align: center; margin-bottom: 4px; }
+  .d3 .tagline { text-align: center; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--espresso-light); opacity: 0.5; margin-bottom: 36px; }
+  .d3 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700; text-align: center; color: var(--espresso); margin-bottom: 6px; }
+  .d3 .desc { text-align: center; font-size: 0.8125rem; color: var(--espresso-light); opacity: 0.6; margin-bottom: 32px; }
+  .d3 .f-label { color: var(--espresso); }
+  .d3 .f-input { border: 1px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.5); border-radius: 12px; color: var(--espresso); }
+  .d3 .f-input:focus { border-color: var(--rose); background: rgba(255,255,255,0.8); box-shadow: 0 0 0 3px var(--rose-muted); }
+  .d3 .f-forgot a { color: var(--espresso-light); opacity: 0.5; }
+  .d3 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 12px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(196,80,106,0.3); }
+  .d3 .btn:hover { background: var(--rose-dark); }
+  .d3 .f-bottom { color: var(--espresso-light); opacity: 0.6; }
+  .d3 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #4 社論風
+  ══════════════════════════════════════════ */
+  .d4 { background: var(--linen); display: flex; align-items: center; justify-content: center; }
+  .d4 .wrap { width: 100%; max-width: 480px; padding: 60px 48px; }
+  .d4 .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+  .d4 .brand-line { width: 40px; height: 2px; background: var(--rose); }
+  .d4 .brand-name { font-weight: 300; font-style: italic; font-size: 0.875rem; color: var(--rose); letter-spacing: 0.1em; }
+  .d4 h2 { font-family: 'Noto Serif TC', serif; font-size: 3rem; font-weight: 700; line-height: 1.1; color: var(--espresso); margin-bottom: 12px; }
+  .d4 .desc { font-size: 0.9375rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 48px; line-height: 1.6; }
+  .d4 .divider { display: flex; align-items: center; gap: 16px; margin-bottom: 36px; }
+  .d4 .divider::before, .d4 .divider::after { content: ''; flex: 1; height: 1px; background: var(--linen-dark); }
+  .d4 .divider span { font-size: 0.6875rem; color: var(--espresso-light); opacity: 0.4; letter-spacing: 0.15em; text-transform: uppercase; }
+  .d4 .f-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso); }
+  .d4 .f-input { border: none; border-bottom: 2px solid var(--linen-dark); background: transparent; border-radius: 0; padding: 12px 0; color: var(--espresso); font-size: 1rem; }
+  .d4 .f-input:focus { border-bottom-color: var(--rose); }
+  .d4 .f-forgot a { color: var(--espresso-light); opacity: 0.4; letter-spacing: 0.05em; }
+  .d4 .btn { width: 100%; padding: 18px; background: var(--espresso); color: var(--linen); border: none; border-radius: 0; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; margin-top: 12px; }
+  .d4 .btn:hover { background: var(--rose); }
+  .d4 .f-bottom { color: var(--espresso-light); opacity: 0.5; }
+  .d4 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #5 暖色漸層
+  ══════════════════════════════════════════ */
+  .d5 { display: flex; align-items: center; justify-content: center; background: linear-gradient(160deg, var(--linen) 0%, #f2ead8 40%, #ebe2d4 100%); position: relative; }
+  .d5 .deco { position: absolute; border-radius: 50%; border: 1px solid var(--linen-dark); }
+  .d5 .dc1 { width: 500px; height: 500px; top: -200px; right: -100px; }
+  .d5 .dc2 { width: 300px; height: 300px; bottom: -100px; left: -80px; }
+  .d5 .card { position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 52px 44px; background: white; border-radius: 28px; box-shadow: 0 24px 80px rgba(30,15,8,0.08); }
+  .d5 .emoji { font-size: 2.5rem; margin-bottom: 20px; }
+  .d5 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700; color: var(--espresso); margin-bottom: 6px; }
+  .d5 .desc { font-size: 0.8125rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 36px; }
+  .d5 .icon-wrap { position: relative; margin-bottom: 20px; }
+  .d5 .icon-wrap .ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; opacity: 0.4; }
+  .d5 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 14px; padding-left: 42px; color: var(--espresso); }
+  .d5 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d5 .f-forgot a { color: var(--espresso-light); opacity: 0.4; }
+  .d5 .btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--rose), var(--rose-dark)); color: white; border: none; border-radius: 14px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(196,80,106,0.3); }
+  .d5 .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(196,80,106,0.35); }
+  .d5 .f-bottom { color: var(--espresso-light); opacity: 0.5; }
+  .d5 .f-bottom a { color: var(--rose); }
+  .d5 .brand-ft { text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--linen-dark); font-weight: 300; font-style: italic; font-size: 0.875rem; color: var(--espresso-light); opacity: 0.4; }
+
+  /* ══════════════════════════════════════════
+     #6 深色優雅
+  ══════════════════════════════════════════ */
+  .d6 { display: flex; align-items: center; justify-content: center; background: var(--wine); background-image: radial-gradient(ellipse at 30% 20%, rgba(196,80,106,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(200,149,48,0.08) 0%, transparent 50%); }
+  .d6 .card { width: 100%; max-width: 400px; padding: 52px 44px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; backdrop-filter: blur(20px); }
+  .d6 .logo { font-weight: 300; font-style: italic; font-size: 1.8rem; color: var(--rose); text-align: center; margin-bottom: 4px; }
+  .d6 .tagline { text-align: center; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 40px; }
+  .d6 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700; color: var(--linen); text-align: center; margin-bottom: 6px; }
+  .d6 .desc { text-align: center; font-size: 0.8125rem; color: rgba(255,255,255,0.4); margin-bottom: 36px; }
+  .d6 .f-label { color: rgba(255,255,255,0.6); }
+  .d6 .f-input { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); border-radius: 10px; color: var(--linen); }
+  .d6 .f-input::placeholder { color: rgba(255,255,255,0.2); }
+  .d6 .f-input:focus { border-color: var(--rose); background: rgba(255,255,255,0.1); box-shadow: 0 0 0 3px rgba(196,80,106,0.2); }
+  .d6 .f-forgot a { color: rgba(255,255,255,0.3); }
+  .d6 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 10px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(196,80,106,0.4); }
+  .d6 .btn:hover { background: var(--rose-dark); }
+  .d6 .f-bottom { color: rgba(255,255,255,0.35); }
+  .d6 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #7 斜切分割
+  ══════════════════════════════════════════ */
+  .d7 { position: relative; }
+  .d7-bg-rose { position: absolute; inset: 0; background: var(--rose); clip-path: polygon(0 0, 55% 0, 35% 100%, 0 100%); }
+  .d7-bg-rose::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 60%, rgba(255,255,255,0.12) 0%, transparent 50%); }
+  .d7-bg-linen { position: absolute; inset: 0; background: var(--linen); clip-path: polygon(55% 0, 100% 0, 100% 100%, 35% 100%); }
+  .d7-brand { position: absolute; left: 0; top: 0; bottom: 0; width: 35%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1; padding: 40px; }
+  .d7-brand h2 { font-weight: 300; font-style: italic; font-size: 3rem; color: white; line-height: 0.9; text-align: center; margin-bottom: 12px; }
+  .d7-brand p { color: rgba(255,255,255,0.5); font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; }
+  .d7-form { position: absolute; right: 0; top: 0; bottom: 0; width: 58%; display: flex; align-items: center; justify-content: center; z-index: 1; padding: 40px; }
+  .d7-wrap { width: 100%; max-width: 380px; }
+  .d7 h2 { font-family: 'Noto Serif TC', serif; font-size: 2rem; font-weight: 700; color: var(--espresso); margin-bottom: 8px; }
+  .d7 .desc { font-size: 0.875rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 40px; }
+  .d7 .f-label { color: var(--espresso); }
+  .d7 .f-input { border: 1.5px solid var(--linen-dark); background: white; border-radius: 10px; color: var(--espresso); }
+  .d7 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); }
+  .d7 .f-forgot a { color: var(--espresso-light); opacity: 0.4; }
+  .d7 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 10px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+  .d7 .btn:hover { background: var(--rose-dark); }
+  .d7 .f-bottom { color: var(--espresso-light); opacity: 0.5; }
+  .d7 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #8 浮動水果
+  ══════════════════════════════════════════ */
+  .d8 { display: flex; align-items: center; justify-content: center; background: var(--rose); position: relative; overflow: hidden; }
+  .d8 .fruit { position: absolute; font-size: 2rem; opacity: 0.15; animation: d8float 6s ease-in-out infinite; }
+  .d8 .fr1 { top: 10%; left: 8%; font-size: 3rem; }
+  .d8 .fr2 { top: 25%; right: 12%; animation-delay: 1s; }
+  .d8 .fr3 { bottom: 20%; left: 15%; font-size: 2.5rem; animation-delay: 2s; }
+  .d8 .fr4 { bottom: 10%; right: 8%; animation-delay: 0.5s; }
+  .d8 .fr5 { top: 60%; right: 5%; font-size: 2.5rem; animation-delay: 1.5s; }
+  @keyframes d8float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(5deg); } }
+  .d8 .card { position: relative; z-index: 1; width: 100%; max-width: 400px; padding: 48px 40px; background: white; border-radius: 24px; box-shadow: 0 32px 80px rgba(74,24,40,0.3); }
+  .d8 .badge { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, var(--rose), var(--rose-dark)); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 4px 16px rgba(196,80,106,0.3); font-size: 1.8rem; }
+  .d8 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700; color: var(--espresso); text-align: center; margin-bottom: 4px; }
+  .d8 .desc { text-align: center; font-size: 0.8125rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 32px; }
+  .d8 .f-label { color: var(--espresso); }
+  .d8 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 12px; color: var(--espresso); }
+  .d8 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d8 .f-forgot a { color: var(--espresso-light); opacity: 0.4; }
+  .d8 .btn { width: 100%; padding: 16px; background: var(--espresso); color: white; border: none; border-radius: 12px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+  .d8 .btn:hover { background: var(--rose); box-shadow: 0 4px 20px rgba(196,80,106,0.25); }
+  .d8 .f-bottom { color: var(--espresso-light); opacity: 0.5; }
+  .d8 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #9 不對稱
+  ══════════════════════════════════════════ */
+  .d9 { display: grid; grid-template-columns: 1fr 480px; }
+  .d9-left { background: var(--linen); display: flex; flex-direction: column; justify-content: space-between; padding: 48px 60px; position: relative; overflow: hidden; }
+  .d9-left::after { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: var(--rose); opacity: 0.05; bottom: -100px; right: -100px; }
+  .d9-top { display: flex; align-items: center; gap: 12px; }
+  .d9-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rose); }
+  .d9-name { font-weight: 300; font-style: italic; font-size: 1rem; color: var(--espresso-light); }
+  .d9-center { max-width: 400px; }
+  .d9 .big { font-family: 'Noto Serif TC', serif; font-size: 3.5rem; font-weight: 700; line-height: 1.15; color: var(--espresso); margin-bottom: 20px; }
+  .d9 .big span { color: var(--rose); }
+  .d9 .left-desc { font-size: 1rem; color: var(--espresso-light); opacity: 0.5; line-height: 1.7; }
+  .d9-copy { font-size: 0.75rem; color: var(--espresso-light); opacity: 0.3; }
+  .d9-right { display: flex; align-items: center; justify-content: center; padding: 48px; background: white; }
+  .d9-wrap { width: 100%; max-width: 360px; }
+  .d9 .form-tag { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--rose); font-weight: 600; margin-bottom: 8px; }
+  .d9 h2 { font-family: 'Noto Serif TC', serif; font-size: 1.5rem; font-weight: 700; color: var(--espresso); margin-bottom: 6px; }
+  .d9 .desc { font-size: 0.8125rem; color: var(--espresso-light); opacity: 0.5; margin-bottom: 36px; }
+  .d9 .f-label { color: var(--espresso); }
+  .d9 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 8px; color: var(--espresso); }
+  .d9 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d9 .f-forgot a { color: var(--espresso-light); opacity: 0.4; }
+  .d9 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+  .d9 .btn:hover { background: var(--rose-dark); }
+  .d9 .f-bottom { color: var(--espresso-light); opacity: 0.5; }
+  .d9 .f-bottom a { color: var(--rose); }
+
+  /* ══════════════════════════════════════════
+     #10 堆疊溫暖
+  ══════════════════════════════════════════ */
+  .d10 { background: var(--linen); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+  .d10-hero { text-align: center; margin-bottom: 40px; }
+  .d10-logo-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+  .d10-logo-circle { width: 48px; height: 48px; border-radius: 50%; background: var(--rose); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 2px 8px rgba(30,15,8,0.1); }
+  .d10-logo-text { font-weight: 300; font-style: italic; font-size: 1.5rem; color: var(--rose); }
+  .d10 .hero-title { font-family: 'Noto Serif TC', serif; font-size: 2.25rem; font-weight: 700; color: var(--espresso); line-height: 1.2; margin-bottom: 8px; }
+  .d10 .hero-desc { font-size: 0.9375rem; color: var(--espresso-light); opacity: 0.5; }
+  .d10 .form-card { width: 100%; max-width: 400px; padding: 40px 36px; background: white; border-radius: 20px; box-shadow: 0 8px 40px rgba(30,15,8,0.06); }
+  .d10 .ornament { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .d10 .ornament::before, .d10 .ornament::after { content: ''; flex: 1; height: 1px; background: var(--linen-dark); }
+  .d10 .ornament span { font-size: 0.6875rem; color: var(--espresso-light); opacity: 0.4; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
+  .d10 .f-label { color: var(--espresso); }
+  .d10 .f-input { border: 1.5px solid var(--linen-dark); background: var(--linen); border-radius: 10px; color: var(--espresso); }
+  .d10 .f-input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-muted); background: white; }
+  .d10 .f-forgot a { color: var(--espresso-light); opacity: 0.4; }
+  .d10 .btn { width: 100%; padding: 16px; background: var(--rose); color: white; border: none; border-radius: 10px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .d10 .btn:hover { background: var(--rose-dark); }
+  .d10-bottom { width: 100%; max-width: 400px; text-align: center; margin-top: 24px; }
+  .d10-bottom p { font-size: 0.875rem; color: var(--espresso-light); opacity: 0.5; }
+  .d10-bottom a { color: var(--rose); font-weight: 500; text-decoration: none; }
+  .d10 .features { display: flex; justify-content: center; gap: 32px; margin-top: 16px; }
+  .d10 .feat { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--espresso-light); opacity: 0.4; }
+  .d10 .feat-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--rose); opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<!-- 導覽列 -->
+<nav class="nav">
+  <span class="nav-title">Login 預覽</span>
+  <a href="#d1">#1 極簡居中</a>
+  <a href="#d2">#2 左圖右表單</a>
+  <a href="#d3">#3 毛玻璃</a>
+  <a href="#d4">#4 社論風</a>
+  <a href="#d5">#5 暖色漸層</a>
+  <a href="#d6">#6 深色優雅</a>
+  <a href="#d7">#7 斜切分割</a>
+  <a href="#d8">#8 浮動水果</a>
+  <a href="#d9">#9 不對稱</a>
+  <a href="#d10">#10 堆疊溫暖</a>
+</nav>
+
+<!-- ═══ #1 極簡居中 ═══ -->
+<section id="d1" class="design d1">
+  <div class="design-label">#1 極簡居中卡片<small>白色卡片居中，乾淨簡潔</small></div>
+  <div class="card">
+    <div class="logo">Jam For Love</div>
+    <div class="tagline">Handmade with Love</div>
+    <h2>歡迎回來</h2>
+    <p class="desc">登入以查看訂單或訂購果醬</p>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text" placeholder="請輸入帳號"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password" placeholder="請輸入密碼"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+  </div>
+</section>
+
+<!-- ═══ #2 左圖右表單 ═══ -->
+<section id="d2" class="design d2">
+  <div class="design-label">#2 左圖右表單<small>果醬意象圖 + 登入表單</small></div>
+  <div class="d2-photo">
+    <img src="https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800" alt="">
+    <div class="d2-overlay">
+      <h2>Jam<br>For Love</h2>
+      <p>Handmade with Love &middot; 2025</p>
+    </div>
+  </div>
+  <div class="d2-form">
+    <div class="d2-wrap">
+      <h2>歡迎回來</h2>
+      <p class="desc">登入以查看訂單或訂購果醬</p>
+      <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+      <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+      <button class="btn">登入</button>
+      <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ #3 毛玻璃 ═══ -->
+<section id="d3" class="design d3">
+  <div class="design-label">#3 毛玻璃風<small>Glassmorphism + 漸層背景</small></div>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="glass">
+    <div class="logo">Jam For Love</div>
+    <div class="tagline">Handmade with Love</div>
+    <h2>歡迎回來</h2>
+    <p class="desc">登入以查看訂單或訂購果醬</p>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+  </div>
+</section>
+
+<!-- ═══ #4 社論風 ═══ -->
+<section id="d4" class="design d4">
+  <div class="design-label">#4 雜誌社論風<small>大標題、底線 input、精品感</small></div>
+  <div class="wrap">
+    <div class="brand"><div class="brand-line"></div><span class="brand-name">Jam For Love</span></div>
+    <h2>歡迎<br>回來</h2>
+    <p class="desc">登入你的帳號，繼續享受手工果醬的美好</p>
+    <div class="divider"><span>帳號登入</span></div>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+  </div>
+</section>
+
+<!-- ═══ #5 暖色漸層 ═══ -->
+<section id="d5" class="design d5">
+  <div class="design-label">#5 暖色漸層 + 圓角<small>Emoji icon、超圓角卡片</small></div>
+  <div class="deco dc1"></div><div class="deco dc2"></div>
+  <div class="card">
+    <div class="emoji">🍓</div>
+    <h2>歡迎回來</h2>
+    <p class="desc">登入以查看訂單或訂購果醬</p>
+    <div class="icon-wrap"><span class="ico">👤</span><input class="f-input" type="text" placeholder="帳號"></div>
+    <div class="icon-wrap"><span class="ico">🔒</span><input class="f-input" type="password" placeholder="密碼"></div>
+    <div class="f-forgot" style="margin-top:-12px;margin-bottom:8px"><a href="#">忘記密碼？</a></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+    <div class="brand-ft">Jam For Love</div>
+  </div>
+</section>
+
+<!-- ═══ #6 深色優雅 ═══ -->
+<section id="d6" class="design d6">
+  <div class="design-label">#6 深色優雅<small>Dark Mode、酒紅底色</small></div>
+  <div class="card">
+    <div class="logo">Jam For Love</div>
+    <div class="tagline">Handmade with Love</div>
+    <h2>歡迎回來</h2>
+    <p class="desc">登入以查看訂單或訂購果醬</p>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text" placeholder="請輸入帳號"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password" placeholder="請輸入密碼"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+  </div>
+</section>
+
+<!-- ═══ #7 斜切分割 ═══ -->
+<section id="d7" class="design d7">
+  <div class="design-label">#7 斜切分割<small>對角線分割、品牌色 vs 亞麻色</small></div>
+  <div class="d7-bg-rose"></div><div class="d7-bg-linen"></div>
+  <div class="d7-brand"><h2>Jam<br>For<br>Love</h2><p>Handmade with Love</p></div>
+  <div class="d7-form">
+    <div class="d7-wrap">
+      <h2>歡迎回來</h2>
+      <p class="desc">登入以查看訂單或訂購果醬</p>
+      <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+      <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+      <button class="btn">登入</button>
+      <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ #8 浮動水果 ═══ -->
+<section id="d8" class="design d8">
+  <div class="design-label">#8 玫瑰底 + 浮動水果<small>水果 emoji 浮動動畫</small></div>
+  <div class="fruit fr1">🍓</div><div class="fruit fr2">🫐</div><div class="fruit fr3">🍑</div><div class="fruit fr4">🍊</div><div class="fruit fr5">🍒</div>
+  <div class="card">
+    <div class="badge">🍓</div>
+    <h2>歡迎回來</h2>
+    <p class="desc">登入以查看訂單或訂購果醬</p>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+    <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+  </div>
+</section>
+
+<!-- ═══ #9 不對稱 ═══ -->
+<section id="d9" class="design d9">
+  <div class="design-label">#9 不對稱佈局<small>左側大文案、右側表單</small></div>
+  <div class="d9-left">
+    <div class="d9-top"><div class="d9-dot"></div><span class="d9-name">Jam For Love</span></div>
+    <div class="d9-center">
+      <h2 class="big">用<span>愛</span>手工熬煮<br>每一瓶果醬</h2>
+      <p class="left-desc">嚴選當季新鮮水果，不加人工色素與防腐劑，<br>每一口都是自然的甜蜜。</p>
+    </div>
+    <div class="d9-copy">© 2025 Jam For Love</div>
+  </div>
+  <div class="d9-right">
+    <div class="d9-wrap">
+      <div class="form-tag">帳號登入</div>
+      <h2>歡迎回來</h2>
+      <p class="desc">登入以查看訂單或訂購果醬</p>
+      <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+      <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+      <button class="btn">登入</button>
+      <p class="f-bottom">還沒有帳號？ <a href="#">註冊</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ #10 堆疊溫暖 ═══ -->
+<section id="d10" class="design d10">
+  <div class="design-label">#10 堆疊式溫暖<small>Logo 在上、表單卡片在下</small></div>
+  <div class="d10-hero">
+    <div class="d10-logo-row">
+      <div class="d10-logo-circle">🍓</div>
+      <span class="d10-logo-text">Jam For Love</span>
+    </div>
+    <h2 class="hero-title">歡迎回來</h2>
+    <p class="hero-desc">登入以查看訂單或訂購果醬</p>
+  </div>
+  <div class="form-card">
+    <div class="ornament"><span>帳號登入</span></div>
+    <div class="f-field"><label class="f-label">帳號</label><input class="f-input" type="text"></div>
+    <div class="f-field"><label class="f-label">密碼</label><input class="f-input" type="password"><div class="f-forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn">登入</button>
+  </div>
+  <div class="d10-bottom">
+    <p>還沒有帳號？ <a href="#">註冊</a></p>
+    <div class="features">
+      <div class="feat"><div class="feat-dot"></div>天然手工</div>
+      <div class="feat"><div class="feat-dot"></div>當季水果</div>
+      <div class="feat"><div class="feat-dot"></div>用愛熬煮</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // 平滑滾動
+  document.querySelectorAll('.nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>

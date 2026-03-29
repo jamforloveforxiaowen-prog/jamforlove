@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login #3 — 毛玻璃風</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --linen: #f8f3eb; --espresso: #1e0f08; --espresso-light: #5c3d2e;
+    --rose: #c4506a; --rose-dark: #a03050; --rose-muted: #c4506a1a; --linen-dark: #ebe2d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #f8f3eb 0%, #ebe2d4 30%, #d87a90 60%, #c4506a 100%);
+    -webkit-font-smoothing: antialiased;
+    position: relative; overflow: hidden;
+  }
+  /* 背景裝飾圓球 */
+  .blob {
+    position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4;
+  }
+  .blob-1 { width: 400px; height: 400px; background: #c4506a; top: -100px; left: -100px; }
+  .blob-2 { width: 300px; height: 300px; background: #c89530; bottom: -80px; right: -60px; }
+  .blob-3 { width: 250px; height: 250px; background: #5a7c52; top: 50%; right: 20%; }
+
+  .glass-card {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 420px; padding: 48px 40px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 24px;
+    box-shadow: 0 8px 48px rgba(30,15,8,0.08);
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .logo {
+    font-family: 'Outfit', sans-serif; font-weight: 300; font-style: italic;
+    font-size: 1.8rem; color: var(--rose); text-align: center; margin-bottom: 4px;
+  }
+  .tagline {
+    text-align: center; font-size: 0.7rem; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--espresso-light); opacity: 0.5;
+    margin-bottom: 36px;
+  }
+  h1 {
+    font-family: 'Noto Serif TC', serif; font-size: 1.75rem; font-weight: 700;
+    text-align: center; margin-bottom: 6px; color: var(--espresso);
+  }
+  .desc { text-align: center; font-size: 0.8125rem; color: var(--espresso-light); opacity: 0.6; margin-bottom: 32px; }
+  label { display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 8px; color: var(--espresso); }
+  input {
+    width: 100%; border: 1px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.5); border-radius: 12px;
+    padding: 14px 16px; font-size: 0.9375rem;
+    color: var(--espresso); outline: none;
+    transition: all 0.2s;
+  }
+  input:focus {
+    border-color: var(--rose); background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 0 3px var(--rose-muted);
+  }
+  .field { margin-bottom: 20px; }
+  .forgot { text-align: right; margin-top: 6px; }
+  .forgot a { font-size: 0.75rem; color: var(--espresso-light); opacity: 0.5; text-decoration: none; }
+  .btn {
+    width: 100%; padding: 16px;
+    background: var(--rose); color: white;
+    border: none; border-radius: 12px;
+    font-size: 0.9375rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    margin-top: 8px;
+    box-shadow: 0 4px 16px rgba(196,80,106,0.3);
+  }
+  .btn:hover { background: var(--rose-dark); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(196,80,106,0.35); }
+  .btn:active { transform: scale(0.97) translateY(0); }
+  .bottom { text-align: center; font-size: 0.875rem; color: var(--espresso-light); opacity: 0.6; margin-top: 28px; }
+  .bottom a { color: var(--rose); font-weight: 500; text-decoration: none; }
+  .tag { position: fixed; top: 16px; left: 16px; background: var(--espresso); color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="tag">#3 毛玻璃風（Glassmorphism）</div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<div class="glass-card">
+  <div class="logo">Jam For Love</div>
+  <div class="tagline">Handmade with Love</div>
+  <h1>歡迎回來</h1>
+  <p class="desc">登入以查看訂單或訂購果醬</p>
+  <form>
+    <div class="field"><label>帳號</label><input type="text"></div>
+    <div class="field"><label>密碼</label><input type="password"><div class="forgot"><a href="#">忘記密碼？</a></div></div>
+    <button class="btn" type="button">登入</button>
+  </form>
+  <p class="bottom">還沒有帳號？ <a href="#">註冊</a></p>
+</div>
+</body>
+</html>

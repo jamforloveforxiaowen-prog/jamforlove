@@ -4,24 +4,19 @@ import { useEffect, useState } from "react";
 import ScrollReveal from "@/components/ScrollReveal";
 import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
-interface OrderItem {
-  id: number;
-  productId: number;
-  quantity: number;
-  price: number;
-  productName: string | null;
-}
-
 interface Order {
   id: number;
   customerName: string;
   phone: string;
+  email: string;
   address: string;
+  deliveryMethod: string;
+  combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
+  addons: { id: number; name: string; quantity: number; price: number }[];
   notes: string;
   status: string;
   total: number;
   createdAt: string;
-  items: OrderItem[];
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -133,7 +128,10 @@ export default function MyOrdersPage() {
                     #{order.id}
                   </span>
                   <span className="text-xs text-espresso-light/40">
-                    {order.createdAt}
+                    {new Date(order.createdAt).toLocaleString("zh-TW")}
+                  </span>
+                  <span className="text-xs text-espresso-light/30">
+                    {order.deliveryMethod === "pickup" ? "面交" : "郵寄"}
                   </span>
                 </div>
                 <span
@@ -145,19 +143,25 @@ export default function MyOrdersPage() {
                 </span>
               </div>
 
-              {/* 產品明細 */}
+              {/* 組合明細 */}
               <div className="border-t border-linen-dark/40 pt-4 space-y-1.5">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between text-sm"
-                  >
+                {order.combos.map((c, ci) => (
+                  <div key={ci} className="flex justify-between text-sm">
                     <span className="text-espresso-light/70">
-                      {item.productName || `產品 #${item.productId}`} ×{" "}
-                      {item.quantity}
+                      {c.name}（{c.items.join("、")}）× {c.quantity}
                     </span>
                     <span className="font-medium text-espresso">
-                      NT$ {item.price * item.quantity}
+                      NT$ {c.price * c.quantity}
+                    </span>
+                  </div>
+                ))}
+                {order.addons.map((a, ai) => (
+                  <div key={ai} className="flex justify-between text-sm">
+                    <span className="text-espresso-light/70">
+                      {a.name} × {a.quantity}
+                    </span>
+                    <span className="font-medium text-espresso">
+                      NT$ {a.price * a.quantity}
                     </span>
                   </div>
                 ))}

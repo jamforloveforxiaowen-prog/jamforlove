@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login #1 — 極簡居中</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --linen: #f8f3eb; --linen-dark: #ebe2d4; --espresso: #1e0f08;
+    --espresso-light: #5c3d2e; --rose: #c4506a; --rose-dark: #a03050;
+    --rose-muted: #c4506a1a; --sage: #5a7c52; --honey: #c89530;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--linen);
+    color: var(--espresso);
+    font-family: 'Outfit', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%; max-width: 400px; padding: 48px 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 40px rgba(30,15,8,0.06);
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .logo-text {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300; font-style: italic;
+    font-size: 2rem; color: var(--rose);
+    text-align: center; margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center; font-size: 0.8rem;
+    color: var(--espresso-light); opacity: 0.5;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.5rem; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .desc { font-size: 0.875rem; color: var(--espresso-light); opacity: 0.6; margin-bottom: 32px; }
+  label { display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 8px; }
+  input {
+    width: 100%; border: 1.5px solid var(--linen-dark);
+    background: var(--linen); border-radius: 10px;
+    padding: 14px 16px; font-size: 0.9375rem;
+    color: var(--espresso); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus {
+    border-color: var(--rose);
+    box-shadow: 0 0 0 3px var(--rose-muted);
+    background: white;
+  }
+  .field { margin-bottom: 20px; }
+  .forgot { text-align: right; margin-top: 6px; }
+  .forgot a { font-size: 0.75rem; color: var(--espresso-light); opacity: 0.5; text-decoration: none; }
+  .forgot a:hover { color: var(--rose); opacity: 1; }
+  .btn {
+    width: 100%; padding: 16px;
+    background: var(--rose); color: white;
+    border: none; border-radius: 10px;
+    font-size: 0.9375rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.15s;
+    margin-top: 8px;
+  }
+  .btn:hover { background: var(--rose-dark); }
+  .btn:active { transform: scale(0.97); }
+  .bottom {
+    text-align: center; font-size: 0.875rem;
+    color: var(--espresso-light); opacity: 0.6;
+    margin-top: 32px;
+  }
+  .bottom a { color: var(--rose); font-weight: 500; text-decoration: none; }
+  .bottom a:hover { color: var(--rose-dark); }
+  .tag {
+    position: fixed; top: 16px; left: 16px;
+    background: var(--espresso); color: white;
+    padding: 6px 14px; border-radius: 8px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="tag">#1 極簡居中卡片</div>
+<div class="card">
+  <div class="logo-text">Jam For Love</div>
+  <div class="subtitle">Handmade with Love</div>
+  <h1>歡迎回來</h1>
+  <p class="desc">登入以查看訂單或訂購果醬</p>
+  <form>
+    <div class="field">
+      <label>帳號</label>
+      <input type="text" placeholder="請輸入帳號">
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input type="password" placeholder="請輸入密碼">
+      <div class="forgot"><a href="#">忘記密碼？</a></div>
+    </div>
+    <button class="btn" type="button">登入</button>
+  </form>
+  <p class="bottom">還沒有帳號？ <a href="#">註冊</a></p>
+</div>
+</body>
+</html>
