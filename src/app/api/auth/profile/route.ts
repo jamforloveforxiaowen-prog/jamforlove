@@ -12,6 +12,20 @@ export async function PUT(req: NextRequest) {
 
   const { name, phone, email, address } = await req.json();
 
+  // 輸入驗證：限制各欄位長度，防止超長字串寫入資料庫
+  const MAX_LENGTH = 200;
+  if (
+    (name && String(name).length > MAX_LENGTH) ||
+    (phone && String(phone).length > MAX_LENGTH) ||
+    (email && String(email).length > MAX_LENGTH) ||
+    (address && String(address).length > MAX_LENGTH)
+  ) {
+    return NextResponse.json(
+      { error: "Input too long, maximum 200 characters per field" },
+      { status: 400 }
+    );
+  }
+
   await db
     .update(users)
     .set({

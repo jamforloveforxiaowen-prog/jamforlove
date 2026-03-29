@@ -45,11 +45,12 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
+    // 修正運算子優先序：|| 優先於三元運算子，需加括號明確分組
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.VERCEL_URL
+      (process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
+        : "http://localhost:3000");
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     await transporter.sendMail({

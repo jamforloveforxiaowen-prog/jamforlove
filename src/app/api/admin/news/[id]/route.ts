@@ -16,9 +16,16 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
 
+  // 明確列出允許更新的欄位，避免 Mass Assignment 漏洞
+  const allowedUpdate: Partial<typeof news.$inferInsert> = {};
+  if (body.title !== undefined) allowedUpdate.title = String(body.title);
+  if (body.content !== undefined) allowedUpdate.content = String(body.content);
+  if (body.imageUrl !== undefined) allowedUpdate.imageUrl = String(body.imageUrl);
+  if (body.isPublished !== undefined) allowedUpdate.isPublished = Boolean(body.isPublished);
+
   const updated = await db
     .update(news)
-    .set({ ...body, updatedAt: sql`(datetime('now'))` })
+    .set({ ...allowedUpdate, updatedAt: sql`(datetime('now'))` })
     .where(eq(news.id, Number(id)))
     .returning()
     .get();

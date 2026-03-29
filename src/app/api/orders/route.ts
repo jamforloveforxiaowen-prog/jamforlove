@@ -5,6 +5,54 @@ import { getSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
+// 伺服器端定義的商品價格（不信任客戶端傳入的 price）
+const COMBO_PRICES: Record<number, number> = {
+  1: 500,
+  2: 500,
+  3: 500,
+  4: 500,
+  5: 500,
+  6: 500,
+  7: 500,
+};
+
+const ADDON_PRICES: Record<number, number> = {
+  1: 300,
+  2: 100,
+  3: 180,
+  4: 200,
+  5: 150,
+  6: 150,
+  7: 180,
+};
+
+interface ComboItem {
+  id: number;
+  quantity: number;
+  [key: string]: unknown;
+}
+
+interface AddonItem {
+  id: number;
+  quantity: number;
+  [key: string]: unknown;
+}
+
+// 根據伺服器端價格重新計算總金額，忽略客戶端傳入的 total
+function calculateTotal(combos: ComboItem[], addons: AddonItem[]): number {
+  const comboTotal = combos.reduce((sum, item) => {
+    const price = COMBO_PRICES[item.id] ?? 0;
+    return sum + price * (item.quantity || 0);
+  }, 0);
+
+  const addonTotal = addons.reduce((sum, item) => {
+    const price = ADDON_PRICES[item.id] ?? 0;
+    return sum + price * (item.quantity || 0);
+  }, 0);
+
+  return comboTotal + addonTotal;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -12,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { customerName, phone, email, address, deliveryMethod, combos, addons, notes, total } = body;
+  const { customerName, phone, email, address, deliveryMethod, combos, addons, notes } = body;
 
   if (!customerName || !phone || !address) {
     return NextResponse.json(
@@ -28,6 +76,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // 在伺服器端重新計算 total，不使用前端傳入的值
+  const computedTotal = calculateTotal(combos || [], addons || []);
+
   const order = await db
     .insert(fundraiseOrders)
     .values({
@@ -40,7 +91,7 @@ export async function POST(req: NextRequest) {
       combos: JSON.stringify(combos || []),
       addons: JSON.stringify(addons || []),
       notes: notes || "",
-      total,
+      total: computedTotal,
     })
     .returning()
     .get();
@@ -52,7 +103,7 @@ export async function POST(req: NextRequest) {
       email,
       combos: combos || [],
       addons: addons || [],
-      total,
+      total: computedTotal,
       deliveryMethod: deliveryMethod || "shipping",
       address,
       notes: notes || "",
