@@ -1308,6 +1308,7 @@ function OrderManager() {
   // 預購時間設定
   const [fundraiseStart, setFundraiseStart] = useState("");
   const [fundraiseEnd, setFundraiseEnd] = useState("");
+  const [fundraiseMaxOrders, setFundraiseMaxOrders] = useState("");
   const [timeSaving, setTimeSaving] = useState(false);
   const [timeMsg, setTimeMsg] = useState("");
 
@@ -1317,17 +1318,19 @@ function OrderManager() {
       .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
 
-    // 載入預購時間設定
+    // 載入預購設定
     Promise.all([
       fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
       fetch("/api/site-settings?key=fundraise_end").then(r => r.json()),
-    ]).then(([s, e]) => {
+      fetch("/api/site-settings?key=fundraise_max_orders").then(r => r.json()),
+    ]).then(([s, e, m]) => {
       if (s.value) setFundraiseStart(s.value);
       if (e.value) setFundraiseEnd(e.value);
+      if (m.value) setFundraiseMaxOrders(m.value);
     });
   }, []);
 
-  async function saveFundraiseTime() {
+  async function saveFundraiseSettings() {
     setTimeSaving(true); setTimeMsg("");
     try {
       await Promise.all([
@@ -1340,6 +1343,11 @@ function OrderManager() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "fundraise_end", value: fundraiseEnd }),
+        }),
+        fetch("/api/admin/site-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "fundraise_max_orders", value: fundraiseMaxOrders }),
         }),
       ]);
       setTimeMsg("已儲存");
@@ -1451,8 +1459,19 @@ function OrderManager() {
               className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
             />
           </div>
+          <div>
+            <label className="block text-xs text-espresso-light/50 mb-1">訂單上限</label>
+            <input
+              type="number"
+              min="0"
+              value={fundraiseMaxOrders}
+              onChange={(e) => setFundraiseMaxOrders(e.target.value)}
+              placeholder="不限"
+              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none w-24"
+            />
+          </div>
           <button
-            onClick={saveFundraiseTime}
+            onClick={saveFundraiseSettings}
             disabled={timeSaving}
             className="px-5 py-2 rounded-md text-sm font-medium bg-rose text-white hover:bg-rose-dark transition-colors disabled:opacity-50"
           >
@@ -1462,7 +1481,9 @@ function OrderManager() {
         </div>
         {fundraiseStart && fundraiseEnd && (
           <p className="text-xs text-espresso-light/40 mt-2">
-            預購期間：{fundraiseStart} ~ {fundraiseEnd}（消費者僅能在此期間內下單）
+            預購期間：{fundraiseStart} ~ {fundraiseEnd}
+            {fundraiseMaxOrders && ` · 上限 ${fundraiseMaxOrders} 筆`}
+            （消費者僅能在此期間內下單{fundraiseMaxOrders ? "，額滿自動關閉" : ""}）
           </p>
         )}
       </div>

@@ -74,6 +74,19 @@ export default function OrderPage() {
   const [fundraiseEnd, setFundraiseEnd] = useState("");
   const [timeChecked, setTimeChecked] = useState(false);
 
+  // 庫存 & 限制
+  const [comboStock, setComboStock] = useState<Record<number, number | null>>({});
+  const [addonStock, setAddonStock] = useState<Record<number, number | null>>({});
+  const [maxOrders, setMaxOrders] = useState<number | null>(null);
+  const [totalOrders, setTotalOrders] = useState(0);
+
+  // 已下過單（每人限一次）
+  const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // 欄位驗證
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   // 訂單確認頁資料
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: number;
@@ -130,7 +143,7 @@ export default function OrderPage() {
       .catch(() => {});
   }
 
-  // 載入預購期間設定
+  // 載入預購期間、庫存、既有訂單
   useEffect(() => {
     Promise.all([
       fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
@@ -139,14 +152,65 @@ export default function OrderPage() {
       if (s.value) setFundraiseStart(s.value);
       if (e.value) setFundraiseEnd(e.value);
     }).finally(() => setTimeChecked(true));
+
+    // 庫存
+    fetch("/api/orders/stock").then(r => r.json()).then(data => {
+      if (data.comboStock) setComboStock(data.comboStock);
+      if (data.addonStock) setAddonStock(data.addonStock);
+      if (data.maxOrders != null) setMaxOrders(data.maxOrders);
+      if (data.totalOrders != null) setTotalOrders(data.totalOrders);
+    }).catch(() => {});
+
+    // 檢查是否已下過單
+    fetch("/api/orders").then(r => r.json()).then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        const order = data[0];
+        setExistingOrderId(order.id);
+      }
+    }).catch(() => {});
   }, []);
 
   const now = new Date();
   const fundraiseActive = fundraiseStart && fundraiseEnd
     && new Date(fundraiseStart) <= now && now <= new Date(fundraiseEnd + "T23:59:59");
+  const ordersFull = maxOrders !== null && totalOrders >= maxOrders;
 
   // 頁面載入時自動帶入個人資料
   useEffect(() => { loadProfile(); }, []);
+
+  // 帶入既有訂單資料（編輯模式）
+  function loadExistingOrder() {
+    fetch("/api/orders").then(r => r.json()).then(data => {
+      if (!Array.isArray(data) || data.length === 0) return;
+      const order = data[0];
+      setCustomerName(order.customerName);
+      setPhone(order.phone);
+      setEmail(order.email || "");
+      setDeliveryMethod(order.deliveryMethod || "shipping");
+      setNotes(order.notes || "");
+      if (order.deliveryMethod === "shipping" && order.address) {
+        parseAndFillAddress(order.address);
+      }
+      const comboSel: Record<number, number> = {};
+      for (const c of order.combos) comboSel[c.id] = c.quantity;
+      setComboSelections(comboSel);
+      const addonSel: Record<number, number> = {};
+      for (const a of order.addons) addonSel[a.id] = a.quantity;
+      setAddonSelections(addonSel);
+      setIsEditMode(true);
+    }).catch(() => {});
+  }
+
+  // 欄位驗證 helpers
+  function markTouched(field: string) {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  }
+  const fieldErrors: Record<string, string> = {};
+  if (touched.customerName && !customerName.trim()) fieldErrors.customerName = "請填寫姓名";
+  if (touched.phone && !phone.trim()) fieldErrors.phone = "請填寫電話";
+  if (touched.phone && phone.trim() && !/^0\d{8,9}$/.test(phone.trim())) fieldErrors.phone = "電話格式不正確";
+  if (touched.email && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) fieldErrors.email = "Email 格式不正確";
+  if (touched.addressDetail && deliveryMethod === "shipping" && !addressDetail.trim()) fieldErrors.addressDetail = "請填寫詳細地址";
 
   // 從 sessionStorage 恢復之前的選擇（從編輯個人資料回來時）
   useEffect(() => {
@@ -184,16 +248,37 @@ export default function OrderPage() {
   const hasSelection = hasCombo;
 
   function updateCombo(id: number, delta: number) {
-    setComboSelections((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
+    setComboSelections((prev) => {
+      const next = Math.max(0, (prev[id] || 0) + delta);
+      const stock = comboStock[id];
+      // 庫存限制（編輯模式下庫存已排除自己的訂單，由 API 把關）
+      if (stock !== null && stock !== undefined && next > stock) return prev;
+      return { ...prev, [id]: next };
+    });
   }
 
   function updateAddon(id: number, delta: number) {
-    setAddonSelections((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 0) + delta) }));
+    setAddonSelections((prev) => {
+      const next = Math.max(0, (prev[id] || 0) + delta);
+      const stock = addonStock[id];
+      if (stock !== null && stock !== undefined && next > stock) return prev;
+      return { ...prev, [id]: next };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!hasCombo) { setError("請至少選擇一項產品組合"); return; }
+
+    // 觸發所有欄位驗證
+    setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
+    if (!customerName.trim() || !phone.trim()) {
+      setError("請填寫必填欄位"); return;
+    }
+    if (deliveryMethod === "shipping" && !addressDetail.trim()) {
+      setError("請填寫收件地址"); return;
+    }
+
     setError(""); setLoading(true);
 
     const combos = Object.entries(comboSelections)
@@ -209,24 +294,29 @@ export default function OrderPage() {
         return { id: addon.id, name: addon.name, quantity: qty, price: addon.price };
       });
 
+    const finalAddress = deliveryMethod === "shipping"
+      ? `${zipcode} ${city}${district}${addressDetail}`.trim()
+      : "面交 / 暨大取貨";
+
     try {
+      const method = isEditMode ? "PUT" : "POST";
+      const payload: Record<string, unknown> = {
+        customerName, phone, email,
+        address: finalAddress,
+        deliveryMethod, combos, addons, notes, total: grandTotal,
+      };
+      if (isEditMode && existingOrderId) {
+        payload.orderId = existingOrderId;
+      }
+
       const res = await fetch("/api/orders", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName, phone, email,
-          address: deliveryMethod === "shipping"
-            ? `${zipcode} ${city}${district}${addressDetail}`.trim()
-            : "面交 / 暨大取貨",
-          deliveryMethod, combos, addons, notes, total: grandTotal,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); setLoading(false); return; }
 
-      const finalAddress = deliveryMethod === "shipping"
-        ? `${zipcode} ${city}${district}${addressDetail}`.trim()
-        : "面交 / 暨大取貨";
       setConfirmedOrder({
         orderId: data.orderId,
         combos, addons, total: grandTotal,
@@ -412,7 +502,7 @@ export default function OrderPage() {
     );
   }
 
-  /* ─── 預購未開放 ─────────────────────────────────── */
+  /* ─── 預購未開放 / 額滿 ──────────────────────────── */
 
   if (timeChecked && !fundraiseActive) {
     return (
@@ -439,6 +529,61 @@ export default function OrderPage() {
           <button onClick={() => router.push("/")} className="btn-primary">
             回到首頁
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (timeChecked && ordersFull && !existingOrderId) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-6">🎉</div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">
+            預購已額滿！
+          </h1>
+          <p className="text-espresso-light/60 text-base leading-relaxed mb-8">
+            感謝大家熱情支持，本次預購名額已滿。<br />期待下次再見！
+          </p>
+          <button onClick={() => router.push("/")} className="btn-primary">
+            回到首頁
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 已下過單：顯示提示，可選擇編輯或查看訂單
+  if (timeChecked && existingOrderId && !isEditMode) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ background: "linear-gradient(135deg, var(--color-sage), var(--color-sage-dark, #6b8f71))" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-3">
+            你已經下過訂單了
+          </h1>
+          <p className="text-espresso-light/60 text-base leading-relaxed mb-2">
+            訂單編號 <span className="font-medium text-espresso">#{existingOrderId}</span>
+          </p>
+          <p className="text-espresso-light/40 text-sm mb-8">
+            如需修改訂單內容，可點擊下方「修改訂單」
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={loadExistingOrder}
+              className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all"
+              style={{ border: "2px dashed var(--color-rose)" }}
+            >
+              修改訂單
+            </button>
+            <button onClick={() => router.push("/my-orders")} className="btn-primary">
+              查看我的訂單
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -472,7 +617,11 @@ export default function OrderPage() {
           <span className="w-10 h-px bg-rose/30" />
         </div>
         <p className="text-espresso-light/50 text-base mt-4 leading-relaxed max-w-md mx-auto">
-          每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。
+          {isEditMode ? (
+            <>正在修改訂單 <span className="font-medium text-espresso">#{existingOrderId}</span>，修改完成後請重新送出</>
+          ) : (
+            <>每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。</>
+          )}
         </p>
       </div>
 
@@ -502,10 +651,12 @@ export default function OrderPage() {
               {COMBOS.map((combo) => {
                 const qty = comboSelections[combo.id] || 0;
                 const isSelected = qty > 0;
+                const remaining = comboStock[combo.id];
+                const soldOut = remaining !== null && remaining !== undefined && remaining <= 0 && qty === 0;
                 return (
                   <div
                     key={combo.id}
-                    className={`rounded-lg p-4 transition-all duration-300 ${isSelected ? "bg-rose/[0.04] animate-[bakeSelect_0.4s_cubic-bezier(0.34,1.56,0.64,1)]" : "bg-white/50 hover:translate-y-[-2px]"}`}
+                    className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "bg-rose/[0.04] animate-[bakeSelect_0.4s_cubic-bezier(0.34,1.56,0.64,1)]" : "bg-white/50 hover:translate-y-[-2px]"}`}
                     style={{
                       border: isSelected ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)",
                     }}
@@ -514,12 +665,22 @@ export default function OrderPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className="font-serif font-bold text-espresso text-lg">{combo.name}</span>
-                          <span className="text-espresso-light/30 text-base">限 {combo.limit} 組</span>
+                          {soldOut ? (
+                            <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-espresso-light/10 text-espresso-light/50">已售完</span>
+                          ) : remaining !== null && remaining !== undefined ? (
+                            <span className={`text-base ${remaining <= 5 ? "text-rose font-semibold" : "text-espresso-light/30"}`}>
+                              剩 {remaining} 組
+                            </span>
+                          ) : (
+                            <span className="text-espresso-light/30 text-base">限 {combo.limit} 組</span>
+                          )}
                         </div>
                         <p className="text-espresso-light/50 text-[1.05rem]">{combo.items.join(" + ")}</p>
                       </div>
                       <div className="shrink-0">
-                        {isSelected ? (
+                        {soldOut ? (
+                          <span className="px-4 py-2 rounded-lg text-base font-medium text-espresso-light/30" style={{ border: "2px dashed rgba(30,15,8,0.08)" }}>售完</span>
+                        ) : isSelected ? (
                           <div className="flex items-center gap-1.5">
                             <button type="button" onClick={() => updateCombo(combo.id, -1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose active:animate-[bakeDing_0.3s_ease] transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
                             <span key={qty} className="w-7 text-center font-bold text-espresso tabular-nums text-base animate-[number-pop_0.3s_ease]">{qty}</span>
@@ -563,23 +724,35 @@ export default function OrderPage() {
               {ADDONS.map((addon) => {
                 const qty = addonSelections[addon.id] || 0;
                 const isSelected = qty > 0;
+                const remaining = addonStock[addon.id];
+                const soldOut = remaining !== null && remaining !== undefined && remaining <= 0 && qty === 0;
                 return (
                   <div
                     key={addon.id}
-                    className="flex items-center justify-between py-3 gap-3"
+                    className={`flex items-center justify-between py-3 gap-3 ${soldOut ? "opacity-50" : ""}`}
                     style={{ borderBottom: "1px dashed rgba(30,15,8,0.08)" }}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-espresso text-[1.05rem] font-medium">{addon.name}</span>
                         {addon.spec && <span className="text-espresso-light/30 text-sm">({addon.spec})</span>}
-                        {addon.limit && <span className="text-sage text-sm font-semibold">限量 {addon.limit}{addon.unit}</span>}
+                        {soldOut ? (
+                          <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-espresso-light/10 text-espresso-light/50">已售完</span>
+                        ) : remaining !== null && remaining !== undefined ? (
+                          <span className={`text-sm font-semibold ${remaining <= 3 ? "text-rose" : "text-sage"}`}>
+                            剩 {remaining}{addon.unit}
+                          </span>
+                        ) : addon.limit ? (
+                          <span className="text-sage text-sm font-semibold">限量 {addon.limit}{addon.unit}</span>
+                        ) : null}
                       </div>
                       {addon.note && <p className="text-rose/60 text-sm mt-0.5">{addon.note}</p>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)", fontFamily: "var(--font-display)" }}>${addon.price}</span>
-                      {isSelected ? (
+                      {soldOut ? (
+                        <span className="w-7 h-7 rounded-md flex items-center justify-center text-espresso-light/20 text-xs">—</span>
+                      ) : isSelected ? (
                         <div className="flex items-center gap-1">
                           <button type="button" onClick={() => updateAddon(addon.id, -1)} className="w-7 h-7 rounded-md text-espresso-light hover:text-[var(--color-honey)] active:scale-90 transition-all flex items-center justify-center text-sm" style={{ border: "1.5px dashed rgba(30,15,8,0.12)" }}>−</button>
                           <span className="w-5 text-center font-bold text-espresso tabular-nums text-sm">{qty}</span>
@@ -637,17 +810,20 @@ export default function OrderPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                 <div className={inputBorderFocus} style={inputBorder}>
                   <label className="block text-sm font-semibold text-espresso-light/50 pt-2">姓名 *</label>
-                  <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className={inputClass} required />
+                  <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} onBlur={() => markTouched("customerName")} className={inputClass} required />
+                  {fieldErrors.customerName && <p className="text-rose text-xs mt-1">{fieldErrors.customerName}</p>}
                 </div>
                 <div className={inputBorderFocus} style={inputBorder}>
                   <label className="block text-sm font-semibold text-espresso-light/50 pt-2">電話 *</label>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} required />
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => markTouched("phone")} className={inputClass} required />
+                  {fieldErrors.phone && <p className="text-rose text-xs mt-1">{fieldErrors.phone}</p>}
                 </div>
               </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
                 <label className="block text-sm font-semibold text-espresso-light/50 pt-2">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="選填，用於訂單通知" />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => markTouched("email")} className={inputClass} placeholder="選填，用於訂單通知" />
+                {fieldErrors.email && <p className="text-rose text-xs mt-1">{fieldErrors.email}</p>}
               </div>
 
               {/* 取貨方式 */}
@@ -681,8 +857,9 @@ export default function OrderPage() {
                   <TaiwanAddressSelector
                     zipcode={zipcode} city={city} district={district} detail={addressDetail}
                     onChangeZipcode={handleChangeZipcode} onChangeCity={handleChangeCity}
-                    onChangeDistrict={handleChangeDistrict} onChangeDetail={handleChangeDetail}
+                    onChangeDistrict={handleChangeDistrict} onChangeDetail={(v) => { handleChangeDetail(v); markTouched("addressDetail"); }}
                   />
+                  {fieldErrors.addressDetail && <p className="text-rose text-xs mt-1">{fieldErrors.addressDetail}</p>}
                 </div>
               )}
 
@@ -752,9 +929,11 @@ export default function OrderPage() {
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
               送出中...
             </span>
-          ) : hasCombo ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇產品組合"}
+          ) : hasCombo ? (isEditMode ? `更新訂單 — NT$ ${grandTotal}` : `確認訂購 — NT$ ${grandTotal}`) : "請先選擇產品組合"}
         </button>
-        <p className="text-center text-espresso-light/30 text-sm mt-4">送出後我們會以電話或 Email 確認訂單 ♥</p>
+        <p className="text-center text-espresso-light/30 text-sm mt-4">
+          {isEditMode ? "修改後請重新送出，我們會以最新版本為準 ♥" : "送出後我們會以電話或 Email 確認訂單 ♥"}
+        </p>
       </form>
     </div>
   );

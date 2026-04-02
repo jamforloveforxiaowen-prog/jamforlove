@@ -125,6 +125,12 @@ export default function MyOrdersPage() {
                 <span className="px-3 py-1 rounded-md text-xs font-semibold bg-sage/15 text-sage">
                   已下單
                 </span>
+                <a
+                  href="/order"
+                  className="px-3 py-1 rounded-md text-xs font-medium text-rose/70 hover:text-rose hover:bg-rose/5 transition-all ring-1 ring-rose/20"
+                >
+                  修改
+                </a>
               </div>
 
               {/* 組合明細 */}
