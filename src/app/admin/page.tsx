@@ -1305,12 +1305,50 @@ function OrderManager() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
+  // 預購時間設定
+  const [fundraiseStart, setFundraiseStart] = useState("");
+  const [fundraiseEnd, setFundraiseEnd] = useState("");
+  const [timeSaving, setTimeSaving] = useState(false);
+  const [timeMsg, setTimeMsg] = useState("");
+
   useEffect(() => {
     fetch("/api/admin/orders")
       .then((res) => res.json())
       .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
+
+    // 載入預購時間設定
+    Promise.all([
+      fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
+      fetch("/api/site-settings?key=fundraise_end").then(r => r.json()),
+    ]).then(([s, e]) => {
+      if (s.value) setFundraiseStart(s.value);
+      if (e.value) setFundraiseEnd(e.value);
+    });
   }, []);
+
+  async function saveFundraiseTime() {
+    setTimeSaving(true); setTimeMsg("");
+    try {
+      await Promise.all([
+        fetch("/api/admin/site-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "fundraise_start", value: fundraiseStart }),
+        }),
+        fetch("/api/admin/site-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "fundraise_end", value: fundraiseEnd }),
+        }),
+      ]);
+      setTimeMsg("已儲存");
+      setTimeout(() => setTimeMsg(""), 2000);
+    } catch {
+      setTimeMsg("儲存失敗");
+    }
+    setTimeSaving(false);
+  }
 
   function exportToExcel() {
     const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "組合數量", "加購", "加購數量", "備註", "總金額", "建立時間"];
@@ -1378,8 +1416,57 @@ function OrderManager() {
 
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
 
+  const now = new Date();
+  const isActive = fundraiseStart && fundraiseEnd
+    && new Date(fundraiseStart) <= now && now <= new Date(fundraiseEnd + "T23:59:59");
+
   return (
     <div>
+      {/* 預購時間設定 */}
+      <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5 mb-6">
+        <h3 className="font-serif text-base font-bold text-espresso mb-3 flex items-center gap-2">
+          預購期間設定
+          {fundraiseStart && fundraiseEnd && (
+            <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${isActive ? "bg-sage/15 text-sage" : "bg-rose/10 text-rose"}`}>
+              {isActive ? "進行中" : "未開放"}
+            </span>
+          )}
+        </h3>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs text-espresso-light/50 mb-1">開始日期</label>
+            <input
+              type="date"
+              value={fundraiseStart}
+              onChange={(e) => setFundraiseStart(e.target.value)}
+              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-espresso-light/50 mb-1">結束日期</label>
+            <input
+              type="date"
+              value={fundraiseEnd}
+              onChange={(e) => setFundraiseEnd(e.target.value)}
+              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
+            />
+          </div>
+          <button
+            onClick={saveFundraiseTime}
+            disabled={timeSaving}
+            className="px-5 py-2 rounded-md text-sm font-medium bg-rose text-white hover:bg-rose-dark transition-colors disabled:opacity-50"
+          >
+            {timeSaving ? "儲存中..." : "儲存"}
+          </button>
+          {timeMsg && <span className="text-sm text-sage font-medium">{timeMsg}</span>}
+        </div>
+        {fundraiseStart && fundraiseEnd && (
+          <p className="text-xs text-espresso-light/40 mt-2">
+            預購期間：{fundraiseStart} ~ {fundraiseEnd}（消費者僅能在此期間內下單）
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-lg font-bold text-espresso">
           訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>

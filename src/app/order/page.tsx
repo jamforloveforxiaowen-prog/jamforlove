@@ -69,6 +69,11 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // 預購期間
+  const [fundraiseStart, setFundraiseStart] = useState("");
+  const [fundraiseEnd, setFundraiseEnd] = useState("");
+  const [timeChecked, setTimeChecked] = useState(false);
+
   // 訂單確認頁資料
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: number;
@@ -124,6 +129,21 @@ export default function OrderPage() {
       })
       .catch(() => {});
   }
+
+  // 載入預購期間設定
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
+      fetch("/api/site-settings?key=fundraise_end").then(r => r.json()),
+    ]).then(([s, e]) => {
+      if (s.value) setFundraiseStart(s.value);
+      if (e.value) setFundraiseEnd(e.value);
+    }).finally(() => setTimeChecked(true));
+  }, []);
+
+  const now = new Date();
+  const fundraiseActive = fundraiseStart && fundraiseEnd
+    && new Date(fundraiseStart) <= now && now <= new Date(fundraiseEnd + "T23:59:59");
 
   // 頁面載入時自動帶入個人資料
   useEffect(() => { loadProfile(); }, []);
@@ -392,11 +412,51 @@ export default function OrderPage() {
     );
   }
 
+  /* ─── 預購未開放 ─────────────────────────────────── */
+
+  if (timeChecked && !fundraiseActive) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-6">🍯</div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">
+            預購尚未開放
+          </h1>
+          {fundraiseStart && fundraiseEnd ? (
+            <p className="text-espresso-light/60 text-base leading-relaxed mb-2">
+              預購期間為 <span className="font-medium text-espresso">{fundraiseStart}</span> ~ <span className="font-medium text-espresso">{fundraiseEnd}</span>
+            </p>
+          ) : (
+            <p className="text-espresso-light/60 text-base leading-relaxed mb-2">
+              預購時間尚未公佈，敬請期待！
+            </p>
+          )}
+          <p className="text-espresso-light/40 text-sm mb-8">
+            {fundraiseStart && new Date(fundraiseStart) > now
+              ? "再等等，馬上就開放囉！"
+              : "本次預購已結束，感謝你的支持！"}
+          </p>
+          <button onClick={() => router.push("/")} className="btn-primary">
+            回到首頁
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   /* ─── 輸入欄位 ──────────────────────────────────── */
 
   const inputClass = "w-full py-3 px-0 bg-transparent text-lg text-espresso outline-none placeholder:text-espresso-light/30 transition-colors focus:border-rose";
   const inputBorder = { borderBottom: "2px dashed rgba(30,15,8,0.12)" };
   const inputBorderFocus = "focus-within:[border-bottom-color:var(--color-rose)]";
+
+  if (!timeChecked) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-rose/30 border-t-rose rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-10 md:py-16">

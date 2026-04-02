@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fundraiseOrders } from "@/lib/db/schema";
+import { fundraiseOrders, siteSettings } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
@@ -57,6 +57,21 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "請先登入再下單" }, { status: 401 });
+  }
+
+  // 檢查預購期間
+  const [startRow, endRow] = await Promise.all([
+    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_start")).get(),
+    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_end")).get(),
+  ]);
+  const now = new Date();
+  const start = startRow?.value ? new Date(startRow.value) : null;
+  const end = endRow?.value ? new Date(endRow.value + "T23:59:59") : null;
+  if (!start || !end || now < start || now > end) {
+    return NextResponse.json(
+      { error: "目前不在預購期間，無法下單" },
+      { status: 403 }
+    );
   }
 
   const body = await req.json();
