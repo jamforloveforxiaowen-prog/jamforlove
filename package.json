@@ -16,6 +16,7 @@
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "@lottiefiles/dotlottie-react": "^0.18.7",
+    "@vercel/blob": "^2.3.2",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
     "jose": "^6.2.1",

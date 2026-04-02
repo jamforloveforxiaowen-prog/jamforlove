@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 import { getSession } from "@/lib/auth";
-
-// Vercel body size 限制需在 route config 設定
-export const config = {
-  api: { bodyParser: false },
-};
 
 // 最大 10MB
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -37,9 +33,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
   }
 
-  const bytes = await file.arrayBuffer();
-  const base64 = Buffer.from(bytes).toString("base64");
-  const dataUrl = `data:${file.type};base64,${base64}`;
+  try {
+    const blob = await put(file.name, file, {
+      access: "public",
+      addRandomSuffix: true,
+    });
 
-  return NextResponse.json({ url: dataUrl });
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    console.error("Blob upload failed:", err);
+    return NextResponse.json({ error: "圖片上傳失敗，請重試" }, { status: 500 });
+  }
 }
