@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import ImageUploader from "@/components/ImageUploader";
+import CampaignManager from "@/components/admin/CampaignManager";
 
 interface Product {
   id: number;
@@ -46,10 +47,10 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "products" | "orders" | "banners" | "news" | "about" | "story";
+type Tab = "campaigns" | "orders" | "banners" | "news" | "about" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "products", label: "產品管理" },
+  { key: "campaigns", label: "表單管理" },
   { key: "orders", label: "訂單管理" },
   { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
@@ -58,7 +59,7 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<Tab>("products");
+  const [tab, setTab] = useState<Tab>("campaigns");
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
@@ -88,7 +89,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {tab === "products" && <ProductManager />}
+      {tab === "campaigns" && <CampaignManager />}
       {tab === "orders" && <OrderManager />}
       {tab === "banners" && <BannerManager />}
       {tab === "news" && <NewsManager />}

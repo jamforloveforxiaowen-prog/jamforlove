@@ -131,8 +131,70 @@ export const cartItems = sqliteTable("cart_items", {
     .default(sql`(datetime('now'))`),
 });
 
+/* ─── 銷售活動 ────────────────────────────────────── */
+
+export const campaigns = sqliteTable("campaigns", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  status: text("status", { enum: ["draft", "active", "closed"] })
+    .notNull()
+    .default("draft"),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  bannerUrl: text("banner_url").notNull().default(""),
+  maxOrders: integer("max_orders"),
+  perPersonLimit: integer("per_person_limit").notNull().default(1),
+  titleText: text("title_text").notNull().default("Jam for Love"),
+  subtitleText: text("subtitle_text").notNull().default(""),
+  themeColor: text("theme_color").notNull().default("rose"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const campaignGroups = sqliteTable("campaign_groups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isRequired: integer("is_required", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const campaignProducts = sqliteTable("campaign_products", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => campaignGroups.id),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  price: integer("price").notNull(),
+  limit: integer("limit"),
+  unit: text("unit").notNull().default("份"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  note: text("note").notNull().default(""),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+/* ─── 訂單 ──────────────────────────────────────── */
+
 export const fundraiseOrders = sqliteTable("fundraise_orders", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id").references(() => campaigns.id),
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
@@ -143,6 +205,7 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
   deliveryMethod: text("delivery_method", {
     enum: ["shipping", "pickup"],
   }).notNull().default("shipping"),
+  items: text("items").notNull().default("[]"),
   combos: text("combos").notNull().default("[]"),
   addons: text("addons").notNull().default("[]"),
   notes: text("notes").notNull().default(""),
