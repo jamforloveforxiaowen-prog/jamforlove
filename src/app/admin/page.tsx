@@ -368,7 +368,7 @@ function ProductManager() {
       )}
 
       <div className="space-y-3">
-        {products.map((product) => (
+        {products.filter((product) => product.id !== editingId).map((product) => (
           <div
             key={product.id}
             className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 flex items-center justify-between"
@@ -620,7 +620,7 @@ function BannerManager() {
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((item) => (
+          {items.filter((item) => item.id !== editingId).map((item) => (
             <div
               key={item.id}
               draggable
@@ -949,7 +949,7 @@ function NewsManager() {
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((item) => (
+          {items.filter((item) => item.id !== editingId).map((item) => (
             <div
               key={item.id}
               className={`bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 transition-opacity duration-200 ${
@@ -1243,7 +1243,7 @@ function StoryManager() {
         </div>
       ) : (
         <div className="space-y-3">
-          {items.map((item) => (
+          {items.filter((item) => item.id !== editingId).map((item) => (
             <div
               key={item.id}
               draggable
