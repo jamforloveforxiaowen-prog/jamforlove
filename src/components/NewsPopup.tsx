@@ -12,14 +12,6 @@ interface NewsItem {
   createdAt: string;
 }
 
-const FALLBACK: NewsItem = {
-  id: 0,
-  title: "春季限定果醬熱賣中！",
-  content: "嚴選春季新鮮草莓與桑葚，限量手工熬煮。\n每瓶都是當季最鮮甜的滋味，售完為止！\n\n即日起至 4/30，訂購滿三瓶享免運優惠。",
-  imageUrl: "",
-  createdAt: new Date().toISOString(),
-};
-
 export default function NewsPopup() {
   const pathname = usePathname();
   const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
@@ -42,13 +34,12 @@ export default function NewsPopup() {
     fetch("/api/news")
       .then((res) => res.json())
       .then((data: NewsItem[]) => {
-        const item = (Array.isArray(data) && data.length > 0) ? data[0] : FALLBACK;
-        setNewsItem(item);
+        if (!Array.isArray(data) || data.length === 0) return;
+        setNewsItem(data[0]);
         setTimeout(() => setVisible(true), 200);
       })
       .catch(() => {
-        setNewsItem(FALLBACK);
-        setTimeout(() => setVisible(true), 200);
+        // API 失敗時不顯示彈窗
       });
   }, [isAuthPage]);
 
