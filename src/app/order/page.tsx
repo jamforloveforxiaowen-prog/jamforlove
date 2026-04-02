@@ -69,6 +69,20 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // 訂單確認頁資料
+  const [confirmedOrder, setConfirmedOrder] = useState<{
+    orderId: number;
+    combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
+    addons: { id: number; name: string; quantity: number; price: number }[];
+    total: number;
+    customerName: string;
+    phone: string;
+    email: string;
+    address: string;
+    deliveryMethod: string;
+    notes: string;
+  } | null>(null);
+
   const handleChangeZipcode = useCallback((v: string) => setZipcode(v), []);
   const handleChangeCity = useCallback((v: string) => setCity(v), []);
   const handleChangeDistrict = useCallback((v: string) => setDistrict(v), []);
@@ -189,6 +203,16 @@ export default function OrderPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); setLoading(false); return; }
+
+      const finalAddress = deliveryMethod === "shipping"
+        ? `${zipcode} ${city}${district}${addressDetail}`.trim()
+        : "面交 / 暨大取貨";
+      setConfirmedOrder({
+        orderId: data.orderId,
+        combos, addons, total: grandTotal,
+        customerName, phone, email,
+        address: finalAddress, deliveryMethod, notes,
+      });
     } catch {
       setError("網路連線失敗，請稍後再試"); setLoading(false); return;
     }
@@ -197,10 +221,11 @@ export default function OrderPage() {
 
   /* ─── 送出成功 ──────────────────────────────────── */
 
-  if (submitted) {
+  if (submitted && confirmedOrder) {
+    const order = confirmedOrder;
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-6 relative overflow-hidden">
-        {/* 愛心煙火 — 從中心向四周飛出 */}
+      <div className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative overflow-hidden">
+        {/* 愛心煙火 */}
         <div className="absolute inset-0 pointer-events-none">
           {Array.from({ length: 10 }).map((_, i) => {
             const angle = (i / 10) * 360;
@@ -208,7 +233,7 @@ export default function OrderPage() {
             return (
               <span
                 key={i}
-                className="absolute left-1/2 top-[40%] text-lg animate-[sparkFly_1s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                className="absolute left-1/2 top-[15%] text-lg animate-[sparkFly_1s_cubic-bezier(0.16,1,0.3,1)_forwards]"
                 style={{
                   color: colors[i % 3],
                   animationDelay: `${0.3 + i * 0.06}s`,
@@ -224,50 +249,144 @@ export default function OrderPage() {
           })}
         </div>
 
-        <div className="text-center max-w-md relative z-10">
-          {/* 蛋糕彈跳出場 */}
-          <div className="mb-6 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-            <div className="relative inline-block">
-              {/* 蛋糕體 */}
-              <div className="w-20 h-12 rounded-t-2xl mx-auto" style={{ background: "linear-gradient(to bottom, var(--color-honey), var(--color-rose))" }} />
-              <div className="w-24 h-6 rounded-b-xl mx-auto" style={{ background: "var(--color-rose)", boxShadow: "0 4px 12px rgba(196,80,106,0.3)" }} />
-              {/* 蠟燭火焰 */}
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                <span className="text-sm animate-[flicker_0.5s_ease-in-out_infinite_alternate]">🔥</span>
-                <div className="w-1 h-3 rounded-full" style={{ background: "var(--color-espresso)" }} />
-              </div>
-              {/* 打勾覆蓋 */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="animate-[check-draw_0.4s_ease_0.5s_forwards]" style={{ strokeDasharray: 24, strokeDashoffset: 24 }}>
-                  <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+        {/* 標題區 */}
+        <div className="text-center mb-8 relative z-10 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ background: "linear-gradient(135deg, var(--color-sage), var(--color-sage-dark, #6b8f71))" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-espresso mb-2" style={{ fontStyle: "italic" }}>
+            收到你的心意了！
+          </h1>
+          <p className="text-espresso-light/50 text-sm">
+            訂單編號 <span className="font-medium text-espresso">#{order.orderId}</span>
+          </p>
+        </div>
+
+        {/* 訂單明細卡片 */}
+        <div
+          className="rounded-2xl p-6 mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.2s_both]"
+          style={{
+            background: "rgba(255,255,255,0.85)",
+            border: "1px solid rgba(235,226,212,0.8)",
+            boxShadow: "0 4px 24px rgba(30,15,8,0.06)",
+          }}
+        >
+          <h2 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2">
+            <span className="text-rose">♥</span> 訂單明細
+          </h2>
+
+          {/* 產品組合 */}
+          {order.combos.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-2">產品組合</p>
+              <div className="space-y-2">
+                {order.combos.map((c) => (
+                  <div key={c.id} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: "1px dashed rgba(30,15,8,0.06)" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-espresso font-medium">{c.name}</p>
+                      <p className="text-espresso-light/50 text-xs mt-0.5">{c.items.join("、")}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-espresso text-sm">x{c.quantity}</p>
+                      <p className="text-espresso-light/60 text-xs">NT$ {c.price * c.quantity}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-
-          <h1 className="font-serif text-3xl font-bold text-espresso mb-4 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.3s_both]" style={{ fontStyle: "italic" }}>收到你的心意了！</h1>
-          <p className="text-espresso-light/60 mb-3 leading-relaxed animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">你的每一份支持，都是我們繼續做下去的動力</p>
-          <p className="text-espresso-light/40 text-base mb-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.5s_both]">
-            訂單金額 <span className="text-rose font-bold text-lg">NT$ {grandTotal}</span>
-          </p>
-          <p className="text-espresso-light/40 text-base mb-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.55s_both]">
-            訂單已收到囉，我們會用心為你準備
-          </p>
-          {email && (
-            <p className="text-espresso-light/40 text-sm mb-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.6s_both]">
-              確認信已寄送至 <span className="text-espresso font-medium">{email}</span>
-            </p>
           )}
 
-          {/* 愛心搖擺跳動 */}
-          <div className="text-3xl mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.65s_both]">
-            <span className="inline-block animate-[heartbeat_1.2s_ease-in-out_infinite]">♥</span>
-          </div>
+          {/* 加購商品 */}
+          {order.addons.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-2">加購商品</p>
+              <div className="space-y-2">
+                {order.addons.map((a) => (
+                  <div key={a.id} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: "1px dashed rgba(30,15,8,0.06)" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-espresso font-medium">{a.name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-espresso text-sm">x{a.quantity}</p>
+                      <p className="text-espresso-light/60 text-xs">NT$ {a.price * a.quantity}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          <div className="flex gap-3 justify-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.75s_both]">
-            <button onClick={() => { setSubmitted(false); window.scrollTo(0, 0); }} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>繼續逛逛</button>
-            <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
+          {/* 合計 */}
+          <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+            <p className="font-serif font-bold text-espresso">合計</p>
+            <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
           </div>
+        </div>
+
+        {/* 收件資訊卡片 */}
+        <div
+          className="rounded-2xl p-6 mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.35s_both]"
+          style={{
+            background: "rgba(255,255,255,0.85)",
+            border: "1px solid rgba(235,226,212,0.8)",
+            boxShadow: "0 4px 24px rgba(30,15,8,0.06)",
+          }}
+        >
+          <h2 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2">
+            <span className="text-rose">♥</span> 收件資訊
+          </h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex gap-3">
+              <span className="text-espresso-light/40 shrink-0 w-16">收件人</span>
+              <span className="text-espresso">{order.customerName}</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-espresso-light/40 shrink-0 w-16">電話</span>
+              <span className="text-espresso">{order.phone}</span>
+            </div>
+            {order.email && (
+              <div className="flex gap-3">
+                <span className="text-espresso-light/40 shrink-0 w-16">Email</span>
+                <span className="text-espresso">{order.email}</span>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span>
+              <span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : "面交 / 暨大取貨"}</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-espresso-light/40 shrink-0 w-16">地址</span>
+              <span className="text-espresso">{order.address}</span>
+            </div>
+            {order.notes && (
+              <div className="flex gap-3">
+                <span className="text-espresso-light/40 shrink-0 w-16">備註</span>
+                <span className="text-espresso">{order.notes}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 提示訊息 */}
+        <div className="text-center mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.5s_both]">
+          <p className="text-espresso-light/50 text-sm leading-relaxed mb-2">
+            訂單已收到囉，我們會用心為你準備
+          </p>
+          {order.email && (
+            <p className="text-espresso-light/40 text-xs">
+              確認信已寄送至 <span className="text-espresso font-medium">{order.email}</span>
+            </p>
+          )}
+        </div>
+
+        {/* 按鈕 */}
+        <div className="flex gap-3 justify-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.6s_both]">
+          <Link href="/my-orders" className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>
+            查看我的訂單
+          </Link>
+          <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
         </div>
       </div>
     );
