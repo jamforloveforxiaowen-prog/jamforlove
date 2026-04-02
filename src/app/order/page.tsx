@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
 
 /* ─── 資料定義 ─────────────────────────────────── */
@@ -84,6 +85,9 @@ export default function OrderPage() {
   const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // 預購說明圖
+  const [fundraiseBanner, setFundraiseBanner] = useState("");
+
   // 欄位驗證
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -152,6 +156,11 @@ export default function OrderPage() {
       if (s.value) setFundraiseStart(s.value);
       if (e.value) setFundraiseEnd(e.value);
     }).finally(() => setTimeChecked(true));
+
+    // 預購說明圖
+    fetch("/api/site-settings?key=fundraise_banner").then(r => r.json()).then(data => {
+      if (data.value) setFundraiseBanner(data.value);
+    }).catch(() => {});
 
     // 庫存
     fetch("/api/orders/stock").then(r => r.json()).then(data => {
@@ -624,6 +633,28 @@ export default function OrderPage() {
           )}
         </p>
       </div>
+
+      {/* ─── 預購說明圖 ──────────────────────────── */}
+      {fundraiseBanner && (
+        <div className="mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.05s_both]">
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{
+              boxShadow: "0 8px 32px rgba(30,15,8,0.08), 0 2px 8px rgba(30,15,8,0.04)",
+              border: "1px solid rgba(235,226,212,0.8)",
+            }}
+          >
+            <Image
+              src={fundraiseBanner}
+              alt="預購活動說明"
+              width={800}
+              height={800}
+              className="w-full h-auto"
+              unoptimized={fundraiseBanner.startsWith("data:")}
+            />
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* ─── 時間軸容器 ─────────────────────────── */}

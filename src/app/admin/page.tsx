@@ -1309,6 +1309,8 @@ function OrderManager() {
   const [fundraiseStart, setFundraiseStart] = useState("");
   const [fundraiseEnd, setFundraiseEnd] = useState("");
   const [fundraiseMaxOrders, setFundraiseMaxOrders] = useState("");
+  const [fundraiseBanner, setFundraiseBanner] = useState("");
+  const [bannerUploading, setBannerUploading] = useState(false);
   const [timeSaving, setTimeSaving] = useState(false);
   const [timeMsg, setTimeMsg] = useState("");
 
@@ -1323,10 +1325,12 @@ function OrderManager() {
       fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
       fetch("/api/site-settings?key=fundraise_end").then(r => r.json()),
       fetch("/api/site-settings?key=fundraise_max_orders").then(r => r.json()),
-    ]).then(([s, e, m]) => {
+      fetch("/api/site-settings?key=fundraise_banner").then(r => r.json()),
+    ]).then(([s, e, m, b]) => {
       if (s.value) setFundraiseStart(s.value);
       if (e.value) setFundraiseEnd(e.value);
       if (m.value) setFundraiseMaxOrders(m.value);
+      if (b.value) setFundraiseBanner(b.value);
     });
   }, []);
 
@@ -1348,6 +1352,11 @@ function OrderManager() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ key: "fundraise_max_orders", value: fundraiseMaxOrders }),
+        }),
+        fetch("/api/admin/site-settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "fundraise_banner", value: fundraiseBanner }),
         }),
       ]);
       setTimeMsg("已儲存");
@@ -1486,6 +1495,56 @@ function OrderManager() {
             （消費者僅能在此期間內下單{fundraiseMaxOrders ? "，額滿自動關閉" : ""}）
           </p>
         )}
+
+        {/* 預購說明圖 */}
+        <div className="mt-4 pt-4" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
+          <label className="block text-xs text-espresso-light/50 mb-2">預購說明圖（顯示在表單最上方）</label>
+          <div className="flex items-start gap-4">
+            {fundraiseBanner && (
+              <img
+                src={fundraiseBanner}
+                alt="預購說明圖預覽"
+                className="w-32 h-auto rounded-md ring-1 ring-linen-dark/60 object-cover"
+              />
+            )}
+            <div className="flex flex-col gap-2">
+              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all cursor-pointer">
+                {bannerUploading ? "上傳中..." : fundraiseBanner ? "更換圖片" : "上傳說明圖"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setBannerUploading(true);
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    try {
+                      const res = await fetch("/api/upload", { method: "POST", body: formData });
+                      const data = await res.json();
+                      if (res.ok && data.url) {
+                        setFundraiseBanner(data.url);
+                      }
+                    } catch { /* ignore */ }
+                    setBannerUploading(false);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {fundraiseBanner && (
+                <button
+                  type="button"
+                  onClick={() => setFundraiseBanner("")}
+                  className="text-xs text-rose/60 hover:text-rose transition-colors text-left"
+                >
+                  移除說明圖
+                </button>
+              )}
+              <p className="text-espresso-light/30 text-xs">儲存後才會生效</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-6">
