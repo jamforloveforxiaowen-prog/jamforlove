@@ -97,13 +97,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: campaignError }, { status: 403 });
     }
 
-    // 每人限購
-    const existingOrders = await db
+    // 每人每個活動限一次
+    const existingOrder = await db
       .select({ id: fundraiseOrders.id })
       .from(fundraiseOrders)
-      .where(and(eq(fundraiseOrders.userId, session.id), eq(fundraiseOrders.campaignId, campaignId)));
+      .where(and(eq(fundraiseOrders.userId, session.id), eq(fundraiseOrders.campaignId, campaignId)))
+      .get();
 
-    if (existingOrders.length >= campaign.perPersonLimit) {
+    if (existingOrder) {
       return NextResponse.json(
         { error: "你已經下過訂單了，如需修改請到「我的訂單」編輯" },
         { status: 409 }
@@ -117,11 +118,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "請至少選擇一項商品" }, { status: 400 });
     }
 
-    // 訂單上限
-    const { soldMap, totalOrders } = await getSoldQuantities(campaignId);
-    if (campaign.maxOrders && totalOrders >= campaign.maxOrders) {
-      return NextResponse.json({ error: "預購訂單已額滿，感謝你的支持！" }, { status: 403 });
-    }
+    const { soldMap } = await getSoldQuantities(campaignId);
 
     // 庫存檢查
     const stockError = await checkStock(campaignId, items, soldMap);

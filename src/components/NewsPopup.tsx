@@ -19,9 +19,10 @@ export default function NewsPopup() {
   const [closing, setClosing] = useState(false);
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
+  const isAdminPage = pathname?.startsWith("/admin");
 
   useEffect(() => {
-    if (isAuthPage) return;
+    if (isAuthPage || isAdminPage) return;
 
     try {
       const today = new Date().toISOString().slice(0, 10);

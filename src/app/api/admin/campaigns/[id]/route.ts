@@ -68,9 +68,8 @@ export async function PUT(
     return NextResponse.json({ success: true });
   }
 
-  const { name, startDate, endDate, bannerUrl, maxOrders, perPersonLimit, titleText, subtitleText, themeColor, groups } = body;
+  const { name, startDate, endDate, bannerUrl, formStyle, pickupOptions, groups } = body;
 
-  // 更新活動基本資料
   await db
     .update(campaigns)
     .set({
@@ -78,11 +77,8 @@ export async function PUT(
       startDate,
       endDate,
       bannerUrl: bannerUrl || "",
-      maxOrders: maxOrders || null,
-      perPersonLimit: perPersonLimit || 1,
-      titleText: titleText || "Jam for Love",
-      subtitleText: subtitleText || "",
-      themeColor: themeColor || "rose",
+      formStyle: formStyle || "classic",
+      pickupOptions: typeof pickupOptions === "string" ? pickupOptions : JSON.stringify(pickupOptions || []),
       updatedAt: sql`(datetime('now'))`,
     })
     .where(eq(campaigns.id, campaignId));

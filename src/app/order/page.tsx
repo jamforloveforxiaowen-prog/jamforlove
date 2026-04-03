@@ -38,11 +38,8 @@ interface ActiveCampaign {
   startDate: string;
   endDate: string;
   bannerUrl: string;
-  maxOrders: number | null;
-  perPersonLimit: number;
-  titleText: string;
-  subtitleText: string;
-  themeColor: string;
+  formStyle: string;
+  pickupOptions: string[];
   groups: CampaignGroup[];
   totalOrders: number;
 }
@@ -77,7 +74,7 @@ export default function OrderPage() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState<"shipping" | "pickup">("shipping");
+  const [deliveryMethod, setDeliveryMethod] = useState<string>("shipping");
   const [notes, setNotes] = useState("");
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -139,7 +136,29 @@ export default function OrderPage() {
 
   // 載入活動與既有訂單
   useEffect(() => {
-    fetch("/api/campaigns/active").then((r) => r.json()).then((data) => {
+    const campaignUrl = previewCampaignId
+      ? `/api/admin/campaigns/${previewCampaignId}`
+      : "/api/campaigns/active";
+
+    const loadCampaign = previewCampaignId
+      ? fetch(campaignUrl).then((r) => r.json()).then((detail) => {
+          // 預覽模式：admin API 回傳 detail 格式，轉換為 ActiveCampaign
+          if (!detail || detail.error) { setCampaignStatus("none"); return; }
+          const pickupOpts = typeof detail.pickupOptions === "string" ? JSON.parse(detail.pickupOptions) : detail.pickupOptions || [];
+          setCampaign({
+            ...detail,
+            pickupOptions: pickupOpts,
+            groups: detail.groups?.map((g: Record<string, unknown>) => ({
+              ...g,
+              products: (g.products as Record<string, unknown>[])?.map((p: Record<string, unknown>) => ({
+                ...p, sold: 0, remaining: p.limit != null ? p.limit : null,
+              })) || [],
+            })) || [],
+            totalOrders: 0,
+          });
+          setCampaignStatus("active");
+        })
+      : fetch(campaignUrl).then((r) => r.json()).then((data) => {
       if (!data.campaign) {
         setCampaignStatus("none");
       } else if (data.campaign.status === "out_of_range") {
@@ -151,13 +170,17 @@ export default function OrderPage() {
       }
     }).catch(() => setCampaignStatus("none"));
 
+    loadCampaign.catch(() => setCampaignStatus("none"));
+
+    if (!previewCampaignId) {
     fetch("/api/orders").then((r) => r.json()).then((data) => {
       if (Array.isArray(data) && data.length > 0) {
         setExistingOrderId(data[0].id);
       }
     }).catch(() => {});
+    }
 
-    loadProfile();
+    if (!previewCampaignId) loadProfile();
   }, []);
 
   // 從 sessionStorage 恢復
@@ -193,7 +216,9 @@ export default function OrderPage() {
   }, [campaign, selections]);
 
   const hasAnySelection = Object.values(selections).some((q) => q > 0);
-  const ordersFull = campaign?.maxOrders != null && campaign.totalOrders >= campaign.maxOrders;
+  // 預覽模式
+  const [searchParams] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams());
+  const previewCampaignId = searchParams.get("preview");
 
   function updateSelection(productId: number, delta: number, remaining: number | null) {
     setSelections((prev) => {
@@ -258,9 +283,10 @@ export default function OrderPage() {
         return { productId: p.id, name: p.name, description: p.description, group: g.name, quantity: qty, price: p.price };
       });
 
-    const finalAddress = deliveryMethod === "shipping"
+    const isShipping = deliveryMethod === "shipping";
+    const finalAddress = isShipping
       ? `${zipcode} ${city}${district}${addressDetail}`.trim()
-      : "面交 / 暨大取貨";
+      : deliveryMethod.startsWith("pickup:") ? deliveryMethod.replace("pickup:", "") : "面交";
 
     try {
       const method = isEditMode ? "PUT" : "POST";
@@ -268,7 +294,8 @@ export default function OrderPage() {
         campaignId: campaign.id,
         customerName, phone, email,
         address: finalAddress,
-        deliveryMethod, items, notes, total: grandTotal,
+        deliveryMethod: isShipping ? "shipping" : "pickup",
+        items, notes, total: grandTotal,
       };
       if (isEditMode && existingOrderId) payload.orderId = existingOrderId;
 
@@ -323,20 +350,6 @@ export default function OrderPage() {
           ) : (
             <p className="text-espresso-light/60 text-base leading-relaxed mb-8">預購時間尚未公佈，敬請期待！</p>
           )}
-          <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─── 額滿 ─── */
-  if (ordersFull && !existingOrderId) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-6">🎉</div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">預購已額滿！</h1>
-          <p className="text-espresso-light/60 text-base leading-relaxed mb-8">感謝大家熱情支持，本次預購名額已滿。</p>
           <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
         </div>
       </div>
@@ -415,7 +428,7 @@ export default function OrderPage() {
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">收件人</span><span className="text-espresso">{order.customerName}</span></div>
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">電話</span><span className="text-espresso">{order.phone}</span></div>
             {order.email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{order.email}</span></div>}
-            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span><span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : "面交 / 暨大取貨"}</span></div>
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span><span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : order.address}</span></div>
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">地址</span><span className="text-espresso">{order.address}</span></div>
             {order.notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{order.notes}</span></div>}
           </div>
@@ -450,9 +463,8 @@ export default function OrderPage() {
       {/* 標頭 */}
       <div className="text-center mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
         <h1 className="font-serif text-3xl md:text-4xl font-bold text-espresso" style={{ fontStyle: "italic" }}>
-          {campaign.titleText}
+          {campaign.name}
         </h1>
-        {campaign.subtitleText && <p className="text-espresso-light/40 text-base mt-1">~ {campaign.subtitleText} ~</p>}
         <div className="flex items-center justify-center gap-3 mt-4">
           <span className="w-10 h-px bg-rose/30" /><span className="text-rose text-sm">♥</span><span className="w-10 h-px bg-rose/30" />
         </div>
@@ -602,12 +614,19 @@ export default function OrderPage() {
 
               <div className="pt-4 pb-2">
                 <label className="block text-sm font-semibold text-espresso-light/50 mb-3">取貨方式 *</label>
-                <div className="flex gap-3">
-                  {([{ value: "shipping" as const, label: "郵寄", icon: "📦" }, { value: "pickup" as const, label: "面交 / 暨大取貨", icon: "🤝" }]).map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => setDeliveryMethod(opt.value)} className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-lg text-lg font-medium transition-all duration-200 ${deliveryMethod === opt.value ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"}`} style={{ border: deliveryMethod === opt.value ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}>
-                      <span>{opt.icon}</span>{opt.label}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setDeliveryMethod("shipping")} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-lg font-medium transition-all duration-200 ${deliveryMethod === "shipping" ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"}`} style={{ border: deliveryMethod === "shipping" ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}>
+                    <span>📦</span>郵寄
+                  </button>
+                  {(campaign.pickupOptions || []).map((opt) => {
+                    const val = `pickup:${opt}`;
+                    const isSelected = deliveryMethod === val;
+                    return (
+                      <button key={opt} type="button" onClick={() => setDeliveryMethod(val as "shipping" | "pickup")} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-lg font-medium transition-all duration-200 ${isSelected ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"}`} style={{ border: isSelected ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}>
+                        <span>🤝</span>{opt}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

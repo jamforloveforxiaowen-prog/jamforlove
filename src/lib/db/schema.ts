@@ -142,11 +142,9 @@ export const campaigns = sqliteTable("campaigns", {
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
   bannerUrl: text("banner_url").notNull().default(""),
-  maxOrders: integer("max_orders"),
-  perPersonLimit: integer("per_person_limit").notNull().default(1),
-  titleText: text("title_text").notNull().default("Jam for Love"),
-  subtitleText: text("subtitle_text").notNull().default(""),
-  themeColor: text("theme_color").notNull().default("rose"),
+  formStyle: text("form_style").notNull().default("classic"),
+  // JSON 陣列：面交取貨選項，例 ["小川阿姨","台大面交","宜蘭面交"]
+  pickupOptions: text("pickup_options").notNull().default("[]"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

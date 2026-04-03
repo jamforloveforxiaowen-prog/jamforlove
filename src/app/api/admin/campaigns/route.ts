@@ -33,13 +33,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, startDate, endDate, bannerUrl, maxOrders, perPersonLimit, titleText, subtitleText, themeColor, groups } = body;
+  const { name, startDate, endDate, bannerUrl, formStyle, pickupOptions, groups } = body;
 
   if (!name || !startDate || !endDate) {
     return NextResponse.json({ error: "請填寫活動名稱和日期" }, { status: 400 });
   }
 
-  // 建立活動
   const campaign = await db
     .insert(campaigns)
     .values({
@@ -47,11 +46,8 @@ export async function POST(req: NextRequest) {
       startDate,
       endDate,
       bannerUrl: bannerUrl || "",
-      maxOrders: maxOrders || null,
-      perPersonLimit: perPersonLimit || 1,
-      titleText: titleText || "Jam for Love",
-      subtitleText: subtitleText || "",
-      themeColor: themeColor || "rose",
+      formStyle: formStyle || "classic",
+      pickupOptions: typeof pickupOptions === "string" ? pickupOptions : JSON.stringify(pickupOptions || []),
     })
     .returning()
     .get();

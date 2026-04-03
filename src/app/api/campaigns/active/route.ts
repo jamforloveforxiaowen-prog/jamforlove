@@ -26,7 +26,6 @@ export async function GET() {
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: "out_of_range",
-        titleText: campaign.titleText,
       },
     });
   }
@@ -74,6 +73,7 @@ export async function GET() {
   return NextResponse.json({
     campaign: {
       ...campaign,
+      pickupOptions: JSON.parse(campaign.pickupOptions || "[]"),
       groups: groupsWithProducts,
       totalOrders,
     },
