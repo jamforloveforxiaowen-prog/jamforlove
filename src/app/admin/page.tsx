@@ -1319,6 +1319,7 @@ function OrderManager() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [campaignList, setCampaignList] = useState<{ id: number; name: string }[]>([]);
   const [filterCampaignId, setFilterCampaignId] = useState<number | "all">("all");
+  const [subTab, setSubTab] = useState<"orders" | "analytics">("orders");
 
   useEffect(() => {
     fetch("/api/admin/orders")
@@ -1393,25 +1394,50 @@ function OrderManager() {
 
   return (
     <div>
-      {/* 活動篩選 + 標題 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <h2 className="font-serif text-lg font-bold text-espresso">
-            訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({filteredOrders.length} 筆)</span>
-          </h2>
-          {campaignList.length > 0 && (
-            <select
-              value={filterCampaignId}
-              onChange={(e) => setFilterCampaignId(e.target.value === "all" ? "all" : Number(e.target.value))}
-              className="px-3 py-1.5 rounded-md text-sm text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
-            >
-              <option value="all">全部活動</option>
-              {campaignList.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
+      {/* 子分頁切換 */}
+      <div className="flex gap-2 mb-6">
+        {([
+          { key: "orders" as const, label: "訂單列表" },
+          { key: "analytics" as const, label: "數據分析" },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setSubTab(t.key)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              subTab === t.key
+                ? "bg-espresso text-linen"
+                : "text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+        {/* 活動篩選（兩個子頁共用）*/}
+        {campaignList.length > 0 && (
+          <select
+            value={filterCampaignId}
+            onChange={(e) => setFilterCampaignId(e.target.value === "all" ? "all" : Number(e.target.value))}
+            className="px-3 py-2 rounded-md text-sm text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none ml-auto"
+          >
+            <option value="all">全部活動</option>
+            {campaignList.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* ─── 數據分析 ─── */}
+      {subTab === "analytics" && (
+        <OrderAnalytics orders={filteredOrders} campaigns={campaignList} />
+      )}
+
+      {/* ─── 訂單列表 ─── */}
+      {subTab === "orders" && (<>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-serif text-lg font-bold text-espresso">
+          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({filteredOrders.length} 筆)</span>
+        </h2>
         <button
           onClick={exportToExcel}
           className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
@@ -1441,9 +1467,6 @@ function OrderManager() {
           </div>
         </div>
       )}
-
-      {/* 數據分析 */}
-      <OrderAnalytics orders={filteredOrders} campaigns={campaignList} />
 
       {filteredOrders.length === 0 ? (
         <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
@@ -1511,6 +1534,7 @@ function OrderManager() {
           })}
         </div>
       )}
+      </>)}
     </div>
   );
 }
