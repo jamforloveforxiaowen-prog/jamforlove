@@ -61,6 +61,7 @@ export default function CampaignManager() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [previewId, setPreviewId] = useState<number | null>(null);
+  const [focusedProduct, setFocusedProduct] = useState<number | null>(null);
 
   // 表單欄位
   const [name, setName] = useState("");
@@ -90,21 +91,17 @@ export default function CampaignManager() {
     setName(""); setStartDate(""); setEndDate(""); setBannerUrl("");
     setFormStyle("classic"); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", price: 0, limit: null }]);
-    setEditingId(null); setShowForm(false); setError("");
+    setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null);
   }
 
   async function startEdit(id: number) {
     setError("");
     const res = await fetch(`/api/admin/campaigns/${id}`);
     const data: CampaignDetail = await res.json();
-    setName(data.name);
-    setStartDate(data.startDate);
-    setEndDate(data.endDate);
-    setBannerUrl(data.bannerUrl || "");
-    setFormStyle(data.formStyle || "classic");
+    setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
+    setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) && opts.length > 0 ? opts : [...DEFAULT_PICKUP]);
-    // 從 groups[0].products 取出品項
     const prods = data.groups?.[0]?.products || [];
     setProducts(prods.length > 0
       ? prods.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
@@ -119,39 +116,32 @@ export default function CampaignManager() {
     if (validProducts.length === 0) { setError("請至少新增一項商品"); return; }
     setSubmitting(true); setError("");
 
-    // 打包成一個 group（保持 API 相容）
     const payload = {
       name, startDate, endDate, bannerUrl, formStyle,
       pickupOptions: JSON.stringify(pickupOptions),
-      groups: [{
-        name: "商品", description: "", sortOrder: 0, isRequired: true,
-        products: validProducts.map((p, i) => ({
-          name: p.name, description: "", price: p.price, limit: p.limit,
-          unit: "份", sortOrder: i, note: "", isActive: true,
-        })),
+      groups: [{ name: "商品", description: "", sortOrder: 0, isRequired: true,
+        products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       }],
     };
 
     try {
       const url = editingId ? `/api/admin/campaigns/${editingId}` : "/api/admin/campaigns";
-      const res = await fetch(url, {
-        method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) { const d = await res.json(); setError(d.error || "儲存失敗"); setSubmitting(false); return; }
-    } catch { setError("網路連線失敗"); setSubmitting(false); return; }
+      const res = await fetch(url, { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const result = await res.json();
+      if (!res.ok) { setError(result.error || "儲存失敗"); setSubmitting(false); return; }
 
-    setSubmitting(false); resetForm(); loadCampaigns();
+      setSubmitting(false);
+      // 儲存後自動開預覽
+      const savedId = editingId || result.id;
+      resetForm(); loadCampaigns();
+      if (savedId) setPreviewId(savedId);
+    } catch { setError("網路連線失敗"); setSubmitting(false); }
   }
 
   async function toggleStatus(c: Campaign) {
     const next = c.status === "draft" ? "active" : c.status === "active" ? "closed" : "draft";
     if (!window.confirm(`確定要將「${c.name}」設為「${STATUS_LABELS[next]}」嗎？`)) return;
-    await fetch(`/api/admin/campaigns/${c.id}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: next }),
-    });
+    await fetch(`/api/admin/campaigns/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: next }) });
     loadCampaigns();
   }
 
@@ -165,16 +155,12 @@ export default function CampaignManager() {
   async function duplicateCampaign(c: Campaign) {
     const res = await fetch(`/api/admin/campaigns/${c.id}`);
     const data: CampaignDetail = await res.json();
-    setName(data.name + "（複製）");
-    setStartDate(""); setEndDate("");
-    setBannerUrl(data.bannerUrl || "");
-    setFormStyle(data.formStyle || "classic");
+    setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
+    setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) ? opts : [...DEFAULT_PICKUP]);
     const prods = data.groups?.[0]?.products || [];
-    setProducts(prods.length > 0
-      ? prods.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
-      : [{ name: "", price: 0, limit: null }]);
+    setProducts(prods.length > 0 ? prods.map((p) => ({ name: p.name, price: p.price, limit: p.limit })) : [{ name: "", price: 0, limit: null }]);
     setEditingId(null); setShowForm(true);
   }
 
@@ -182,8 +168,28 @@ export default function CampaignManager() {
   function updateProduct(i: number, field: keyof ProductEntry, value: unknown) {
     setProducts((prev) => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
   }
-  function addProduct() { setProducts((prev) => [...prev, { name: "", price: 0, limit: null }]); }
-  function removeProduct(i: number) { setProducts((prev) => prev.filter((_, idx) => idx !== i)); }
+  function addProduct() {
+    setProducts((prev) => [...prev, { name: "", price: 0, limit: null }]);
+    setTimeout(() => setFocusedProduct(products.length), 50);
+  }
+  function removeProduct(i: number) {
+    if (products.length <= 1) return;
+    setProducts((prev) => prev.filter((_, idx) => idx !== i));
+    setFocusedProduct(null);
+  }
+  function duplicateProduct(i: number) {
+    setProducts((prev) => [...prev.slice(0, i + 1), { ...prev[i] }, ...prev.slice(i + 1)]);
+  }
+  function moveProduct(from: number, to: number) {
+    if (to < 0 || to >= products.length) return;
+    setProducts((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+    setFocusedProduct(to);
+  }
 
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
 
@@ -198,7 +204,7 @@ export default function CampaignManager() {
         <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary-sm">+ 建立表單</button>
       </div>
 
-      {/* 預覽 */}
+      {/* ═══ 預覽 Modal ═══ */}
       {previewId && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center pt-8 px-4 overflow-y-auto" onClick={() => setPreviewId(null)}>
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -207,20 +213,13 @@ export default function CampaignManager() {
               <div className="flex gap-2">
                 <button
                   onClick={async () => {
-                    if (!window.confirm("確定要發佈嗎？")) return;
-                    await fetch(`/api/admin/campaigns/${previewId}`, {
-                      method: "PUT", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ status: "active" }),
-                    });
+                    if (!window.confirm("確定要發佈嗎？發佈後消費者即可看到。")) return;
+                    await fetch(`/api/admin/campaigns/${previewId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "active" }) });
                     setPreviewId(null); loadCampaigns();
                   }}
                   className="px-4 py-1.5 rounded-md text-sm font-medium bg-sage text-white hover:bg-sage/80 transition-colors"
-                >
-                  確認發佈
-                </button>
-                <button onClick={() => setPreviewId(null)} className="px-4 py-1.5 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all">
-                  關閉
-                </button>
+                >確認發佈</button>
+                <button onClick={() => setPreviewId(null)} className="px-4 py-1.5 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all">關閉</button>
               </div>
             </div>
             <iframe src={`/order?preview=${previewId}`} className="w-full border-0" style={{ height: "80vh" }} />
@@ -228,73 +227,134 @@ export default function CampaignManager() {
         </div>
       )}
 
-      {/* ─── 編輯表單 ─── */}
+      {/* ═══ 編輯表單 ═══ */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-6 mb-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mb-8 space-y-4">
           <h3 className="font-serif font-bold text-espresso text-lg">{editingId ? "編輯表單" : "建立預購表單"}</h3>
 
-          {/* 基本資訊 */}
-          <div>
-            <label className="block text-sm font-medium text-espresso mb-1">表單名稱 *</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} required placeholder="例：2026 母親節預購" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+          {/* 基本資訊卡片 */}
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-espresso mb-1">開始日期 *</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+              <label className="block text-sm font-medium text-espresso mb-1">表單名稱 *</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} required placeholder="例：2026 母親節預購" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-espresso mb-1">結束日期 *</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-espresso mb-1">開始日期 *</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-espresso mb-1">結束日期 *</label>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+              </div>
             </div>
+            <ImageUploader value={bannerUrl} onChange={setBannerUrl} label="活動說明圖（選填）" previewWidth={160} previewHeight={100} />
           </div>
 
-          {/* 說明圖 */}
-          <ImageUploader value={bannerUrl} onChange={setBannerUrl} label="活動說明圖（選填）" previewWidth={160} previewHeight={100} />
-
-          {/* ─── 商品列表 ─── */}
-          <div className="pt-2" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-            <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-3">商品列表</p>
-            <div className="space-y-2">
-              {products.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input
-                    value={p.name}
-                    onChange={(e) => updateProduct(i, "name", e.target.value)}
-                    className={`${inputClass} flex-1`}
-                    placeholder="品名"
-                  />
-                  <div className="relative shrink-0 w-28">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-espresso-light/40 text-sm">NT$</span>
-                    <input
-                      type="number"
-                      value={p.price || ""}
-                      onChange={(e) => updateProduct(i, "price", Number(e.target.value))}
-                      className={`${inputClass} pl-12`}
-                      placeholder="價格"
-                      min="0"
-                    />
+          {/* ═══ 商品列表（Google Forms 風格）═══ */}
+          <div className="space-y-3">
+            {products.map((p, i) => {
+              const isFocused = focusedProduct === i;
+              return (
+                <div
+                  key={i}
+                  className={`bg-white rounded-lg ring-1 transition-all duration-200 ${isFocused ? "ring-rose ring-2 shadow-md" : "ring-linen-dark/60"}`}
+                  style={isFocused ? { borderLeft: "4px solid var(--color-rose)" } : { borderLeft: "4px solid transparent" }}
+                  onClick={() => setFocusedProduct(i)}
+                >
+                  {/* 拖曳把手 */}
+                  <div className="flex justify-center pt-2 pb-1 cursor-grab text-espresso-light/20 hover:text-espresso-light/40">
+                    <svg width="20" height="6" viewBox="0 0 20 6"><circle cx="4" cy="1" r="1" fill="currentColor" /><circle cx="10" cy="1" r="1" fill="currentColor" /><circle cx="16" cy="1" r="1" fill="currentColor" /><circle cx="4" cy="5" r="1" fill="currentColor" /><circle cx="10" cy="5" r="1" fill="currentColor" /><circle cx="16" cy="5" r="1" fill="currentColor" /></svg>
                   </div>
-                  <input
-                    type="number"
-                    value={p.limit ?? ""}
-                    onChange={(e) => updateProduct(i, "limit", e.target.value ? Number(e.target.value) : null)}
-                    className={`${inputClass} w-24 shrink-0`}
-                    placeholder="限量"
-                    min="0"
-                  />
-                  <button type="button" onClick={() => removeProduct(i)} className="text-rose/40 hover:text-rose shrink-0 p-1" title="刪除">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                  </button>
+
+                  <div className="px-5 pb-2">
+                    {/* 品名 */}
+                    <input
+                      value={p.name}
+                      onChange={(e) => updateProduct(i, "name", e.target.value)}
+                      className="w-full py-2 text-lg text-espresso bg-transparent outline-none placeholder:text-espresso-light/30"
+                      style={{ borderBottom: isFocused ? "2px solid var(--color-rose)" : "1px solid rgba(30,15,8,0.1)" }}
+                      placeholder={isFocused ? "輸入品名，例：香辣香菇醬" : "品名"}
+                      autoFocus={isFocused && !p.name}
+                    />
+
+                    {/* 價格 + 限量（focus 時顯示） */}
+                    {isFocused && (
+                      <div className="flex items-center gap-4 mt-3 animate-[bakeSwing_0.3s_ease_both]">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-espresso-light/50">NT$</span>
+                          <input
+                            type="number"
+                            value={p.price || ""}
+                            onChange={(e) => updateProduct(i, "price", Number(e.target.value))}
+                            className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
+                            placeholder="價格"
+                            min="0"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-espresso-light/50">限量</span>
+                          <input
+                            type="number"
+                            value={p.limit ?? ""}
+                            onChange={(e) => updateProduct(i, "limit", e.target.value ? Number(e.target.value) : null)}
+                            className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
+                            placeholder="不限"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 非 focus 時顯示摘要 */}
+                    {!isFocused && p.name && (
+                      <div className="flex items-center gap-3 mt-1 text-sm text-espresso-light/40">
+                        <span>NT$ {p.price}</span>
+                        {p.limit != null && <span>· 限量 {p.limit}</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 底部工具列（focus 時顯示）*/}
+                  {isFocused && (
+                    <div className="flex items-center justify-end gap-1 px-4 py-2 border-t border-linen-dark/20 animate-[bakeSwing_0.3s_ease_both]">
+                      {/* 上移 */}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); moveProduct(i, i - 1); }} disabled={i === 0} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="上移">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                      </button>
+                      {/* 下移 */}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); moveProduct(i, i + 1); }} disabled={i === products.length - 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="下移">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                      </button>
+                      <div className="w-px h-5 bg-linen-dark/30 mx-1" />
+                      {/* 複製 */}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); duplicateProduct(i); }} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen transition-all" title="複製">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+                      </button>
+                      {/* 刪除 */}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeProduct(i); }} disabled={products.length <= 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-rose hover:bg-rose/5 disabled:opacity-20 transition-all" title="刪除">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-            <button type="button" onClick={addProduct} className="text-xs text-sage hover:underline mt-3">+ 新增商品</button>
+              );
+            })}
+
+            {/* 新增商品按鈕 */}
+            <button
+              type="button"
+              onClick={addProduct}
+              className="w-full py-3 bg-white rounded-lg ring-1 ring-dashed ring-linen-dark/40 text-espresso-light/50 hover:text-rose hover:ring-rose/40 transition-all flex items-center justify-center gap-2 text-base"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
+              新增商品
+            </button>
           </div>
 
-          {/* ─── 面交選項 ─── */}
-          <div className="pt-2" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-            <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-3">面交取貨選項（消費者下拉選擇）</p>
+          {/* 面交選項 */}
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
+            <p className="text-sm font-medium text-espresso mb-3">面交取貨選項（消費者下拉選擇）</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {pickupOptions.map((opt, i) => (
                 <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-linen ring-1 ring-linen-dark/40 text-espresso">
@@ -306,28 +366,21 @@ export default function CampaignManager() {
               ))}
             </div>
             <div className="flex gap-2">
-              <input
-                value={newPickup}
-                onChange={(e) => setNewPickup(e.target.value)}
+              <input value={newPickup} onChange={(e) => setNewPickup(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = newPickup.trim(); if (v && !pickupOptions.includes(v)) { setPickupOptions((p) => [...p, v]); setNewPickup(""); } } }}
-                className={`${inputClass} flex-1`}
-                placeholder="新增選項，例：5/19（四）校內取貨"
-              />
-              <button type="button" onClick={() => { const v = newPickup.trim(); if (v && !pickupOptions.includes(v)) { setPickupOptions((p) => [...p, v]); setNewPickup(""); } }} className="px-4 py-2 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all shrink-0">
-                新增
-              </button>
+                className={`${inputClass} flex-1`} placeholder="新增選項，例：5/19（四）校內取貨" />
+              <button type="button" onClick={() => { const v = newPickup.trim(); if (v && !pickupOptions.includes(v)) { setPickupOptions((p) => [...p, v]); setNewPickup(""); } }}
+                className="px-4 py-2 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all shrink-0">新增</button>
             </div>
           </div>
 
-          {/* ─── 表單風格 ─── */}
-          <div className="pt-2" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-            <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-3">表單風格</p>
+          {/* 表單風格 */}
+          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
+            <p className="text-sm font-medium text-espresso mb-3">表單風格</p>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {FORM_STYLES.map((s) => (
-                <button
-                  key={s.id} type="button" onClick={() => setFormStyle(s.id)}
-                  className={`p-3 rounded-lg text-left transition-all ${formStyle === s.id ? "bg-rose/5 ring-2 ring-rose" : "bg-linen/50 ring-1 ring-linen-dark/40 hover:ring-espresso-light/40"}`}
-                >
+                <button key={s.id} type="button" onClick={() => setFormStyle(s.id)}
+                  className={`p-3 rounded-lg text-left transition-all ${formStyle === s.id ? "bg-rose/5 ring-2 ring-rose" : "bg-linen/50 ring-1 ring-linen-dark/40 hover:ring-espresso-light/40"}`}>
                   <p className="text-sm font-bold text-espresso">{s.name}</p>
                   <p className="text-[0.65rem] text-espresso-light/50 mt-0.5 leading-tight">{s.desc}</p>
                 </button>
@@ -335,16 +388,17 @@ export default function CampaignManager() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          {/* 送出 */}
+          <div className="flex gap-3">
             <button type="submit" disabled={submitting} className="btn-primary-sm">
-              {submitting ? "儲存中..." : editingId ? "更新表單" : "建立表單"}
+              {submitting ? "儲存中..." : editingId ? "儲存並預覽" : "建立並預覽"}
             </button>
             <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
           </div>
         </form>
       )}
 
-      {/* ─── 表單列表 ─── */}
+      {/* ═══ 表單列表 ═══ */}
       {campaigns.length === 0 && !showForm ? (
         <div className="text-center py-24">
           <p className="text-espresso-light/50 text-sm">尚無預購表單，點擊上方按鈕建立</p>
@@ -357,22 +411,19 @@ export default function CampaignManager() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <h3 className="font-serif font-bold text-espresso text-base">{c.name}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>
-                      {STATUS_LABELS[c.status]}
-                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>{STATUS_LABELS[c.status]}</span>
                   </div>
-                  <p className="text-espresso-light/50 text-sm">
-                    {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
-                  </p>
+                  <p className="text-espresso-light/50 text-sm">{c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單</p>
                 </div>
                 {c.bannerUrl && <Image src={c.bannerUrl} alt="" width={80} height={50} className="rounded-md object-cover shrink-0" />}
               </div>
 
               <div className="flex gap-2 mt-3 pt-3 flex-wrap" style={{ borderTop: "1px dashed rgba(30,15,8,0.06)" }}>
+                {/* 預覽按鈕（醒目） */}
+                <button onClick={() => setPreviewId(c.id)} className="text-xs px-4 py-1.5 rounded-md bg-sage/10 ring-1 ring-sage/30 text-sage font-medium hover:bg-sage/20 hover:ring-sage transition-all">
+                  👁 預覽
+                </button>
                 <button onClick={() => startEdit(c.id)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">編輯</button>
-                {c.status === "draft" && (
-                  <button onClick={() => setPreviewId(c.id)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-sage/40 text-sage hover:ring-sage transition-all">預覽</button>
-                )}
                 <button onClick={() => toggleStatus(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">
                   {c.status === "draft" ? "發佈" : c.status === "active" ? "結束" : "重新開放"}
                 </button>
