@@ -543,6 +543,29 @@ function BannerManager() {
     }
   }
 
+  // 快速排序
+  async function moveBanner(id: number, target: "first" | "last" | "up" | "down") {
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const reordered = [...items];
+    const [moved] = reordered.splice(idx, 1);
+    if (target === "first") reordered.unshift(moved);
+    else if (target === "last") reordered.push(moved);
+    else if (target === "up" && idx > 0) reordered.splice(idx - 1, 0, moved);
+    else if (target === "down" && idx < items.length - 1) reordered.splice(idx + 1, 0, moved);
+    else { reordered.splice(idx, 0, moved); return; }
+    setItems(reordered);
+    await Promise.all(
+      reordered.map((item, i) =>
+        fetch(`/api/admin/banners/${item.id}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sortOrder: i }),
+        })
+      )
+    );
+    loadItems();
+  }
+
   // 拖曳排序
   function handleDragStart(id: number) {
     setDragId(id);
@@ -564,22 +587,18 @@ function BannerManager() {
     const newIndex = items.findIndex(i => i.id === targetId);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // 重新排列
     const reordered = [...items];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
 
-    // 即時更新 UI
     setItems(reordered);
     setDragId(null);
     setDragOverId(null);
 
-    // 批次更新 sortOrder 到後端
     await Promise.all(
       reordered.map((item, i) =>
         fetch(`/api/admin/banners/${item.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: "PUT", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sortOrder: i }),
         })
       )
@@ -597,7 +616,7 @@ function BannerManager() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-serif text-lg font-bold text-espresso">Banner 列表</h2>
-          {items.length > 1 && <p className="text-xs text-espresso-light/40 mt-1">拖曳卡片可調整順序</p>}
+          {items.length > 1 && <p className="text-xs text-espresso-light/40 mt-1">可拖曳或用按鈕調整順序</p>}
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary-sm">
           + 新增 Banner
@@ -682,7 +701,13 @@ function BannerManager() {
 
               {/* 操作列 */}
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-espresso-light/40">#{items.indexOf(item) + 1}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-espresso-light/40 mr-2">#{items.indexOf(item) + 1}</span>
+                  <button onClick={() => moveBanner(item.id, "first")} disabled={items.indexOf(item) === 0} className="text-xs text-espresso-light/40 hover:text-espresso px-1.5 py-1 rounded disabled:opacity-20 transition-all" title="移到最前">⇤</button>
+                  <button onClick={() => moveBanner(item.id, "up")} disabled={items.indexOf(item) === 0} className="text-xs text-espresso-light/40 hover:text-espresso px-1.5 py-1 rounded disabled:opacity-20 transition-all" title="上移">↑</button>
+                  <button onClick={() => moveBanner(item.id, "down")} disabled={items.indexOf(item) === items.length - 1} className="text-xs text-espresso-light/40 hover:text-espresso px-1.5 py-1 rounded disabled:opacity-20 transition-all" title="下移">↓</button>
+                  <button onClick={() => moveBanner(item.id, "last")} disabled={items.indexOf(item) === items.length - 1} className="text-xs text-espresso-light/40 hover:text-espresso px-1.5 py-1 rounded disabled:opacity-20 transition-all" title="移到最後">⇥</button>
+                </div>
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(item)} className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-1.5 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all">
                     編輯
