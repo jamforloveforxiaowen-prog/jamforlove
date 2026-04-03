@@ -53,6 +53,45 @@ interface OrderItem {
   price: number;
 }
 
+/* ─── Legacy 商品（fallback 用） ──────────────── */
+
+const LEGACY_COMBOS = [
+  { id: 9001, name: "組合 1", desc: "香辣香菇醬 + 馬告菜圃醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9002, name: "組合 2", desc: "覆盆子果醬 + 綜合莓果醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9003, name: "組合 3", desc: "香辣香菇醬 + 覆盆子果醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9004, name: "組合 4", desc: "香辣香菇醬 + 綜合莓果醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9005, name: "組合 5", desc: "馬告菜圃醬 + 覆盆子果醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9006, name: "組合 6", desc: "馬告菜圃醬 + 綜合莓果醬 + 手工皂", price: 500, limit: 25 },
+  { id: 9007, name: "組合 7", desc: "手工皂 ×3", price: 500, limit: 20 },
+];
+
+const LEGACY_ADDONS = [
+  { id: 9101, name: "金盞花乳霜 / 玫瑰花乳霜 (40ml)", price: 300, limit: null },
+  { id: 9102, name: "洋甘菊護手霜 馬卡龍隨行盒 (30ml)", price: 100, limit: null },
+  { id: 9103, name: "洋甘菊護手霜 (50ml)", price: 180, limit: null },
+  { id: 9104, name: "手工洗頭皂", price: 200, limit: null },
+  { id: 9105, name: "草莓果醬", price: 150, limit: 20 },
+  { id: 9106, name: "蘋果桑葚醬", price: 150, limit: null },
+  { id: 9107, name: "堅果蔓越莓雪Q餅 (10塊/盒)", price: 180, limit: 10 },
+];
+
+function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign {
+  const toProduct = (item: { id: number; name: string; desc?: string; price: number; limit: number | null }): CampaignProduct => ({
+    id: item.id, name: item.name, description: item.desc || "", price: item.price,
+    limit: item.limit, unit: "份", sortOrder: 0, note: "", isActive: true,
+    sold: 0, remaining: item.limit,
+  });
+  return {
+    id: 0, name: "Jam for Love", status: "active", startDate, endDate,
+    bannerUrl: "", formStyle: "classic", pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
+    groups: [
+      { id: 1, name: "產品組合", description: "每組 NT$500，可複選多組", sortOrder: 0, isRequired: true, products: LEGACY_COMBOS.map(toProduct) },
+      { id: 2, name: "加購好物", description: "可自由搭配", sortOrder: 1, isRequired: false, products: LEGACY_ADDONS.map(toProduct) },
+    ],
+    totalOrders: 0,
+  };
+}
+
 /* ─── 主頁面 ────────────────────────────────────── */
 
 export default function OrderPage() {
@@ -158,15 +197,33 @@ export default function OrderPage() {
           });
           setCampaignStatus("active");
         })
-      : fetch(campaignUrl).then((r) => r.json()).then((data) => {
-      if (!data.campaign) {
-        setCampaignStatus("none");
-      } else if (data.campaign.status === "out_of_range") {
+      : fetch(campaignUrl).then((r) => r.json()).then(async (data) => {
+      if (data.campaign && data.campaign.status !== "out_of_range") {
+        setCampaign(data.campaign);
+        setCampaignStatus("active");
+      } else if (data.campaign?.status === "out_of_range") {
         setCampaignStatus("out_of_range");
         setOutOfRangeInfo({ startDate: data.campaign.startDate, endDate: data.campaign.endDate, name: data.campaign.name });
       } else {
-        setCampaign(data.campaign);
-        setCampaignStatus("active");
+        // Fallback：用 site_settings 的預購期間
+        const [sRes, eRes] = await Promise.all([
+          fetch("/api/site-settings?key=fundraise_start").then((r) => r.json()),
+          fetch("/api/site-settings?key=fundraise_end").then((r) => r.json()),
+        ]);
+        const now = new Date();
+        const start = sRes.value ? new Date(sRes.value) : null;
+        const end = eRes.value ? new Date(eRes.value + "T23:59:59") : null;
+
+        if (start && end && now >= start && now <= end) {
+          // 用 hardcoded 商品建立虛擬 campaign
+          setCampaign(buildLegacyCampaign(sRes.value, eRes.value));
+          setCampaignStatus("active");
+        } else if (sRes.value && eRes.value) {
+          setCampaignStatus("out_of_range");
+          setOutOfRangeInfo({ startDate: sRes.value, endDate: eRes.value, name: "預購" });
+        } else {
+          setCampaignStatus("none");
+        }
       }
     }).catch(() => setCampaignStatus("none"));
 
@@ -321,7 +378,10 @@ export default function OrderPage() {
   if (campaignStatus === "loading") {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-rose/30 border-t-rose rounded-full animate-spin" />
+        <div className="text-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="w-8 h-8 border-2 border-rose/30 border-t-rose rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-espresso-light/40 text-sm">載入中...</p>
+        </div>
       </div>
     );
   }
@@ -331,12 +391,12 @@ export default function OrderPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-6">
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-6">🍯</div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4">
+          <div className="text-6xl mb-6 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">🍯</div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.15s_both]">
             預購尚未開放
           </h1>
           {outOfRangeInfo ? (
-            <>
+            <div className="animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.25s_both]">
               <p className="text-espresso-light/60 text-base leading-relaxed mb-2">
                 <span className="font-medium text-espresso">{outOfRangeInfo.name}</span> 的預購期間為
               </p>
@@ -346,11 +406,13 @@ export default function OrderPage() {
               <p className="text-espresso-light/40 text-sm mb-8">
                 {new Date() < new Date(outOfRangeInfo.startDate) ? "再等等，馬上就開放囉！" : "本次預購已結束，感謝你的支持！"}
               </p>
-            </>
+            </div>
           ) : (
-            <p className="text-espresso-light/60 text-base leading-relaxed mb-8">預購時間尚未公佈，敬請期待！</p>
+            <p className="text-espresso-light/60 text-base leading-relaxed mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.25s_both]">預購時間尚未公佈，敬請期待！</p>
           )}
-          <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
+          <div className="animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
+            <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
+          </div>
         </div>
       </div>
     );
@@ -361,13 +423,15 @@ export default function OrderPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center px-6">
         <div className="text-center max-w-md">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ background: "linear-gradient(135deg, var(--color-sage), var(--color-sage-dark, #6b8f71))" }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <div className="animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ background: "linear-gradient(135deg, var(--color-sage), var(--color-sage-dark, #6b8f71))" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
           </div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-3">你已經下過訂單了</h1>
-          <p className="text-espresso-light/60 text-base mb-2">訂單編號 <span className="font-medium text-espresso">#{existingOrderId}</span></p>
-          <p className="text-espresso-light/40 text-sm mb-8">如需修改訂單內容，可點擊下方「修改訂單」</p>
-          <div className="flex gap-3 justify-center">
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.15s_both]">你已經下過訂單了</h1>
+          <p className="text-espresso-light/60 text-base mb-2 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.25s_both]">訂單編號 <span className="font-medium text-espresso">#{existingOrderId}</span></p>
+          <p className="text-espresso-light/40 text-sm mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.3s_both]">如需修改訂單內容，可點擊下方「修改訂單」</p>
+          <div className="flex gap-3 justify-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
             <button onClick={loadExistingOrder} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>修改訂單</button>
             <button onClick={() => router.push("/my-orders")} className="btn-primary">查看我的訂單</button>
           </div>
