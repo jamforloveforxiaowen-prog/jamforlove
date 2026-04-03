@@ -61,7 +61,7 @@ const STATUS_STYLES: Record<string, string> = {
 type Tab = "campaigns" | "orders" | "banners" | "news" | "about" | "story";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "campaigns", label: "預購表單" },
+  { key: "campaigns", label: "預購表單設計" },
   { key: "orders", label: "訂單管理" },
   { key: "banners", label: "Banner 管理" },
   { key: "news", label: "最新消息" },
