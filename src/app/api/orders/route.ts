@@ -1,116 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fundraiseOrders, siteSettings } from "@/lib/db/schema";
+import { fundraiseOrders, campaigns, campaignProducts, siteSettings } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, and, ne, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
-// 伺服器端定義的商品價格（不信任客戶端傳入的 price）
-const COMBO_PRICES: Record<number, number> = {
-  1: 500, 2: 500, 3: 500, 4: 500, 5: 500, 6: 500, 7: 500,
-};
-
-const ADDON_PRICES: Record<number, number> = {
-  1: 300, 2: 100, 3: 180, 4: 200, 5: 150, 6: 150, 7: 180,
-};
-
-// 各品項限量
-const COMBO_LIMITS: Record<number, number> = {
-  1: 25, 2: 25, 3: 25, 4: 25, 5: 25, 6: 25, 7: 20,
-};
-const ADDON_LIMITS: Record<number, number | null> = {
-  1: null, 2: null, 3: null, 4: null, 5: 20, 6: null, 7: 10,
-};
-
-interface ComboItem {
-  id: number;
+interface OrderItem {
+  productId: number;
+  name: string;
+  description?: string;
+  group: string;
   quantity: number;
-  [key: string]: unknown;
+  price: number;
 }
 
-interface AddonItem {
-  id: number;
-  quantity: number;
-  [key: string]: unknown;
-}
+// 伺服器端重新計算 total
+async function calculateTotal(campaignId: number, items: OrderItem[]): Promise<number> {
+  const products = await db
+    .select({ id: campaignProducts.id, price: campaignProducts.price })
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaignId));
 
-function calculateTotal(combos: ComboItem[], addons: AddonItem[]): number {
-  const comboTotal = combos.reduce((sum, item) => {
-    const price = COMBO_PRICES[item.id] ?? 0;
+  const priceMap = new Map(products.map((p) => [p.id, p.price]));
+
+  return items.reduce((sum, item) => {
+    const price = priceMap.get(item.productId) ?? 0;
     return sum + price * (item.quantity || 0);
   }, 0);
-  const addonTotal = addons.reduce((sum, item) => {
-    const price = ADDON_PRICES[item.id] ?? 0;
-    return sum + price * (item.quantity || 0);
-  }, 0);
-  return comboTotal + addonTotal;
 }
 
-// 統計已售數量（可排除指定訂單，用於編輯時）
-async function getSoldQuantities(excludeOrderId?: number) {
-  const allOrders = await db.select({
-    id: fundraiseOrders.id,
-    combos: fundraiseOrders.combos,
-    addons: fundraiseOrders.addons,
-  }).from(fundraiseOrders);
+// 統計已售數量
+async function getSoldQuantities(campaignId: number, excludeOrderId?: number) {
+  const allOrders = await db
+    .select({ id: fundraiseOrders.id, items: fundraiseOrders.items })
+    .from(fundraiseOrders)
+    .where(eq(fundraiseOrders.campaignId, campaignId));
 
-  const comboSold: Record<number, number> = {};
-  const addonSold: Record<number, number> = {};
-
+  const soldMap: Record<number, number> = {};
   for (const order of allOrders) {
     if (excludeOrderId && order.id === excludeOrderId) continue;
-    const combos = JSON.parse(order.combos) as ComboItem[];
-    const addons = JSON.parse(order.addons) as AddonItem[];
-    for (const c of combos) comboSold[c.id] = (comboSold[c.id] || 0) + c.quantity;
-    for (const a of addons) addonSold[a.id] = (addonSold[a.id] || 0) + a.quantity;
-  }
-
-  return { comboSold, addonSold, totalOrders: allOrders.length };
-}
-
-// 檢查庫存是否足夠
-function checkStock(
-  combos: ComboItem[],
-  addons: AddonItem[],
-  comboSold: Record<number, number>,
-  addonSold: Record<number, number>,
-): string | null {
-  for (const c of combos) {
-    const limit = COMBO_LIMITS[c.id];
-    if (limit !== undefined) {
-      const sold = comboSold[c.id] || 0;
-      const remaining = limit - sold;
-      if (c.quantity > remaining) {
-        return `組合 ${c.id} 剩餘 ${remaining} 組，無法購買 ${c.quantity} 組`;
-      }
+    const items = JSON.parse(order.items || "[]") as { productId: number; quantity: number }[];
+    for (const item of items) {
+      soldMap[item.productId] = (soldMap[item.productId] || 0) + item.quantity;
     }
   }
-  for (const a of addons) {
-    const limit = ADDON_LIMITS[a.id];
-    if (limit !== null && limit !== undefined) {
-      const sold = addonSold[a.id] || 0;
-      const remaining = limit - sold;
-      if (a.quantity > remaining) {
-        return `加購商品 ${a.id} 剩餘 ${remaining} 份，無法購買 ${a.quantity} 份`;
-      }
+  return { soldMap, totalOrders: allOrders.length };
+}
+
+// 檢查庫存
+async function checkStock(campaignId: number, items: OrderItem[], soldMap: Record<number, number>): Promise<string | null> {
+  const products = await db
+    .select({ id: campaignProducts.id, name: campaignProducts.name, limit: campaignProducts.limit })
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaignId));
+
+  const limitMap = new Map(products.map((p) => [p.id, { limit: p.limit, name: p.name }]));
+
+  for (const item of items) {
+    const info = limitMap.get(item.productId);
+    if (!info || info.limit == null) continue;
+    const sold = soldMap[item.productId] || 0;
+    const remaining = info.limit - sold;
+    if (item.quantity > remaining) {
+      return `「${info.name}」剩餘 ${remaining} 份，無法購買 ${item.quantity} 份`;
     }
   }
   return null;
 }
 
-// 共用：檢查預購期間
-async function checkFundraisePeriod(): Promise<string | null> {
-  const [startRow, endRow] = await Promise.all([
-    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_start")).get(),
-    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_end")).get(),
-  ]);
-  const now = new Date();
-  const start = startRow?.value ? new Date(startRow.value) : null;
-  const end = endRow?.value ? new Date(endRow.value + "T23:59:59") : null;
-  if (!start || !end || now < start || now > end) {
-    return "目前不在預購期間，無法下單";
+// 檢查活動是否可下單
+async function checkCampaign(campaignId: number): Promise<{ error: string | null; campaign: typeof campaigns.$inferSelect | null }> {
+  const campaign = await db.select().from(campaigns).where(eq(campaigns.id, campaignId)).get();
+  if (!campaign) return { error: "找不到此活動", campaign: null };
+  if (campaign.status !== "active") return { error: "此活動尚未開放或已結束", campaign: null };
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (today < campaign.startDate || today > campaign.endDate) {
+    return { error: "目前不在預購期間，無法下單", campaign: null };
   }
-  return null;
+  return { error: null, campaign };
 }
 
 export async function POST(req: NextRequest) {
@@ -119,51 +87,112 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "請先登入再下單" }, { status: 401 });
   }
 
-  // 檢查預購期間
-  const periodError = await checkFundraisePeriod();
-  if (periodError) {
-    return NextResponse.json({ error: periodError }, { status: 403 });
-  }
-
-  // 每人限填一次
-  const existing = await db
-    .select({ id: fundraiseOrders.id })
-    .from(fundraiseOrders)
-    .where(eq(fundraiseOrders.userId, session.id))
-    .get();
-  if (existing) {
-    return NextResponse.json(
-      { error: "你已經下過訂單了，如需修改請到「我的訂單」編輯" },
-      { status: 409 }
-    );
-  }
-
   const body = await req.json();
-  const { customerName, phone, email, address, deliveryMethod, combos, addons, notes } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, items, notes } = body;
+
+  // 新格式（有 campaignId）
+  if (campaignId) {
+    const { error: campaignError, campaign } = await checkCampaign(campaignId);
+    if (campaignError || !campaign) {
+      return NextResponse.json({ error: campaignError }, { status: 403 });
+    }
+
+    // 每人限購
+    const existingOrders = await db
+      .select({ id: fundraiseOrders.id })
+      .from(fundraiseOrders)
+      .where(and(eq(fundraiseOrders.userId, session.id), eq(fundraiseOrders.campaignId, campaignId)));
+
+    if (existingOrders.length >= campaign.perPersonLimit) {
+      return NextResponse.json(
+        { error: "你已經下過訂單了，如需修改請到「我的訂單」編輯" },
+        { status: 409 }
+      );
+    }
+
+    if (!customerName || !phone || !address) {
+      return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
+    }
+    if (!items || items.length === 0) {
+      return NextResponse.json({ error: "請至少選擇一項商品" }, { status: 400 });
+    }
+
+    // 訂單上限
+    const { soldMap, totalOrders } = await getSoldQuantities(campaignId);
+    if (campaign.maxOrders && totalOrders >= campaign.maxOrders) {
+      return NextResponse.json({ error: "預購訂單已額滿，感謝你的支持！" }, { status: 403 });
+    }
+
+    // 庫存檢查
+    const stockError = await checkStock(campaignId, items, soldMap);
+    if (stockError) {
+      return NextResponse.json({ error: stockError }, { status: 400 });
+    }
+
+    const computedTotal = await calculateTotal(campaignId, items);
+
+    const order = await db
+      .insert(fundraiseOrders)
+      .values({
+        campaignId,
+        userId: session.id,
+        customerName,
+        phone,
+        email: email || "",
+        address,
+        deliveryMethod: deliveryMethod || "shipping",
+        items: JSON.stringify(items),
+        combos: "[]",
+        addons: "[]",
+        notes: notes || "",
+        total: computedTotal,
+      })
+      .returning()
+      .get();
+
+    // 寄確認信
+    if (email) {
+      sendOrderConfirmationEmail({
+        customerName,
+        email,
+        combos: items.map((i: OrderItem) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
+        addons: [],
+        total: computedTotal,
+        deliveryMethod: deliveryMethod || "shipping",
+        address,
+        notes: notes || "",
+        orderId: order.id,
+      }).catch((err) => {
+        console.error("Failed to send order confirmation email:", err);
+      });
+    }
+
+    return NextResponse.json({ success: true, orderId: order.id });
+  }
+
+  // Legacy 格式（無 campaignId，保持向後相容）
+  const { combos, addons } = body;
+
+  // 舊的預購期間檢查
+  const [startRow, endRow] = await Promise.all([
+    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_start")).get(),
+    db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_end")).get(),
+  ]);
+  const now = new Date();
+  const start = startRow?.value ? new Date(startRow.value) : null;
+  const end = endRow?.value ? new Date(endRow.value + "T23:59:59") : null;
+  if (!start || !end || now < start || now > end) {
+    return NextResponse.json({ error: "目前不在預購期間，無法下單" }, { status: 403 });
+  }
+
+  const existing = await db.select({ id: fundraiseOrders.id }).from(fundraiseOrders).where(eq(fundraiseOrders.userId, session.id)).get();
+  if (existing) {
+    return NextResponse.json({ error: "你已經下過訂單了" }, { status: 409 });
+  }
 
   if (!customerName || !phone || !address) {
     return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
   }
-
-  if ((!combos || combos.length === 0) && (!addons || addons.length === 0)) {
-    return NextResponse.json({ error: "請至少選擇一項產品組合或加購商品" }, { status: 400 });
-  }
-
-  // 檢查訂單上限
-  const { comboSold, addonSold, totalOrders } = await getSoldQuantities();
-  const maxRow = await db.select().from(siteSettings).where(eq(siteSettings.key, "fundraise_max_orders")).get();
-  const maxOrders = maxRow?.value ? Number(maxRow.value) : null;
-  if (maxOrders && totalOrders >= maxOrders) {
-    return NextResponse.json({ error: "預購訂單已額滿，感謝你的支持！" }, { status: 403 });
-  }
-
-  // 檢查庫存
-  const stockError = checkStock(combos || [], addons || [], comboSold, addonSold);
-  if (stockError) {
-    return NextResponse.json({ error: stockError }, { status: 400 });
-  }
-
-  const computedTotal = calculateTotal(combos || [], addons || []);
 
   const order = await db
     .insert(fundraiseOrders)
@@ -174,30 +203,14 @@ export async function POST(req: NextRequest) {
       email: email || "",
       address,
       deliveryMethod: deliveryMethod || "shipping",
+      items: "[]",
       combos: JSON.stringify(combos || []),
       addons: JSON.stringify(addons || []),
       notes: notes || "",
-      total: computedTotal,
+      total: 0,
     })
     .returning()
     .get();
-
-  // 寄送訂單確認信（非同步，不阻塞回應）
-  if (email) {
-    sendOrderConfirmationEmail({
-      customerName,
-      email,
-      combos: combos || [],
-      addons: addons || [],
-      total: computedTotal,
-      deliveryMethod: deliveryMethod || "shipping",
-      address,
-      notes: notes || "",
-      orderId: order.id,
-    }).catch((err) => {
-      console.error("Failed to send order confirmation email:", err);
-    });
-  }
 
   return NextResponse.json({ success: true, orderId: order.id });
 }
@@ -208,20 +221,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "請先登入" }, { status: 401 });
   }
 
-  // 檢查預購期間（僅在預購期間內可編輯）
-  const periodError = await checkFundraisePeriod();
-  if (periodError) {
-    return NextResponse.json({ error: "預購期間已結束，無法修改訂單" }, { status: 403 });
-  }
-
   const body = await req.json();
-  const { orderId, customerName, phone, email, address, deliveryMethod, combos, addons, notes } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, items, notes } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
   }
 
-  // 確認是自己的訂單
   const existing = await db
     .select()
     .from(fundraiseOrders)
@@ -231,39 +237,44 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "找不到此訂單" }, { status: 404 });
   }
 
-  if (!customerName || !phone || !address) {
-    return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
+  // 如果有 campaignId，用新邏輯
+  const cId = campaignId || existing.campaignId;
+  if (cId) {
+    const { error: campaignError } = await checkCampaign(cId);
+    if (campaignError) {
+      return NextResponse.json({ error: "預購期間已結束，無法修改訂單" }, { status: 403 });
+    }
+
+    if (!customerName || !phone || !address) {
+      return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
+    }
+
+    const { soldMap } = await getSoldQuantities(cId, orderId);
+    const stockError = await checkStock(cId, items || [], soldMap);
+    if (stockError) {
+      return NextResponse.json({ error: stockError }, { status: 400 });
+    }
+
+    const computedTotal = await calculateTotal(cId, items || []);
+
+    await db
+      .update(fundraiseOrders)
+      .set({
+        customerName,
+        phone,
+        email: email || "",
+        address,
+        deliveryMethod: deliveryMethod || "shipping",
+        items: JSON.stringify(items || []),
+        notes: notes || "",
+        total: computedTotal,
+      })
+      .where(eq(fundraiseOrders.id, orderId));
+
+    return NextResponse.json({ success: true, orderId });
   }
 
-  if ((!combos || combos.length === 0) && (!addons || addons.length === 0)) {
-    return NextResponse.json({ error: "請至少選擇一項產品組合或加購商品" }, { status: 400 });
-  }
-
-  // 檢查庫存（排除自己的訂單）
-  const { comboSold, addonSold } = await getSoldQuantities(orderId);
-  const stockError = checkStock(combos || [], addons || [], comboSold, addonSold);
-  if (stockError) {
-    return NextResponse.json({ error: stockError }, { status: 400 });
-  }
-
-  const computedTotal = calculateTotal(combos || [], addons || []);
-
-  await db
-    .update(fundraiseOrders)
-    .set({
-      customerName,
-      phone,
-      email: email || "",
-      address,
-      deliveryMethod: deliveryMethod || "shipping",
-      combos: JSON.stringify(combos || []),
-      addons: JSON.stringify(addons || []),
-      notes: notes || "",
-      total: computedTotal,
-    })
-    .where(eq(fundraiseOrders.id, orderId));
-
-  return NextResponse.json({ success: true, orderId });
+  return NextResponse.json({ error: "無法修改此訂單" }, { status: 400 });
 }
 
 export async function GET() {
@@ -280,6 +291,7 @@ export async function GET() {
 
   const result = userOrders.map((o) => ({
     ...o,
+    items: JSON.parse(o.items || "[]"),
     combos: JSON.parse(o.combos),
     addons: JSON.parse(o.addons),
   }));
