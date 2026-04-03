@@ -427,6 +427,13 @@ export default function CampaignManager() {
                 <button onClick={() => toggleStatus(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">
                   {c.status === "draft" ? "發佈" : c.status === "active" ? "結束" : "重新開放"}
                 </button>
+                {c.status !== "draft" && (
+                  <button onClick={async () => {
+                    if (!window.confirm(`確定要隱藏「${c.name}」嗎？消費者將看不到此表單。`)) return;
+                    await fetch(`/api/admin/campaigns/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) });
+                    loadCampaigns();
+                  }} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-espresso-light/20 text-espresso-light/50 hover:text-espresso hover:ring-espresso-light transition-all">隱藏</button>
+                )}
                 <button onClick={() => duplicateCampaign(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">複製</button>
                 <button onClick={() => handleDelete(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/60 hover:text-rose hover:ring-rose transition-all">刪除</button>
               </div>
