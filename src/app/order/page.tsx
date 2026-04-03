@@ -614,20 +614,17 @@ export default function OrderPage() {
 
               <div className="pt-4 pb-2">
                 <label className="block text-sm font-semibold text-espresso-light/50 mb-3">取貨方式 *</label>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setDeliveryMethod("shipping")} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-lg font-medium transition-all duration-200 ${deliveryMethod === "shipping" ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"}`} style={{ border: deliveryMethod === "shipping" ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}>
-                    <span>📦</span>郵寄
-                  </button>
-                  {(campaign.pickupOptions || []).map((opt) => {
-                    const val = `pickup:${opt}`;
-                    const isSelected = deliveryMethod === val;
-                    return (
-                      <button key={opt} type="button" onClick={() => setDeliveryMethod(val as "shipping" | "pickup")} className={`flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-lg font-medium transition-all duration-200 ${isSelected ? "bg-rose/5 text-rose" : "text-espresso-light hover:text-espresso"}`} style={{ border: isSelected ? "2px dashed var(--color-rose)" : "2px dashed rgba(30,15,8,0.1)" }}>
-                        <span>🤝</span>{opt}
-                      </button>
-                    );
-                  })}
-                </div>
+                <select
+                  value={deliveryMethod}
+                  onChange={(e) => setDeliveryMethod(e.target.value)}
+                  className="w-full py-3 px-4 rounded-lg text-lg text-espresso bg-white outline-none transition-colors focus:ring-rose"
+                  style={{ border: "2px dashed rgba(30,15,8,0.12)" }}
+                >
+                  <option value="shipping">📦 郵寄</option>
+                  {(campaign.pickupOptions || []).map((opt) => (
+                    <option key={opt} value={`pickup:${opt}`}>🤝 {opt}</option>
+                  ))}
+                </select>
               </div>
 
               {deliveryMethod === "shipping" && (
