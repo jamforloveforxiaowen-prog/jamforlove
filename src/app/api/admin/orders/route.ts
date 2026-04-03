@@ -13,12 +13,14 @@ export async function GET() {
   const rows = await db
     .select({
       id: fundraiseOrders.id,
+      campaignId: fundraiseOrders.campaignId,
       userId: fundraiseOrders.userId,
       customerName: fundraiseOrders.customerName,
       phone: fundraiseOrders.phone,
       email: fundraiseOrders.email,
       address: fundraiseOrders.address,
       deliveryMethod: fundraiseOrders.deliveryMethod,
+      items: fundraiseOrders.items,
       combos: fundraiseOrders.combos,
       addons: fundraiseOrders.addons,
       notes: fundraiseOrders.notes,
@@ -33,6 +35,7 @@ export async function GET() {
 
   const result = rows.map((r) => ({
     ...r,
+    items: JSON.parse(r.items || "[]"),
     combos: JSON.parse(r.combos),
     addons: JSON.parse(r.addons),
   }));

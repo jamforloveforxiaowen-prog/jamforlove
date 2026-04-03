@@ -58,3 +58,4 @@ next-env.d.ts
 
 # misc data files
 歷年的銷售記錄/
+.env*.local

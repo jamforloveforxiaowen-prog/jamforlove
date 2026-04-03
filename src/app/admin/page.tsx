@@ -14,8 +14,18 @@ interface Product {
   isActive: boolean;
 }
 
+interface OrderItem {
+  productId: number;
+  name: string;
+  description?: string;
+  group: string;
+  quantity: number;
+  price: number;
+}
+
 interface Order {
   id: number;
+  campaignId: number | null;
   userId: number;
   username: string | null;
   customerName: string;
@@ -23,6 +33,7 @@ interface Order {
   email: string;
   address: string;
   deliveryMethod: string;
+  items: OrderItem[];
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
   notes: string;
@@ -1305,15 +1316,8 @@ function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-
-  // 預購時間設定
-  const [fundraiseStart, setFundraiseStart] = useState("");
-  const [fundraiseEnd, setFundraiseEnd] = useState("");
-  const [fundraiseMaxOrders, setFundraiseMaxOrders] = useState("");
-  const [fundraiseBanner, setFundraiseBanner] = useState("");
-  const [bannerUploading, setBannerUploading] = useState(false);
-  const [timeSaving, setTimeSaving] = useState(false);
-  const [timeMsg, setTimeMsg] = useState("");
+  const [campaignList, setCampaignList] = useState<{ id: number; name: string }[]>([]);
+  const [filterCampaignId, setFilterCampaignId] = useState<number | "all">("all");
 
   useEffect(() => {
     fetch("/api/admin/orders")
@@ -1321,109 +1325,61 @@ function OrderManager() {
       .then((data) => { setOrders(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
 
-    // 載入預購設定
-    Promise.all([
-      fetch("/api/site-settings?key=fundraise_start").then(r => r.json()),
-      fetch("/api/site-settings?key=fundraise_end").then(r => r.json()),
-      fetch("/api/site-settings?key=fundraise_max_orders").then(r => r.json()),
-      fetch("/api/site-settings?key=fundraise_banner").then(r => r.json()),
-    ]).then(([s, e, m, b]) => {
-      if (s.value) setFundraiseStart(s.value);
-      if (e.value) setFundraiseEnd(e.value);
-      if (m.value) setFundraiseMaxOrders(m.value);
-      if (b.value) setFundraiseBanner(b.value);
-    });
+    fetch("/api/admin/campaigns")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setCampaignList(data.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))); })
+      .catch(() => {});
   }, []);
 
-  async function saveFundraiseSettings() {
-    setTimeSaving(true); setTimeMsg("");
-    try {
-      await Promise.all([
-        fetch("/api/admin/site-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "fundraise_start", value: fundraiseStart }),
-        }),
-        fetch("/api/admin/site-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "fundraise_end", value: fundraiseEnd }),
-        }),
-        fetch("/api/admin/site-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "fundraise_max_orders", value: fundraiseMaxOrders }),
-        }),
-        fetch("/api/admin/site-settings", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "fundraise_banner", value: fundraiseBanner }),
-        }),
-      ]);
-      setTimeMsg("已儲存");
-      setTimeout(() => setTimeMsg(""), 2000);
-    } catch {
-      setTimeMsg("儲存失敗");
-    }
-    setTimeSaving(false);
+  const filteredOrders = filterCampaignId === "all"
+    ? orders
+    : orders.filter((o) => o.campaignId === filterCampaignId);
+
+  // 取得訂單的品項列表（新格式 items 或 legacy combos+addons）
+  function getOrderItems(o: Order): { name: string; quantity: number; price: number }[] {
+    if (o.items && o.items.length > 0) return o.items;
+    const legacy = [
+      ...o.combos.map((c) => ({ name: `${c.name}（${c.items.join("、")}）`, quantity: c.quantity, price: c.price })),
+      ...o.addons.map((a) => ({ name: a.name, quantity: a.quantity, price: a.price })),
+    ];
+    return legacy;
   }
 
   function exportToExcel() {
-    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "組合", "組合數量", "加購", "加購數量", "備註", "總金額", "建立時間"];
-    const rows = orders.map((o) => [
-      o.id,
-      o.customerName,
-      o.phone,
-      o.email,
-      o.address,
-      o.deliveryMethod === "pickup" ? "面交" : "郵寄",
-      o.combos.map((c) => `${c.name}(${c.items.join("+")}) ×${c.quantity}`).join("; "),
-      o.combos.reduce((s, c) => s + c.quantity, 0),
-      o.addons.map((a) => `${a.name} ×${a.quantity} $${a.price}`).join("; "),
-      o.addons.reduce((s, a) => s + a.quantity, 0),
-      o.notes,
-      o.total,
-      new Date(o.createdAt).toLocaleString("zh-TW"),
-    ]);
+    const data = filteredOrders;
+    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "品項明細", "品項數量", "備註", "總金額", "建立時間"];
+    const rows = data.map((o) => {
+      const items = getOrderItems(o);
+      return [
+        o.id, o.customerName, o.phone, o.email, o.address,
+        o.deliveryMethod === "pickup" ? "面交" : "郵寄",
+        items.map((i) => `${i.name} ×${i.quantity} $${i.price}`).join("; "),
+        items.reduce((s, i) => s + i.quantity, 0),
+        o.notes, o.total,
+        new Date(o.createdAt).toLocaleString("zh-TW"),
+      ];
+    });
 
-    // 統計列
-    const totalOrders = orders.length;
-    const totalAmount = orders.reduce((s, o) => s + o.total, 0);
-    const totalComboQty = orders.reduce((s, o) => s + o.combos.reduce((cs, c) => cs + c.quantity, 0), 0);
-    const totalAddonQty = orders.reduce((s, o) => s + o.addons.reduce((as, a) => as + a.quantity, 0), 0);
-    const shippingCount = orders.filter(o => o.deliveryMethod === "shipping").length;
-    const pickupCount = orders.filter(o => o.deliveryMethod === "pickup").length;
+    const totalAmount = data.reduce((s, o) => s + o.total, 0);
+    const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
+    const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
 
-    // 各組合統計
-    const comboStats: Record<string, number> = {};
-    orders.forEach(o => o.combos.forEach(c => {
-      comboStats[c.name] = (comboStats[c.name] || 0) + c.quantity;
-    }));
-    const addonStats: Record<string, number> = {};
-    orders.forEach(o => o.addons.forEach(a => {
-      addonStats[a.name] = (addonStats[a.name] || 0) + a.quantity;
+    const itemStats: Record<string, number> = {};
+    data.forEach((o) => getOrderItems(o).forEach((i) => {
+      itemStats[i.name] = (itemStats[i.name] || 0) + i.quantity;
     }));
 
     const statsRows = [
-      [],
-      ["═══ 統計摘要 ═══"],
-      ["總訂單數", totalOrders],
-      ["總金額", `NT$ ${totalAmount}`],
-      ["組合總數量", totalComboQty],
-      ["加購總數量", totalAddonQty],
+      [], ["═══ 統計摘要 ═══"],
+      ["總訂單數", data.length], ["總金額", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
-      [],
-      ["═══ 各組合銷量 ═══"],
-      ...Object.entries(comboStats).map(([name, qty]) => [name, qty]),
-      [],
-      ["═══ 各加購銷量 ═══"],
-      ...Object.entries(addonStats).map(([name, qty]) => [name, qty]),
+      [], ["═══ 各品項銷量 ═══"],
+      ...Object.entries(itemStats).map(([name, qty]) => [name, qty]),
     ];
 
     const allRows = [header, ...rows, ...statsRows];
     const csv = allRows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const bom = "\uFEFF";
-    const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1434,124 +1390,27 @@ function OrderManager() {
 
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
 
-  const now = new Date();
-  const isActive = fundraiseStart && fundraiseEnd
-    && new Date(fundraiseStart) <= now && now <= new Date(fundraiseEnd + "T23:59:59");
-
   return (
     <div>
-      {/* 預購時間設定 */}
-      <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5 mb-6">
-        <h3 className="font-serif text-base font-bold text-espresso mb-3 flex items-center gap-2">
-          預購期間設定
-          {fundraiseStart && fundraiseEnd && (
-            <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${isActive ? "bg-sage/15 text-sage" : "bg-rose/10 text-rose"}`}>
-              {isActive ? "進行中" : "未開放"}
-            </span>
+      {/* 活動篩選 + 標題 */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <h2 className="font-serif text-lg font-bold text-espresso">
+            訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({filteredOrders.length} 筆)</span>
+          </h2>
+          {campaignList.length > 0 && (
+            <select
+              value={filterCampaignId}
+              onChange={(e) => setFilterCampaignId(e.target.value === "all" ? "all" : Number(e.target.value))}
+              className="px-3 py-1.5 rounded-md text-sm text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
+            >
+              <option value="all">全部活動</option>
+              {campaignList.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           )}
-        </h3>
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="block text-xs text-espresso-light/50 mb-1">開始日期</label>
-            <input
-              type="date"
-              value={fundraiseStart}
-              onChange={(e) => setFundraiseStart(e.target.value)}
-              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-espresso-light/50 mb-1">結束日期</label>
-            <input
-              type="date"
-              value={fundraiseEnd}
-              onChange={(e) => setFundraiseEnd(e.target.value)}
-              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-espresso-light/50 mb-1">訂單上限</label>
-            <input
-              type="number"
-              min="0"
-              value={fundraiseMaxOrders}
-              onChange={(e) => setFundraiseMaxOrders(e.target.value)}
-              placeholder="不限"
-              className="px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none w-24"
-            />
-          </div>
-          <button
-            onClick={saveFundraiseSettings}
-            disabled={timeSaving}
-            className="px-5 py-2 rounded-md text-sm font-medium bg-rose text-white hover:bg-rose-dark transition-colors disabled:opacity-50"
-          >
-            {timeSaving ? "儲存中..." : "儲存"}
-          </button>
-          {timeMsg && <span className="text-sm text-sage font-medium">{timeMsg}</span>}
         </div>
-        {fundraiseStart && fundraiseEnd && (
-          <p className="text-xs text-espresso-light/40 mt-2">
-            預購期間：{fundraiseStart} ~ {fundraiseEnd}
-            {fundraiseMaxOrders && ` · 上限 ${fundraiseMaxOrders} 筆`}
-            （消費者僅能在此期間內下單{fundraiseMaxOrders ? "，額滿自動關閉" : ""}）
-          </p>
-        )}
-
-        {/* 預購說明圖 */}
-        <div className="mt-4 pt-4" style={{ borderTop: "1px dashed rgba(30,15,8,0.08)" }}>
-          <label className="block text-xs text-espresso-light/50 mb-2">預購說明圖（顯示在表單最上方）</label>
-          <div className="flex items-start gap-4">
-            {fundraiseBanner && (
-              <img
-                src={fundraiseBanner}
-                alt="預購說明圖預覽"
-                className="w-32 h-auto rounded-md ring-1 ring-linen-dark/60 object-cover"
-              />
-            )}
-            <div className="flex flex-col gap-2">
-              <label className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all cursor-pointer">
-                {bannerUploading ? "上傳中..." : fundraiseBanner ? "更換圖片" : "上傳說明圖"}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    setBannerUploading(true);
-                    const formData = new FormData();
-                    formData.append("file", file);
-                    try {
-                      const res = await fetch("/api/upload", { method: "POST", body: formData });
-                      const data = await res.json();
-                      if (res.ok && data.url) {
-                        setFundraiseBanner(data.url);
-                      }
-                    } catch { /* ignore */ }
-                    setBannerUploading(false);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-              {fundraiseBanner && (
-                <button
-                  type="button"
-                  onClick={() => setFundraiseBanner("")}
-                  className="text-xs text-rose/60 hover:text-rose transition-colors text-left"
-                >
-                  移除說明圖
-                </button>
-              )}
-              <p className="text-espresso-light/30 text-xs">儲存後才會生效</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">
-          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({orders.length} 筆)</span>
-        </h2>
         <button
           onClick={exportToExcel}
           className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
@@ -1561,32 +1420,32 @@ function OrderManager() {
       </div>
 
       {/* 統計面板 */}
-      {orders.length > 0 && (
+      {filteredOrders.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-espresso">{orders.length}</p>
+            <p className="text-2xl font-bold text-espresso">{filteredOrders.length}</p>
             <p className="text-xs text-espresso-light/50 mt-1">總訂單數</p>
           </div>
           <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-rose">NT$ {orders.reduce((s, o) => s + o.total, 0).toLocaleString()}</p>
+            <p className="text-2xl font-bold text-rose">NT$ {filteredOrders.reduce((s, o) => s + o.total, 0).toLocaleString()}</p>
             <p className="text-xs text-espresso-light/50 mt-1">總金額</p>
           </div>
           <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-honey">{orders.reduce((s, o) => s + o.combos.reduce((cs, c) => cs + c.quantity, 0), 0)}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">組合總數</p>
+            <p className="text-2xl font-bold text-honey">{filteredOrders.reduce((s, o) => s + getOrderItems(o).reduce((is, i) => is + i.quantity, 0), 0)}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">品項總數</p>
           </div>
           <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-sage">{orders.reduce((s, o) => s + o.addons.reduce((as, a) => as + a.quantity, 0), 0)}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">加購總數</p>
+            <p className="text-2xl font-bold text-sage">{filteredOrders.filter((o) => o.deliveryMethod === "shipping").length} / {filteredOrders.filter((o) => o.deliveryMethod === "pickup").length}</p>
+            <p className="text-xs text-espresso-light/50 mt-1">郵寄 / 面交</p>
           </div>
         </div>
       )}
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
       ) : (
         <div className="space-y-3">
-          {[...orders].reverse().map((order) => {
+          {[...filteredOrders].reverse().map((order) => {
             const isExpanded = expandedId === order.id;
             return (
               <div key={order.id} className="bg-white rounded-lg ring-1 ring-linen-dark/60 overflow-hidden">
@@ -1619,28 +1478,23 @@ function OrderManager() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-linen-dark/30 pt-3">
-                    {order.combos.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">組合</p>
-                        {order.combos.map((c, i) => (
-                          <div key={i} className="flex justify-between text-sm py-0.5">
-                            <span className="text-espresso-light">{c.name}（{c.items.join("、")}）× {c.quantity}</span>
-                            <span className="text-espresso font-medium tabular-nums">NT$ {c.price * c.quantity}</span>
+                    {(() => {
+                      const items = getOrderItems(order);
+                      if (items.length > 0) {
+                        return (
+                          <div className="mb-3">
+                            <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">品項</p>
+                            {items.map((item, i) => (
+                              <div key={i} className="flex justify-between text-sm py-0.5">
+                                <span className="text-espresso-light">{item.name} × {item.quantity}</span>
+                                <span className="text-espresso font-medium tabular-nums">NT$ {item.price * item.quantity}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    {order.addons.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">加購</p>
-                        {order.addons.map((a, i) => (
-                          <div key={i} className="flex justify-between text-sm py-0.5">
-                            <span className="text-espresso-light">{a.name} × {a.quantity}</span>
-                            <span className="text-espresso font-medium tabular-nums">NT$ {a.price * a.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      }
+                      return null;
+                    })()}
                     <div className="mb-3 text-sm text-espresso-light/60 space-y-0.5">
                       <p>地址：{order.address}</p>
                       {order.email && <p>Email：{order.email}</p>}
