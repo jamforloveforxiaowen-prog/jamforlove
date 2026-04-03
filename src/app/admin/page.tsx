@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import ImageUploader from "@/components/ImageUploader";
 import CampaignManager from "@/components/admin/CampaignManager";
+import OrderAnalytics from "@/components/admin/OrderAnalytics";
 
 interface Product {
   id: number;
@@ -1440,6 +1441,9 @@ function OrderManager() {
           </div>
         </div>
       )}
+
+      {/* 數據分析 */}
+      <OrderAnalytics orders={filteredOrders} campaigns={campaignList} />
 
       {filteredOrders.length === 0 ? (
         <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
