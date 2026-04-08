@@ -146,23 +146,25 @@ export async function POST(req: NextRequest) {
       .returning()
       .get();
 
-    // 寄確認信
+    // 寄確認信（必須 await，否則 Vercel Serverless 會在回傳後中斷寄信）
     if (email) {
-      sendOrderConfirmationEmail({
-        customerName,
-        email,
-        combos: items.map((i: OrderItem) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
-        addons: [],
-        total: computedTotal,
-        discountAmount,
-        deliveryMethod: deliveryMethod || "shipping",
-        paymentMethod: paymentMethod || "cash",
-        address,
-        notes: notes || "",
-        orderId: order.id,
-      }).catch((err) => {
+      try {
+        await sendOrderConfirmationEmail({
+          customerName,
+          email,
+          combos: items.map((i: OrderItem) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
+          addons: [],
+          total: computedTotal,
+          discountAmount,
+          deliveryMethod: deliveryMethod || "shipping",
+          paymentMethod: paymentMethod || "cash",
+          address,
+          notes: notes || "",
+          orderId: order.id,
+        });
+      } catch (err) {
         console.error("Failed to send order confirmation email:", err);
-      });
+      }
     }
 
     return NextResponse.json({ success: true, orderId: order.id });
