@@ -303,8 +303,8 @@ export default function CampaignManager() {
                         </span>
                       </div>
                       <button type="button" onClick={() => setSupportOptions((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="p-1 rounded text-espresso-light/30 hover:text-rose transition-colors">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                        className="px-2 py-1 rounded-md text-xs text-rose/50 ring-1 ring-rose/20 hover:text-rose hover:ring-rose hover:bg-rose/5 transition-all shrink-0">
+                        刪除
                       </button>
                     </div>
                   ))}
