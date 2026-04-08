@@ -254,19 +254,17 @@ export default function CampaignManager() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-espresso mb-1">舊朋友折扣（%）</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={supporterDiscount || ""}
-                  onChange={(e) => setSupporterDiscount(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                  className={`${inputClass} w-32`}
-                  placeholder="0"
-                  min="0"
-                  max="100"
-                />
+              <label className="block text-sm font-medium text-espresso mb-1">支持者折扣</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSupporterDiscount(supporterDiscount > 0 ? 0 : 1)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${supporterDiscount > 0 ? "bg-sage" : "bg-espresso-light/20"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${supporterDiscount > 0 ? "translate-x-6" : ""}`} />
+                </button>
                 <span className="text-sm text-espresso-light/50">
-                  {supporterDiscount > 0 ? `曾支持過的顧客享 ${supporterDiscount}% 折扣（打${(10 - supporterDiscount / 10).toFixed(1).replace(/\.0$/, "")}折）` : "設為 0 表示不啟用"}
+                  {supporterDiscount > 0 ? "已啟用 — 消費者可選擇支持方式，享 9 折 / 85 折 / 7 折優惠" : "未啟用"}
                 </span>
               </div>
             </div>

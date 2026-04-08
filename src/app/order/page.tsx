@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
+import { SUPPORT_TYPES, type SupportType, getDiscountPercent } from "@/lib/supportTypes";
 
 /* ─── 型別定義 ─────────────────────────────────── */
 
@@ -137,8 +138,8 @@ export default function OrderPage() {
   const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "active">("loading");
   const [outOfRangeInfo, setOutOfRangeInfo] = useState<{ startDate: string; endDate: string; name: string } | null>(null);
 
-  // 是否支持過 Jam for Love
-  const [isSupporter, setIsSupporter] = useState(false);
+  // 支持類型選擇
+  const [supportType, setSupportType] = useState<SupportType | "">("");
 
   // 選購數量：key = productId
   const [selections, setSelections] = useState<Record<number, number>>({});
@@ -177,6 +178,7 @@ export default function OrderPage() {
     paymentMethod: string;
     notes: string;
     isSupporter: boolean;
+    supportType: SupportType | "";
   } | null>(null);
 
   // 送出成功
@@ -294,7 +296,7 @@ export default function OrderPage() {
         if (data.selections) setSelections(data.selections);
         if (data.deliveryMethod) setDeliveryMethod(data.deliveryMethod);
         if (data.notes) setNotes(data.notes);
-        if (data.isSupporter) setIsSupporter(data.isSupporter);
+        if (data.supportType) setSupportType(data.supportType);
         if (data.paymentMethod) setPaymentMethod(data.paymentMethod);
       } catch { /* ignore */ }
       sessionStorage.removeItem("order_selections");
@@ -313,8 +315,12 @@ export default function OrderPage() {
   );
 
   const discountAmount = useMemo(
-    () => isSupporter && campaign?.supporterDiscount ? Math.round(subtotal * campaign.supporterDiscount / 100) : 0,
-    [isSupporter, campaign, subtotal]
+    () => {
+      if (!supportType || !campaign?.supporterDiscount) return 0;
+      const pct = getDiscountPercent(supportType);
+      return pct > 0 ? Math.round(subtotal * pct / 100) : 0;
+    },
+    [supportType, campaign, subtotal]
   );
 
   const grandTotal = subtotal - discountAmount;
@@ -352,6 +358,7 @@ export default function OrderPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!campaign) return;
+    if (campaign.supporterDiscount > 0 && !supportType) { setError("請選擇您曾經以何種方式支持 Jam for Love"); return; }
     if (!hasRequiredSelection) { setError("請至少從必填分組中選擇一項"); return; }
 
     setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
@@ -375,7 +382,7 @@ export default function OrderPage() {
 
     setPendingOrder({
       items, total: grandTotal, discountAmount,
-      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes, isSupporter,
+      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes, supportType, isSupporter: supportType !== "" && supportType !== "first_time",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -400,6 +407,7 @@ export default function OrderPage() {
         notes: pendingOrder.notes,
         total: pendingOrder.total,
         isSupporter: pendingOrder.isSupporter,
+        supportType: pendingOrder.supportType,
       };
 
       const res = await fetch("/api/orders", {
@@ -522,7 +530,7 @@ export default function OrderPage() {
                 <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-rose/70">♥ 舊朋友折扣</span>
+                <span className="text-rose/70">♥ 支持者折扣</span>
                 <span className="text-rose">-NT$ {order.discountAmount}</span>
               </div>
               <div className="flex items-center justify-between pt-1">
@@ -634,7 +642,7 @@ export default function OrderPage() {
                 <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-rose/70">♥ 舊朋友折扣</span>
+                <span className="text-rose/70">♥ 支持者折扣</span>
                 <span className="text-rose">-NT$ {order.discountAmount}</span>
               </div>
               <div className="flex items-center justify-between pt-1">
@@ -715,28 +723,36 @@ export default function OrderPage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* 是否支持過 Jam for Love */}
+        {/* 您曾經以何種方式支持 Jam for Love? */}
         {campaign.supporterDiscount > 0 && (
           <div className="mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.08s_both]">
-            <button
-              type="button"
-              onClick={() => setIsSupporter((v) => !v)}
-              className={`w-full rounded-xl p-5 text-left transition-all duration-300 ${isSupporter ? "shadow-md" : "hover:bg-white/80"}`}
-              style={isSupporter ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}`, boxShadow: `0 4px 12px ${theme.accent}15` } : { background: theme.cardBg, border: `2px dashed ${theme.border}` }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-all" style={isSupporter ? { background: theme.accent, color: "#fff" } : { background: "var(--color-linen)", border: "1px solid rgba(30,15,8,0.15)" }}>
-                  {isSupporter && <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                </div>
-                <div className="flex-1">
-                  <p className="font-serif text-lg font-bold text-espresso">是否支持過 Jam for Love 呢？</p>
-                  <p className="text-espresso-light/50 text-sm mt-0.5">
-                    曾經購買過的朋友，感謝你的持續支持！勾選即享 <span className="font-semibold" style={{ color: theme.accent }}>{campaign.supporterDiscount}% 折扣</span>
-                  </p>
-                </div>
-                {isSupporter && <span className="text-2xl" style={{ color: theme.accent }}>♥</span>}
+            <div className="rounded-xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
+              <p className="font-serif text-lg font-bold text-espresso mb-4">您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
+              <div className="space-y-3">
+                {(Object.entries(SUPPORT_TYPES) as [SupportType, typeof SUPPORT_TYPES[SupportType]][]).map(([key, opt]) => {
+                  const selected = supportType === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSupportType(key)}
+                      className={`w-full rounded-xl p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
+                      style={selected ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `1px solid ${theme.border}` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all" style={selected ? { background: theme.accent, border: `2px solid ${theme.accent}` } : { background: "transparent", border: "2px solid rgba(30,15,8,0.2)" }}>
+                          {selected && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <span className="text-base text-espresso">
+                          {opt.label}
+                          {opt.discountLabel && <span className="ml-1 font-semibold" style={{ color: theme.accent }}>({opt.discountLabel})</span>}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            </button>
+            </div>
           </div>
         )}
 
@@ -840,7 +856,7 @@ export default function OrderPage() {
                 <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
                   {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
                 </button>
-                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, isSupporter })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportType })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
               </div>
             </div>
             <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
@@ -943,7 +959,7 @@ export default function OrderPage() {
                     <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
                   </div>
                   <div className="flex justify-between text-base">
-                    <span style={{ color: theme.accent }}>♥ 舊朋友折扣（{campaign?.supporterDiscount}%）</span>
+                    <span style={{ color: theme.accent }}>♥ {supportType ? SUPPORT_TYPES[supportType].label : "折扣"}（{getDiscountPercent(supportType)}%）</span>
                     <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
                   </div>
                   <div className="flex justify-between items-baseline pt-1.5" style={{ borderTop: `1px dashed ${theme.border}` }}>

@@ -283,7 +283,7 @@ export default function MyOrdersPage() {
               {/* 折扣 */}
               {order.discountAmount > 0 && (
                 <div className="border-t border-linen-dark/40 mt-4 pt-3 flex justify-between text-sm">
-                  <span className="text-rose/70">♥ 舊朋友折扣</span>
+                  <span className="text-rose/70">♥ 支持者折扣</span>
                   <span className="text-rose font-medium">-NT$ {order.discountAmount}</span>
                 </div>
               )}

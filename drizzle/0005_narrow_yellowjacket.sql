@@ -1,0 +1,1 @@
+ALTER TABLE `fundraise_orders` ADD `support_type` text DEFAULT '' NOT NULL;

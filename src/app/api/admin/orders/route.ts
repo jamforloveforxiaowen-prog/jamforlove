@@ -25,6 +25,7 @@ export async function GET() {
       combos: fundraiseOrders.combos,
       addons: fundraiseOrders.addons,
       isSupporter: fundraiseOrders.isSupporter,
+      supportType: fundraiseOrders.supportType,
       discountAmount: fundraiseOrders.discountAmount,
       notes: fundraiseOrders.notes,
       total: fundraiseOrders.total,

@@ -212,6 +212,7 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
     enum: ["cash", "transfer"],
   }).notNull().default("cash"),
   isSupporter: integer("is_supporter", { mode: "boolean" }).notNull().default(false),
+  supportType: text("support_type").notNull().default(""),
   discountAmount: integer("discount_amount").notNull().default(0),
   notes: text("notes").notNull().default(""),
   total: integer("total").notNull(),

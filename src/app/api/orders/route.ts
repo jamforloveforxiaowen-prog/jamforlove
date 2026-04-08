@@ -5,6 +5,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { getDiscountPercent } from "@/lib/supportTypes";
 
 interface OrderItem {
   productId: number;
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType } = body;
 
   // 新格式（有 campaignId）
   if (campaignId) {
@@ -115,10 +116,13 @@ export async function POST(req: NextRequest) {
 
     const subtotal = await calculateTotal(campaignId, items);
 
-    // 計算舊客戶折扣
+    // 計算折扣（根據支持類型）
     let discountAmount = 0;
-    if (isSupporter && campaign.supporterDiscount > 0) {
-      discountAmount = Math.round(subtotal * campaign.supporterDiscount / 100);
+    if (supportType && campaign.supporterDiscount > 0) {
+      const pct = getDiscountPercent(supportType);
+      if (pct > 0) {
+        discountAmount = Math.round(subtotal * pct / 100);
+      }
     }
     const computedTotal = subtotal - discountAmount;
 
@@ -136,7 +140,8 @@ export async function POST(req: NextRequest) {
         items: JSON.stringify(items),
         combos: "[]",
         addons: "[]",
-        isSupporter: !!isSupporter,
+        isSupporter: !!supportType && supportType !== "first_time",
+        supportType: supportType || "",
         discountAmount,
         notes: notes || "",
         total: computedTotal,
@@ -218,7 +223,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
@@ -253,11 +258,14 @@ export async function PUT(req: NextRequest) {
 
     const subtotal = await calculateTotal(cId, items || []);
 
-    // 計算舊客戶折扣
+    // 計算折扣（根據支持類型）
     const campaignData = await db.select().from(campaigns).where(eq(campaigns.id, cId)).get();
     let discountAmount = 0;
-    if (isSupporter && campaignData && campaignData.supporterDiscount > 0) {
-      discountAmount = Math.round(subtotal * campaignData.supporterDiscount / 100);
+    if (supportType && campaignData && campaignData.supporterDiscount > 0) {
+      const pct = getDiscountPercent(supportType);
+      if (pct > 0) {
+        discountAmount = Math.round(subtotal * pct / 100);
+      }
     }
     const computedTotal = subtotal - discountAmount;
 
@@ -270,7 +278,8 @@ export async function PUT(req: NextRequest) {
         address,
         deliveryMethod: deliveryMethod || "shipping",
         items: JSON.stringify(items || []),
-        isSupporter: !!isSupporter,
+        isSupporter: !!supportType && supportType !== "first_time",
+        supportType: supportType || "",
         discountAmount,
         notes: notes || "",
         total: computedTotal,

@@ -193,7 +193,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
           <td style="font-size: 14px; color: #5c3d2e; text-align: right;">NT$ ${total + discountAmount}</td>
         </tr></table>
         <table style="width: 100%; margin-bottom: 8px;"><tr>
-          <td style="font-size: 14px; color: #c4506a; font-weight: 500;">♥ 舊朋友折扣</td>
+          <td style="font-size: 14px; color: #c4506a; font-weight: 500;">♥ 支持者折扣</td>
           <td style="font-size: 14px; color: #c4506a; text-align: right;">-NT$ ${discountAmount}</td>
         </tr></table>
         ` : ""}
