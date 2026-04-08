@@ -52,6 +52,7 @@ interface ModifyRequest {
   handled: boolean;
   createdAt: string;
   campaignName: string;
+  orderEmail: string;
   orderTotal: number;
   orderItems: { name: string; quantity: number; price: number }[];
 }
@@ -1539,7 +1540,7 @@ function OrderManager() {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-espresso" style={{ fontFamily: "var(--font-display)" }}>訂單 #{r.orderId}</span>
-                        <span className="text-sm text-espresso-light/50">{r.customerName} / {r.phone}</span>
+                        <span className="text-sm text-espresso-light/50">{r.customerName} / {r.phone}{r.orderEmail ? ` / ${r.orderEmail}` : ""}</span>
                         {r.campaignName && <span className="text-xs text-espresso-light/40">({r.campaignName})</span>}
                       </div>
                       <p className="text-xs text-espresso-light/40 mt-0.5">{new Date(r.createdAt).toLocaleString("zh-TW")}</p>

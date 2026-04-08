@@ -14,6 +14,7 @@ export async function GET() {
     .select({
       request: orderModifyRequests,
       campaignName: campaigns.name,
+      orderEmail: fundraiseOrders.email,
       orderTotal: fundraiseOrders.total,
       orderItems: fundraiseOrders.items,
     })
@@ -25,6 +26,7 @@ export async function GET() {
   const result = rows.map((r) => ({
     ...r.request,
     campaignName: r.campaignName || "",
+    orderEmail: r.orderEmail || "",
     orderTotal: r.orderTotal || 0,
     orderItems: JSON.parse(r.orderItems || "[]"),
   }));
