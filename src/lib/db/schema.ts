@@ -230,6 +230,7 @@ export const orderModifyRequests = sqliteTable("order_modify_requests", {
   customerName: text("customer_name").notNull(),
   phone: text("phone").notNull(),
   message: text("message").notNull(),
+  handled: integer("handled", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

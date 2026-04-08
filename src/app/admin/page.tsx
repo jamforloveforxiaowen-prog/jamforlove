@@ -43,6 +43,19 @@ interface Order {
   createdAt: string;
 }
 
+interface ModifyRequest {
+  id: number;
+  orderId: number;
+  customerName: string;
+  phone: string;
+  message: string;
+  handled: boolean;
+  createdAt: string;
+  campaignName: string;
+  orderTotal: number;
+  orderItems: { name: string; quantity: number; price: number }[];
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending: "待確認",
   confirmed: "已確認",
@@ -1346,7 +1359,29 @@ function OrderManager() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [campaignList, setCampaignList] = useState<{ id: number; name: string }[]>([]);
   const [filterCampaignId, setFilterCampaignId] = useState<number | "all">("all");
-  const [subTab, setSubTab] = useState<"orders" | "analytics">("orders");
+  const [subTab, setSubTab] = useState<"orders" | "analytics" | "modify-requests">("orders");
+
+  // 修改申請
+  const [modifyRequests, setModifyRequests] = useState<ModifyRequest[]>([]);
+  const [modifyLoading, setModifyLoading] = useState(false);
+
+  function loadModifyRequests() {
+    setModifyLoading(true);
+    fetch("/api/admin/modify-requests")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setModifyRequests(data); })
+      .catch(() => {})
+      .finally(() => setModifyLoading(false));
+  }
+
+  async function toggleHandled(id: number, handled: boolean) {
+    await fetch("/api/admin/modify-requests", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, handled }),
+    });
+    setModifyRequests((prev) => prev.map((r) => r.id === id ? { ...r, handled } : r));
+  }
 
   useEffect(() => {
     fetch("/api/admin/orders")
@@ -1358,6 +1393,9 @@ function OrderManager() {
       .then((res) => res.json())
       .then((data) => { if (Array.isArray(data)) setCampaignList(data.map((c: { id: number; name: string }) => ({ id: c.id, name: c.name }))); })
       .catch(() => {});
+
+    // 載入修改申請（用於顯示未處理數量）
+    loadModifyRequests();
   }, []);
 
   const filteredOrders = filterCampaignId === "all"
@@ -1426,19 +1464,29 @@ function OrderManager() {
         {([
           { key: "orders" as const, label: "訂單列表" },
           { key: "analytics" as const, label: "數據分析" },
-        ]).map((t) => (
+          { key: "modify-requests" as const, label: "修改申請" },
+        ]).map((t) => {
+          const unhandled = t.key === "modify-requests" ? modifyRequests.filter((r) => !r.handled).length : 0;
+          return (
           <button
             key={t.key}
-            onClick={() => setSubTab(t.key)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            onClick={() => {
+              setSubTab(t.key);
+              if (t.key === "modify-requests" && modifyRequests.length === 0) loadModifyRequests();
+            }}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all relative ${
               subTab === t.key
                 ? "bg-espresso text-linen"
                 : "text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
             }`}
           >
             {t.label}
+            {unhandled > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 rounded-full bg-rose text-white text-[0.65rem] font-bold flex items-center justify-center">{unhandled}</span>
+            )}
           </button>
-        ))}
+          );
+        })}
         {/* 活動篩選（兩個子頁共用）*/}
         {campaignList.length > 0 && (
           <select
@@ -1457,6 +1505,74 @@ function OrderManager() {
       {/* ─── 數據分析 ─── */}
       {subTab === "analytics" && (
         <OrderAnalytics orders={filteredOrders} campaigns={campaignList} />
+      )}
+
+      {/* ─── 修改申請 ─── */}
+      {subTab === "modify-requests" && (
+        <div>
+          <h2 className="font-serif text-lg font-bold text-espresso mb-4">
+            修改申請 <span className="text-espresso-light/40 font-normal text-sm">({modifyRequests.filter((r) => !r.handled).length} 筆未處理)</span>
+          </h2>
+
+          {modifyLoading ? (
+            <p className="text-espresso-light/50 py-8 text-center">載入中...</p>
+          ) : modifyRequests.length === 0 ? (
+            <p className="text-espresso-light/30 py-12 text-center">尚無修改申請</p>
+          ) : (
+            <div className="space-y-3">
+              {modifyRequests.map((r) => (
+                <div key={r.id} className={`bg-white rounded-lg ring-1 p-5 transition-all ${r.handled ? "ring-linen-dark/30 opacity-60" : "ring-rose/30 shadow-sm"}`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-espresso" style={{ fontFamily: "var(--font-display)" }}>訂單 #{r.orderId}</span>
+                        <span className="text-sm text-espresso-light/50">{r.customerName} / {r.phone}</span>
+                        {r.campaignName && <span className="text-xs text-espresso-light/40">({r.campaignName})</span>}
+                      </div>
+                      <p className="text-xs text-espresso-light/40 mt-0.5">{new Date(r.createdAt).toLocaleString("zh-TW")}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-semibold shrink-0 ${r.handled ? "bg-sage/15 text-sage" : "bg-rose/10 text-rose"}`}>
+                      {r.handled ? "已處理" : "未處理"}
+                    </span>
+                  </div>
+
+                  {/* 原訂單品項 */}
+                  <div className="rounded-md bg-linen/50 p-3 mb-3 ring-1 ring-linen-dark/20">
+                    <p className="text-xs text-espresso-light/40 mb-1.5">原訂單</p>
+                    {r.orderItems.map((item: { name: string; quantity: number; price: number }, i: number) => (
+                      <div key={i} className="flex justify-between text-sm">
+                        <span className="text-espresso-light/70">{item.name} × {item.quantity}</span>
+                        <span className="text-espresso">NT$ {item.price * item.quantity}</span>
+                      </div>
+                    ))}
+                    <div className="mt-1.5 pt-1.5 flex justify-between text-sm font-medium" style={{ borderTop: "1px dashed rgba(30,15,8,0.1)" }}>
+                      <span className="text-espresso">合計</span>
+                      <span className="text-rose">NT$ {r.orderTotal}</span>
+                    </div>
+                  </div>
+
+                  {/* 修改內容 */}
+                  <div className="rounded-md bg-rose/[0.03] p-3 mb-3 ring-1 ring-rose/15">
+                    <p className="text-xs text-rose/60 mb-1">修改內容</p>
+                    <p className="text-espresso text-sm whitespace-pre-wrap">{r.message}</p>
+                  </div>
+
+                  {/* 操作按鈕 */}
+                  <button
+                    onClick={() => toggleHandled(r.id, !r.handled)}
+                    className={`text-xs px-4 py-1.5 rounded-md transition-all ${
+                      r.handled
+                        ? "ring-1 ring-linen-dark text-espresso-light hover:text-espresso"
+                        : "bg-sage text-white hover:bg-sage/80"
+                    }`}
+                  >
+                    {r.handled ? "標為未處理" : "標為已處理"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ─── 訂單列表 ─── */}
