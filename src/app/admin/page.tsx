@@ -1146,6 +1146,7 @@ function StoryManager() {
           content,
           imageUrl,
           sortOrder,
+          ...(!editingId && { isPublished: true }),
         }),
       });
       if (!res.ok) {
@@ -1306,7 +1307,7 @@ function StoryManager() {
               onDragEnd={() => { setDragId(null); setDragOverId(null); }}
               className={`bg-white rounded-lg ring-1 p-4 cursor-grab active:cursor-grabbing transition-all duration-200 ${
                 dragOverId === item.id && dragId !== item.id ? "ring-rose ring-2" : "ring-linen-dark/60"
-              } ${dragId === item.id ? "opacity-50" : ""}`}
+              } ${dragId === item.id ? "opacity-50" : ""} ${!item.isPublished ? "opacity-60" : ""}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -1330,7 +1331,19 @@ function StoryManager() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${item.isPublished ? "bg-sage/15 text-sage" : "bg-espresso-light/10 text-espresso-light/50"}`}>
+                    {item.isPublished ? "已發佈" : "隱藏"}
+                  </span>
+                  <button
+                    onClick={async () => {
+                      await fetch(`/api/admin/story/${item.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPublished: !item.isPublished }) });
+                      loadItems();
+                    }}
+                    className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200"
+                  >
+                    {item.isPublished ? "隱藏" : "發佈"}
+                  </button>
                   <button
                     onClick={() => startEdit(item)}
                     className="text-xs text-espresso-light/60 hover:text-espresso px-3 py-2 ring-1 ring-linen-dark rounded-md hover:ring-espresso-light transition-all duration-200"
