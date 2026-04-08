@@ -256,3 +256,90 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     html,
   });
 }
+
+/* ── 訂單修改通知信（寄給管理員）──── */
+
+interface ModifyNotificationData {
+  orderId: number;
+  customerName: string;
+  phone: string;
+  campaignName: string;
+  items: { name: string; quantity: number; price: number }[];
+  total: number;
+  message: string;
+  notifyEmails: string[];
+}
+
+export async function sendOrderModifyNotification(data: ModifyNotificationData) {
+  const { orderId, customerName, phone, campaignName, items, total, message, notifyEmails } = data;
+
+  const itemRows = items.map((i) =>
+    `<tr>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; font-size: 14px;">${esc(i.name)}</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; text-align: center; font-size: 14px;">×${i.quantity}</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ebe2d4; color: #1e0f08; text-align: right; font-size: 14px;">NT$ ${i.price * i.quantity}</td>
+    </tr>`
+  ).join("");
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 0; background: #faf6f0; font-family: 'Georgia', serif;">
+  <div style="max-width: 520px; margin: 0 auto; padding: 40px 24px;">
+
+    <div style="text-align: center; margin-bottom: 24px;">
+      <h1 style="font-size: 22px; color: #1e0f08; margin: 0 0 4px;">訂單修改通知</h1>
+      <p style="color: #c4506a; font-size: 14px; margin: 0;">訂單 #${orderId}</p>
+    </div>
+
+    <div style="background: white; border-radius: 12px; padding: 24px; border: 2px dashed #ebe2d4; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; color: #1e0f08; margin: 0 0 12px;">用戶資訊</h2>
+      <table style="width: 100%;">
+        <tr><td style="padding: 4px 0; color: #5c3d2e80; font-size: 14px; width: 60px;">姓名</td><td style="padding: 4px 0; color: #1e0f08; font-size: 14px;">${esc(customerName)}</td></tr>
+        <tr><td style="padding: 4px 0; color: #5c3d2e80; font-size: 14px;">電話</td><td style="padding: 4px 0; color: #1e0f08; font-size: 14px;">${esc(phone)}</td></tr>
+      </table>
+    </div>
+
+    <div style="background: white; border-radius: 12px; padding: 24px; border: 2px dashed #ebe2d4; margin-bottom: 16px;">
+      <h2 style="font-size: 16px; color: #1e0f08; margin: 0 0 4px;">原訂單內容</h2>
+      ${campaignName ? `<p style="color: #5c3d2e80; font-size: 13px; margin: 0 0 12px;">${esc(campaignName)}</p>` : ""}
+      <table style="width: 100%; border-collapse: collapse;">
+        ${itemRows}
+      </table>
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 2px dashed rgba(196,80,106,0.25);">
+        <table style="width: 100%;"><tr>
+          <td style="font-size: 14px; color: #1e0f08; font-weight: 600;">合計</td>
+          <td style="font-size: 18px; color: #c4506a; font-weight: 700; text-align: right;">NT$ ${total}</td>
+        </tr></table>
+      </div>
+    </div>
+
+    <div style="background: #fff5f5; border-radius: 12px; padding: 24px; border: 2px dashed #c4506a40;">
+      <h2 style="font-size: 16px; color: #c4506a; margin: 0 0 8px;">修改內容</h2>
+      <p style="color: #1e0f08; font-size: 15px; line-height: 1.7; margin: 0; white-space: pre-wrap;">${esc(message)}</p>
+    </div>
+
+    <div style="border-top: 1px solid #ebe2d4; margin-top: 24px; padding-top: 20px; text-align: center;">
+      <p style="color: #5c3d2e60; font-size: 12px; margin: 0;">Jam for Love — 訂單修改通知（系統自動發送）</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  // 寄給所有管理員
+  for (const email of notifyEmails) {
+    if (!isValidEmail(email)) continue;
+    const rateCheck = checkEmailRateLimit(email);
+    if (!rateCheck.allowed) {
+      console.error("Email rate limit hit for admin:", rateCheck.reason);
+      continue;
+    }
+    await transporter.sendMail({
+      from: `"Jam for Love" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: `訂單修改通知 — #${orderId} ${customerName}`,
+      html,
+    });
+  }
+}

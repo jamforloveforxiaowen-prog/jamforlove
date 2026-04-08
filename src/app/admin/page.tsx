@@ -59,7 +59,7 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-sage/15 text-sage",
 };
 
-type Tab = "campaigns" | "orders" | "banners" | "news" | "about" | "story";
+type Tab = "campaigns" | "orders" | "banners" | "news" | "about" | "story" | "settings";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "campaigns", label: "預購表單設計" },
@@ -68,6 +68,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "news", label: "最新消息" },
   { key: "about", label: "關於我們" },
   { key: "story", label: "果醬的故事" },
+  { key: "settings", label: "設定" },
 ];
 
 export default function AdminPage() {
@@ -107,6 +108,7 @@ export default function AdminPage() {
       {tab === "news" && <NewsManager />}
       {tab === "about" && <AboutManager />}
       {tab === "story" && <StoryManager />}
+      {tab === "settings" && <SettingsManager />}
     </div>
   );
 }
@@ -1564,4 +1566,114 @@ function OrderManager() {
   );
 }
 
+/* ═══ 設定管理 ═══ */
 
+function SettingsManager() {
+  const [notifyEmails, setNotifyEmails] = useState<string[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=order_notify_emails")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.value) {
+          try { setNotifyEmails(JSON.parse(data.value)); } catch { /* ignore */ }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function saveEmails(emails: string[]) {
+    setSaving(true); setError(""); setSuccess("");
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "order_notify_emails", value: JSON.stringify(emails) }),
+      });
+      if (!res.ok) { setError("儲存失敗"); setSaving(false); return; }
+      setNotifyEmails(emails);
+      setSuccess("已儲存");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch { setError("網路連線失敗"); }
+    setSaving(false);
+  }
+
+  function addEmail() {
+    const email = newEmail.trim().toLowerCase();
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Email 格式不正確"); return; }
+    if (notifyEmails.includes(email)) { setError("此信箱已存在"); return; }
+    setError("");
+    const updated = [...notifyEmails, email];
+    setNewEmail("");
+    saveEmails(updated);
+  }
+
+  function removeEmail(index: number) {
+    const updated = notifyEmails.filter((_, i) => i !== index);
+    saveEmails(updated);
+  }
+
+  if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
+
+  const inputClass = "w-full px-3 py-2 rounded-md text-lg text-espresso bg-linen ring-1 ring-linen-dark/60 focus:ring-rose outline-none";
+
+  return (
+    <div>
+      <h2 className="font-serif text-lg font-bold text-espresso mb-6">設定</h2>
+
+      {error && <p className="text-rose text-sm font-medium mb-4">{error}</p>}
+      {success && <p className="text-sage text-sm font-medium mb-4">{success}</p>}
+
+      <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
+        <h3 className="font-serif font-bold text-espresso mb-1">訂單通知信箱</h3>
+        <p className="text-espresso-light/50 text-sm mb-4">用戶提交訂單修改時，會同時通知以下所有信箱</p>
+
+        {notifyEmails.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {notifyEmails.map((email, i) => (
+              <div key={i} className="flex items-center justify-between py-2 px-3 rounded-md bg-linen/50 ring-1 ring-linen-dark/30">
+                <span className="text-espresso text-sm">{email}</span>
+                <button
+                  onClick={() => removeEmail(i)}
+                  disabled={saving}
+                  className="text-rose/40 hover:text-rose text-xs transition-colors disabled:opacity-50"
+                >
+                  刪除
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {notifyEmails.length === 0 && (
+          <p className="text-espresso-light/30 text-sm mb-4 py-3 text-center rounded-md bg-linen/30">尚未設定通知信箱</p>
+        )}
+
+        <div className="flex gap-2">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEmail(); } }}
+            className={`${inputClass} flex-1`}
+            placeholder="輸入 Email 信箱"
+          />
+          <button
+            onClick={addEmail}
+            disabled={saving || !newEmail.trim()}
+            className="px-4 py-2 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all shrink-0 disabled:opacity-40"
+          >
+            {saving ? "儲存中..." : "新增"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

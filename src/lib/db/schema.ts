@@ -220,6 +220,21 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
     .default(sql`(datetime('now'))`),
 });
 
+/* ─── 訂單修改申請 ─────────────────────────────── */
+
+export const orderModifyRequests = sqliteTable("order_modify_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => fundraiseOrders.id),
+  customerName: text("customer_name").notNull(),
+  phone: text("phone").notNull(),
+  message: text("message").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const orderItems = sqliteTable("order_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: integer("order_id")
