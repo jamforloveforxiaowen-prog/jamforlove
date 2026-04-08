@@ -121,7 +121,11 @@ export async function POST(req: NextRequest) {
     if (pct > 0 && campaign.supporterDiscount > 0) {
       discountAmount = Math.round(subtotal * pct / 100);
     }
-    const computedTotal = subtotal - discountAmount;
+    const afterDiscount = subtotal - discountAmount;
+    // 郵寄未滿 1000 加收 65 元運費
+    const isShipping = (deliveryMethod || "shipping") === "shipping";
+    const shippingFeeAmount = isShipping && afterDiscount < 1000 ? 65 : 0;
+    const computedTotal = afterDiscount + shippingFeeAmount;
 
     const order = await db
       .insert(fundraiseOrders)
@@ -140,6 +144,7 @@ export async function POST(req: NextRequest) {
         isSupporter: !!supportType && supportType !== "first_time",
         supportType: supportType || "",
         discountAmount,
+        shippingFee: shippingFeeAmount,
         notes: notes || "",
         total: computedTotal,
       })
@@ -156,6 +161,7 @@ export async function POST(req: NextRequest) {
           addons: [],
           total: computedTotal,
           discountAmount,
+          shippingFee: shippingFeeAmount,
           deliveryMethod: deliveryMethod || "shipping",
           paymentMethod: paymentMethod || "cash",
           address,
@@ -264,7 +270,10 @@ export async function PUT(req: NextRequest) {
     if (putPct > 0 && campaignData && campaignData.supporterDiscount > 0) {
       discountAmount = Math.round(subtotal * putPct / 100);
     }
-    const computedTotal = subtotal - discountAmount;
+    const putAfterDiscount = subtotal - discountAmount;
+    const putIsShipping = (deliveryMethod || "shipping") === "shipping";
+    const putShippingFee = putIsShipping && putAfterDiscount < 1000 ? 65 : 0;
+    const computedTotal = putAfterDiscount + putShippingFee;
 
     await db
       .update(fundraiseOrders)
@@ -278,6 +287,7 @@ export async function PUT(req: NextRequest) {
         isSupporter: !!supportType && supportType !== "first_time",
         supportType: supportType || "",
         discountAmount,
+        shippingFee: putShippingFee,
         notes: notes || "",
         total: computedTotal,
       })

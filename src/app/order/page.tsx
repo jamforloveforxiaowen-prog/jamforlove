@@ -171,6 +171,7 @@ export default function OrderPage() {
     items: OrderItem[];
     total: number;
     discountAmount: number;
+    shippingFee: number;
     customerName: string;
     phone: string;
     email: string;
@@ -189,6 +190,7 @@ export default function OrderPage() {
     items: OrderItem[];
     total: number;
     discountAmount: number;
+    shippingFee: number;
     customerName: string;
     phone: string;
     email: string;
@@ -328,7 +330,11 @@ export default function OrderPage() {
     [selectedOption, subtotal]
   );
 
-  const grandTotal = subtotal - discountAmount;
+  const SHIPPING_FEE = 65;
+  const FREE_SHIPPING_THRESHOLD = 1000;
+  const afterDiscount = subtotal - discountAmount;
+  const shippingFee = deliveryMethod === "shipping" && afterDiscount < FREE_SHIPPING_THRESHOLD ? SHIPPING_FEE : 0;
+  const grandTotal = afterDiscount + shippingFee;
 
   const hasRequiredSelection = useMemo(() => {
     if (!campaign) return false;
@@ -386,7 +392,7 @@ export default function OrderPage() {
       : deliveryMethod.startsWith("pickup:") ? deliveryMethod.replace("pickup:", "") : "面交";
 
     setPendingOrder({
-      items, total: grandTotal, discountAmount,
+      items, total: grandTotal, discountAmount, shippingFee,
       customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes,
       supportType: selectedOption?.label || "", supportDiscount: selectedOption?.discount || 0,
       isSupporter: !!selectedOption && selectedOption.discount > 0,
@@ -413,6 +419,7 @@ export default function OrderPage() {
         items: pendingOrder.items,
         notes: pendingOrder.notes,
         total: pendingOrder.total,
+        shippingFee: pendingOrder.shippingFee,
         isSupporter: pendingOrder.isSupporter,
         supportType: pendingOrder.supportType,
         supportDiscount: pendingOrder.supportDiscount,
@@ -431,6 +438,7 @@ export default function OrderPage() {
         items: pendingOrder.items,
         total: pendingOrder.total,
         discountAmount: pendingOrder.discountAmount,
+        shippingFee: pendingOrder.shippingFee,
         customerName: pendingOrder.customerName,
         phone: pendingOrder.phone,
         email: pendingOrder.email,
@@ -531,23 +539,30 @@ export default function OrderPage() {
               </div>
             </div>
           ))}
-          {order.discountAmount > 0 && (
+          {(order.discountAmount > 0 || (order.shippingFee || 0) > 0) ? (
             <div className="pt-3 mt-2 space-y-1" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
               <div className="flex justify-between text-sm">
                 <span className="text-espresso-light/60">小計</span>
-                <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
+                <span className="text-espresso">NT$ {order.total - (order.shippingFee || 0) + order.discountAmount}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-rose/70">♥ 支持者折扣</span>
-                <span className="text-rose">-NT$ {order.discountAmount}</span>
-              </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-rose/70">♥ 支持者折扣</span>
+                  <span className="text-rose">-NT$ {order.discountAmount}</span>
+                </div>
+              )}
+              {(order.shippingFee || 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-espresso-light/60">運費</span>
+                  <span className="text-espresso">NT$ {order.shippingFee}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-1">
                 <p className="font-serif font-bold text-espresso">合計</p>
                 <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
               </div>
             </div>
-          )}
-          {order.discountAmount === 0 && (
+          ) : (
             <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
               <p className="font-serif font-bold text-espresso">合計</p>
               <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
@@ -643,23 +658,30 @@ export default function OrderPage() {
               </div>
             </div>
           ))}
-          {order.discountAmount > 0 && (
+          {(order.discountAmount > 0 || (order.shippingFee || 0) > 0) ? (
             <div className="pt-3 mt-2 space-y-1" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
               <div className="flex justify-between text-sm">
                 <span className="text-espresso-light/60">小計</span>
-                <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
+                <span className="text-espresso">NT$ {order.total - (order.shippingFee || 0) + order.discountAmount}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-rose/70">♥ 支持者折扣</span>
-                <span className="text-rose">-NT$ {order.discountAmount}</span>
-              </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-rose/70">♥ 支持者折扣</span>
+                  <span className="text-rose">-NT$ {order.discountAmount}</span>
+                </div>
+              )}
+              {(order.shippingFee || 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-espresso-light/60">運費</span>
+                  <span className="text-espresso">NT$ {order.shippingFee}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-1">
                 <p className="font-serif font-bold text-espresso">合計</p>
                 <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
               </div>
             </div>
-          )}
-          {order.discountAmount === 0 && (
+          ) : (
             <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
               <p className="font-serif font-bold text-espresso">合計</p>
               <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
@@ -961,23 +983,37 @@ export default function OrderPage() {
                   );
                 })}
               </div>
-              {discountAmount > 0 && (
+              {(discountAmount > 0 || shippingFee > 0) && (
                 <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
                   <div className="flex justify-between text-base">
                     <span className="text-espresso-light">小計</span>
                     <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
                   </div>
-                  <div className="flex justify-between text-base">
-                    <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
-                    <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
-                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-base">
+                      <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
+                      <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
+                    </div>
+                  )}
+                  {shippingFee > 0 && (
+                    <div className="flex justify-between text-base">
+                      <span className="text-espresso-light">運費</span>
+                      <span className="text-espresso tabular-nums">NT$ {shippingFee}</span>
+                    </div>
+                  )}
+                  {shippingFee === 0 && deliveryMethod === "shipping" && (
+                    <div className="flex justify-between text-base">
+                      <span className="text-espresso-light">運費</span>
+                      <span className="text-sage font-medium">免運費</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-baseline pt-1.5" style={{ borderTop: `1px dashed ${theme.border}` }}>
                     <span className="font-serif font-bold text-espresso">合計</span>
                     <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
                   </div>
                 </div>
               )}
-              {discountAmount === 0 && (
+              {discountAmount === 0 && shippingFee === 0 && (
                 <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `2px dashed ${theme.border}` }}>
                   <span className="font-serif font-bold text-espresso">合計</span>
                   <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>

@@ -72,6 +72,7 @@ interface OrderEmailData {
   addons: OrderItem[];
   total: number;
   discountAmount?: number;
+  shippingFee?: number;
   deliveryMethod: string;
   paymentMethod?: string;
   address: string;
@@ -120,7 +121,7 @@ function buildOrderRows(combos: OrderItem[], addons: OrderItem[]) {
 export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   const {
     customerName, email, combos, addons,
-    total, discountAmount, deliveryMethod, paymentMethod, address, notes, orderId,
+    total, discountAmount, shippingFee, deliveryMethod, paymentMethod, address, notes, orderId,
   } = data;
 
   if (!email) return;
@@ -187,14 +188,22 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
 
       <!-- 合計 -->
       <div style="margin-top: 16px; padding-top: 16px; border-top: 2px dashed rgba(196,80,106,0.25);">
-        ${discountAmount && discountAmount > 0 ? `
+        ${(discountAmount && discountAmount > 0) || (shippingFee && shippingFee > 0) ? `
         <table style="width: 100%; margin-bottom: 8px;"><tr>
           <td style="font-size: 14px; color: #5c3d2e; font-weight: 500;">小計</td>
-          <td style="font-size: 14px; color: #5c3d2e; text-align: right;">NT$ ${total + discountAmount}</td>
+          <td style="font-size: 14px; color: #5c3d2e; text-align: right;">NT$ ${total - (shippingFee || 0) + (discountAmount || 0)}</td>
         </tr></table>
+        ` : ""}
+        ${discountAmount && discountAmount > 0 ? `
         <table style="width: 100%; margin-bottom: 8px;"><tr>
           <td style="font-size: 14px; color: #c4506a; font-weight: 500;">♥ 支持者折扣</td>
           <td style="font-size: 14px; color: #c4506a; text-align: right;">-NT$ ${discountAmount}</td>
+        </tr></table>
+        ` : ""}
+        ${shippingFee && shippingFee > 0 ? `
+        <table style="width: 100%; margin-bottom: 8px;"><tr>
+          <td style="font-size: 14px; color: #5c3d2e; font-weight: 500;">運費</td>
+          <td style="font-size: 14px; color: #5c3d2e; text-align: right;">NT$ ${shippingFee}</td>
         </tr></table>
         ` : ""}
         <table style="width: 100%;"><tr>

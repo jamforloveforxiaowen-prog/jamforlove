@@ -216,6 +216,7 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
   isSupporter: integer("is_supporter", { mode: "boolean" }).notNull().default(false),
   supportType: text("support_type").notNull().default(""),
   discountAmount: integer("discount_amount").notNull().default(0),
+  shippingFee: integer("shipping_fee").notNull().default(0),
   notes: text("notes").notNull().default(""),
   total: integer("total").notNull(),
   status: text("status", {

@@ -27,6 +27,7 @@ export async function GET() {
       isSupporter: fundraiseOrders.isSupporter,
       supportType: fundraiseOrders.supportType,
       discountAmount: fundraiseOrders.discountAmount,
+      shippingFee: fundraiseOrders.shippingFee,
       notes: fundraiseOrders.notes,
       total: fundraiseOrders.total,
       status: fundraiseOrders.status,
