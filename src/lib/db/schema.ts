@@ -208,6 +208,9 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
   items: text("items").notNull().default("[]"),
   combos: text("combos").notNull().default("[]"),
   addons: text("addons").notNull().default("[]"),
+  paymentMethod: text("payment_method", {
+    enum: ["cash", "transfer"],
+  }).notNull().default("cash"),
   isSupporter: integer("is_supporter", { mode: "boolean" }).notNull().default(false),
   discountAmount: integer("discount_amount").notNull().default(0),
   notes: text("notes").notNull().default(""),

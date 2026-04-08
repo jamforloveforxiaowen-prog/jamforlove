@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { campaignId, customerName, phone, email, address, deliveryMethod, items, notes, isSupporter } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter } = body;
 
   // 新格式（有 campaignId）
   if (campaignId) {
@@ -132,6 +132,7 @@ export async function POST(req: NextRequest) {
         email: email || "",
         address,
         deliveryMethod: deliveryMethod || "shipping",
+        paymentMethod: paymentMethod || "cash",
         items: JSON.stringify(items),
         combos: "[]",
         addons: "[]",
@@ -153,6 +154,7 @@ export async function POST(req: NextRequest) {
         total: computedTotal,
         discountAmount,
         deliveryMethod: deliveryMethod || "shipping",
+        paymentMethod: paymentMethod || "cash",
         address,
         notes: notes || "",
         orderId: order.id,
@@ -216,7 +218,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, items, notes, isSupporter } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });

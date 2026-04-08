@@ -73,6 +73,7 @@ interface OrderEmailData {
   total: number;
   discountAmount?: number;
   deliveryMethod: string;
+  paymentMethod?: string;
   address: string;
   notes: string;
   orderId: number;
@@ -119,7 +120,7 @@ function buildOrderRows(combos: OrderItem[], addons: OrderItem[]) {
 export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   const {
     customerName, email, combos, addons,
-    total, discountAmount, deliveryMethod, address, notes, orderId,
+    total, discountAmount, deliveryMethod, paymentMethod, address, notes, orderId,
   } = data;
 
   if (!email) return;
@@ -214,6 +215,10 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
         <tr>
           <td style="padding: 6px 0; color: #5c3d2e80; font-size: 14px;">取貨方式</td>
           <td style="padding: 6px 0; color: #1e0f08; font-size: 15px;">${deliveryText}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #5c3d2e80; font-size: 14px;">付款方式</td>
+          <td style="padding: 6px 0; color: #1e0f08; font-size: 15px;">${paymentMethod === "transfer" ? "匯款" : "現金"}</td>
         </tr>
         ${deliveryMethod === "shipping" ? `
         <tr>

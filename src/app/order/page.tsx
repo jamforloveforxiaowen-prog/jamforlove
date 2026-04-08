@@ -93,6 +93,25 @@ function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign
   };
 }
 
+/* ─── 匯款資訊元件 ─────────────────────────────── */
+
+function BankTransferInfo() {
+  const [info, setInfo] = useState("");
+  useEffect(() => {
+    fetch("/api/site-settings?key=bank_transfer_info")
+      .then((r) => r.json())
+      .then((data) => { if (data.value) setInfo(data.value); })
+      .catch(() => {});
+  }, []);
+  if (!info) return null;
+  return (
+    <div className="mt-3 rounded-lg bg-linen/60 p-4 ring-1 ring-linen-dark/30">
+      <p className="text-xs font-semibold text-espresso-light/50 mb-1.5">匯款資訊</p>
+      <p className="text-sm text-espresso whitespace-pre-wrap">{info}</p>
+    </div>
+  );
+}
+
 /* ─── 表單風格配色 ─────────────────────────────── */
 
 const FORM_STYLE_THEMES: Record<string, { accent: string; accentLight: string; bg: string; cardBg: string; border: string; stepColors: string[] }> = {
@@ -133,6 +152,7 @@ export default function OrderPage() {
   const [district, setDistrict] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("shipping");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">("cash");
   const [notes, setNotes] = useState("");
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -154,6 +174,7 @@ export default function OrderPage() {
     email: string;
     address: string;
     deliveryMethod: string;
+    paymentMethod: string;
     notes: string;
     isSupporter: boolean;
   } | null>(null);
@@ -169,6 +190,7 @@ export default function OrderPage() {
     email: string;
     address: string;
     deliveryMethod: string;
+    paymentMethod: string;
     notes: string;
   } | null>(null);
 
@@ -273,6 +295,7 @@ export default function OrderPage() {
         if (data.deliveryMethod) setDeliveryMethod(data.deliveryMethod);
         if (data.notes) setNotes(data.notes);
         if (data.isSupporter) setIsSupporter(data.isSupporter);
+        if (data.paymentMethod) setPaymentMethod(data.paymentMethod);
       } catch { /* ignore */ }
       sessionStorage.removeItem("order_selections");
     }
@@ -352,7 +375,7 @@ export default function OrderPage() {
 
     setPendingOrder({
       items, total: grandTotal, discountAmount,
-      customerName, phone, email, address: finalAddress, deliveryMethod, notes, isSupporter,
+      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes, isSupporter,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -372,6 +395,7 @@ export default function OrderPage() {
         email: pendingOrder.email,
         address: pendingOrder.address,
         deliveryMethod: isShipping ? "shipping" : "pickup",
+        paymentMethod: pendingOrder.paymentMethod,
         items: pendingOrder.items,
         notes: pendingOrder.notes,
         total: pendingOrder.total,
@@ -396,6 +420,7 @@ export default function OrderPage() {
         email: pendingOrder.email,
         address: pendingOrder.address,
         deliveryMethod: pendingOrder.deliveryMethod,
+        paymentMethod: pendingOrder.paymentMethod,
         notes: pendingOrder.notes,
       });
       setPendingOrder(null);
@@ -523,6 +548,7 @@ export default function OrderPage() {
             {order.email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{order.email}</span></div>}
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span><span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : order.address}</span></div>
             {order.deliveryMethod === "shipping" && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">地址</span><span className="text-espresso">{order.address}</span></div>}
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款方式</span><span className="text-espresso">{order.paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
             {order.notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{order.notes}</span></div>}
           </div>
         </div>
@@ -633,6 +659,7 @@ export default function OrderPage() {
             {order.email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{order.email}</span></div>}
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span><span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : order.address}</span></div>
             <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">地址</span><span className="text-espresso">{order.address}</span></div>
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款方式</span><span className="text-espresso">{order.paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
             {order.notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{order.notes}</span></div>}
           </div>
         </div>
@@ -813,7 +840,7 @@ export default function OrderPage() {
                 <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
                   {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
                 </button>
-                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, notes, isSupporter })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, isSupporter })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
               </div>
             </div>
             <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
@@ -860,6 +887,30 @@ export default function OrderPage() {
                   {fieldErrors.addressDetail && <p className="text-rose text-xs mt-1">{fieldErrors.addressDetail}</p>}
                 </div>
               )}
+
+              <div className="pt-4 pb-2">
+                <label className="block text-sm font-semibold text-espresso-light/50 mb-3">付款方式 *</label>
+                <div className="flex gap-3">
+                  {([
+                    { value: "cash" as const, label: "💵 現金", desc: "面交時付款" },
+                    { value: "transfer" as const, label: "🏦 匯款", desc: "銀行轉帳" },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPaymentMethod(opt.value)}
+                      className={`flex-1 py-3 px-4 rounded-lg text-left transition-all ${paymentMethod === opt.value ? "shadow-sm" : ""}`}
+                      style={paymentMethod === opt.value
+                        ? { border: `2px solid ${theme.accent}`, background: `${theme.accent}08` }
+                        : { border: `2px dashed ${theme.border}`, background: theme.cardBg }}
+                    >
+                      <p className="text-base font-medium text-espresso">{opt.label}</p>
+                      <p className="text-xs text-espresso-light/40 mt-0.5">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+                {paymentMethod === "transfer" && <BankTransferInfo />}
+              </div>
 
               <div className={inputBorderFocus} style={inputBorder}>
                 <label className="block text-sm font-semibold text-espresso-light/50 pt-2">備註</label>

@@ -20,6 +20,7 @@ export async function GET() {
       email: fundraiseOrders.email,
       address: fundraiseOrders.address,
       deliveryMethod: fundraiseOrders.deliveryMethod,
+      paymentMethod: fundraiseOrders.paymentMethod,
       items: fundraiseOrders.items,
       combos: fundraiseOrders.combos,
       addons: fundraiseOrders.addons,

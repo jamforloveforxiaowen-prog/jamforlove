@@ -1701,21 +1701,23 @@ function OrderManager() {
 function SettingsManager() {
   const [notifyEmails, setNotifyEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState("");
+  const [bankInfo, setBankInfo] = useState("");
+  const [bankInfoSaved, setBankInfoSaved] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetch("/api/site-settings?key=order_notify_emails")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.value) {
-          try { setNotifyEmails(JSON.parse(data.value)); } catch { /* ignore */ }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/site-settings?key=order_notify_emails").then((r) => r.json()),
+      fetch("/api/site-settings?key=bank_transfer_info").then((r) => r.json()),
+    ]).then(([emailData, bankData]) => {
+      if (emailData.value) {
+        try { setNotifyEmails(JSON.parse(emailData.value)); } catch { /* ignore */ }
+      }
+      if (bankData.value) { setBankInfo(bankData.value); setBankInfoSaved(bankData.value); }
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   async function saveEmails(emails: string[]) {
@@ -1803,6 +1805,37 @@ function SettingsManager() {
             {saving ? "儲存中..." : "新增"}
           </button>
         </div>
+      </div>
+
+      {/* 匯款資訊 */}
+      <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5 mt-6">
+        <h3 className="font-serif font-bold text-espresso mb-1">匯款資訊</h3>
+        <p className="text-espresso-light/50 text-sm mb-4">選擇匯款付款時，消費者會看到以下資訊</p>
+        <textarea
+          value={bankInfo}
+          onChange={(e) => setBankInfo(e.target.value)}
+          rows={4}
+          className={`${inputClass} resize-none mb-3`}
+          placeholder={"例：\n銀行：台灣銀行（004）\n帳號：012-345-678-901\n戶名：Jam for Love"}
+        />
+        <button
+          onClick={async () => {
+            setSaving(true); setError(""); setSuccess("");
+            try {
+              const res = await fetch("/api/admin/site-settings", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ key: "bank_transfer_info", value: bankInfo }),
+              });
+              if (!res.ok) { setError("儲存失敗"); } else { setBankInfoSaved(bankInfo); setSuccess("已儲存"); setTimeout(() => setSuccess(""), 2000); }
+            } catch { setError("網路連線失敗"); }
+            setSaving(false);
+          }}
+          disabled={saving || bankInfo === bankInfoSaved}
+          className="px-4 py-2 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all disabled:opacity-40"
+        >
+          {saving ? "儲存中..." : "儲存"}
+        </button>
       </div>
     </div>
   );

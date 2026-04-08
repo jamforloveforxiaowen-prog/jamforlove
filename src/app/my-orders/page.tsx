@@ -22,6 +22,7 @@ interface Order {
   items: OrderItem[];
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
+  paymentMethod: string;
   isSupporter: boolean;
   discountAmount: number;
   notes: string;
@@ -236,7 +237,7 @@ export default function MyOrdersPage() {
                     {new Date(order.createdAt).toLocaleString("zh-TW")}
                   </span>
                   <span className="text-xs text-espresso-light/30">
-                    {order.deliveryMethod === "pickup" ? "面交" : "郵寄"}
+                    {order.deliveryMethod === "pickup" ? "面交" : "郵寄"} · {order.paymentMethod === "transfer" ? "匯款" : "現金"}
                   </span>
                 </div>
                 <span className="px-3 py-1 rounded-md text-xs font-semibold bg-sage/15 text-sage">
