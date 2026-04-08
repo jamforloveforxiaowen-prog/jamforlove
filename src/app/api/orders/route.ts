@@ -97,20 +97,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: campaignError }, { status: 403 });
     }
 
-    // 每人每個活動限一次
-    const existingOrder = await db
-      .select({ id: fundraiseOrders.id })
-      .from(fundraiseOrders)
-      .where(and(eq(fundraiseOrders.userId, session.id), eq(fundraiseOrders.campaignId, campaignId)))
-      .get();
-
-    if (existingOrder) {
-      return NextResponse.json(
-        { error: "你已經下過訂單了，如需修改請到「我的訂單」編輯" },
-        { status: 409 }
-      );
-    }
-
     if (!customerName || !phone || !address) {
       return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
     }

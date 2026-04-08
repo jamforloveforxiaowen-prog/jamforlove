@@ -140,9 +140,6 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // 已下過單
-  const [existingOrderId, setExistingOrderId] = useState<number | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   // 欄位驗證
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -235,13 +232,6 @@ export default function OrderPage() {
       if (data.campaign && data.campaign.status !== "out_of_range") {
         setCampaign(data.campaign);
         setCampaignStatus("active");
-        // 檢查此活動是否已下過單
-        fetch("/api/orders").then((r) => r.json()).then((orders) => {
-          if (Array.isArray(orders)) {
-            const match = orders.find((o: { campaignId?: number }) => o.campaignId === data.campaign.id);
-            if (match) setExistingOrderId(match.id);
-          }
-        }).catch(() => {});
       } else if (data.campaign?.status === "out_of_range") {
         setCampaignStatus("out_of_range");
         setOutOfRangeInfo({ startDate: data.campaign.startDate, endDate: data.campaign.endDate, name: data.campaign.name });
@@ -326,33 +316,6 @@ export default function OrderPage() {
     });
   }
 
-  // 帶入既有訂單（編輯模式）
-  function loadExistingOrder() {
-    fetch("/api/orders").then((r) => r.json()).then((data) => {
-      if (!Array.isArray(data) || data.length === 0) return;
-      const order = data[0];
-      setCustomerName(order.customerName);
-      setPhone(order.phone);
-      setEmail(order.email || "");
-      setDeliveryMethod(order.deliveryMethod || "shipping");
-      setNotes(order.notes || "");
-      setIsSupporter(!!order.isSupporter);
-      if (order.deliveryMethod === "shipping" && order.address) parseAndFillAddress(order.address);
-
-      // 從 items 或 legacy combos/addons 恢復選擇
-      const sel: Record<number, number> = {};
-      const items = JSON.parse(order.items || "[]") as { productId: number; quantity: number }[];
-      if (items.length > 0) {
-        for (const item of items) sel[item.productId] = item.quantity;
-      } else {
-        // Legacy: combos/addons 沒有 productId，無法精確對應
-        // 使用者需要重新選擇
-      }
-      setSelections(sel);
-      setIsEditMode(true);
-    }).catch(() => {});
-  }
-
   // 欄位驗證
   function markTouched(field: string) { setTouched((prev) => ({ ...prev, [field]: true })); }
   const fieldErrors: Record<string, string> = {};
@@ -400,7 +363,7 @@ export default function OrderPage() {
     setError(""); setLoading(true);
 
     try {
-      const method = isEditMode ? "PUT" : "POST";
+      const method = "POST";
       const isShipping = pendingOrder.deliveryMethod === "shipping";
       const payload: Record<string, unknown> = {
         campaignId: campaign.id,
@@ -414,7 +377,6 @@ export default function OrderPage() {
         total: pendingOrder.total,
         isSupporter: pendingOrder.isSupporter,
       };
-      if (isEditMode && existingOrderId) payload.orderId = existingOrderId;
 
       const res = await fetch("/api/orders", {
         method,
@@ -482,28 +444,6 @@ export default function OrderPage() {
           )}
           <div className="animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
             <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ─── 已下過單 ─── */
-  if (existingOrderId && !isEditMode) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
-          <div className="animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ background: "linear-gradient(135deg, var(--color-sage), var(--color-sage-dark, #6b8f71))" }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </div>
-          </div>
-          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.15s_both]">你已經下過訂單了</h1>
-          <p className="text-espresso-light/60 text-base mb-2 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.25s_both]">訂單編號 <span className="font-medium text-espresso">#{existingOrderId}</span></p>
-          <p className="text-espresso-light/40 text-sm mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.3s_both]">如需修改訂單內容，可點擊下方「修改訂單」</p>
-          <div className="flex gap-3 justify-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
-            <button onClick={loadExistingOrder} className="px-6 py-3 rounded-lg font-serif font-bold text-base text-rose hover:bg-rose hover:text-white active:scale-95 transition-all" style={{ border: "2px dashed var(--color-rose)" }}>修改訂單</button>
-            <button onClick={() => router.push("/my-orders")} className="btn-primary">查看我的訂單</button>
           </div>
         </div>
       </div>
@@ -611,7 +551,7 @@ export default function OrderPage() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
                 送出中...
               </span>
-            ) : isEditMode ? "確認更新訂單" : "確認送出訂單"}
+            ) : "確認送出訂單"}
           </button>
         </div>
         <p className="text-center text-espresso-light/30 text-sm mt-4">
@@ -734,11 +674,7 @@ export default function OrderPage() {
           <span className="w-10 h-px" style={{ background: `${theme.accent}50` }} /><span className="text-sm" style={{ color: theme.accent }}>♥</span><span className="w-10 h-px" style={{ background: `${theme.accent}50` }} />
         </div>
         <p className="text-espresso-light/50 text-base mt-4 leading-relaxed max-w-md mx-auto">
-          {isEditMode ? (
-            <>正在修改訂單 <span className="font-medium text-espresso">#{existingOrderId}</span>，修改完成後請重新送出</>
-          ) : (
-            <>每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。</>
-          )}
+          每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。
         </p>
       </div>
 
@@ -990,10 +926,10 @@ export default function OrderPage() {
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
               送出中...
             </span>
-          ) : hasAnySelection ? (isEditMode ? `更新訂單 — NT$ ${grandTotal}` : `確認訂購 — NT$ ${grandTotal}`) : "請先選擇商品"}
+          ) : hasAnySelection ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇商品"}
         </button>
         <p className="text-center text-espresso-light/30 text-sm mt-4">
-          {isEditMode ? "修改後請重新送出，我們會以最新版本為準 ♥" : "送出後我們會以電話或 Email 確認訂單 ♥"}
+          送出後我們會以電話或 Email 確認訂單 ♥
         </p>
       </form>
     </div>
