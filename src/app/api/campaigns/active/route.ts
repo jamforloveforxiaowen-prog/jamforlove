@@ -1,17 +1,28 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { campaigns, campaignGroups, campaignProducts, fundraiseOrders } from "@/lib/db/schema";
-import { eq, asc, sql, and } from "drizzle-orm";
+import { eq, asc, desc, sql, and, lte, gte } from "drizzle-orm";
 
 export async function GET() {
   const now = new Date().toISOString().slice(0, 10);
 
-  // 找到目前 active 且在日期範圍內的活動
-  const campaign = await db
+  // 優先找 active 且在日期範圍內的活動（最新的優先）
+  let campaign = await db
     .select()
     .from(campaigns)
-    .where(eq(campaigns.status, "active"))
+    .where(and(eq(campaigns.status, "active"), lte(campaigns.startDate, now), gte(campaigns.endDate, now)))
+    .orderBy(desc(campaigns.startDate))
     .get();
+
+  // 如果沒有在範圍內的，找任何 active 活動（顯示 out_of_range）
+  if (!campaign) {
+    campaign = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.status, "active"))
+      .orderBy(desc(campaigns.startDate))
+      .get();
+  }
 
   if (!campaign) {
     return NextResponse.json({ campaign: null });
