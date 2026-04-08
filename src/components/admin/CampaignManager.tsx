@@ -485,7 +485,6 @@ export default function CampaignManager() {
                   </div>
                   <p className="text-espresso-light/50 text-sm">
                     {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
-                    {c.supportOptions.length > 0 && <span className="ml-2 text-rose">♥ 支持者折扣 {c.supportOptions.length} 個選項</span>}
                   </p>
                 </div>
                 {c.bannerUrl && <Image src={c.bannerUrl} alt="" width={80} height={50} className="rounded-md object-cover shrink-0" />}
