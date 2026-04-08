@@ -39,6 +39,7 @@ interface ActiveCampaign {
   endDate: string;
   bannerUrl: string;
   formStyle: string;
+  supporterDiscount: number;
   pickupOptions: string[];
   groups: CampaignGroup[];
   totalOrders: number;
@@ -83,7 +84,7 @@ function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign
   });
   return {
     id: 0, name: "Jam for Love", status: "active", startDate, endDate,
-    bannerUrl: "", formStyle: "classic", pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
+    bannerUrl: "", formStyle: "classic", supporterDiscount: 0, pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
     groups: [
       { id: 1, name: "產品組合", description: "每組 NT$500，可複選多組", sortOrder: 0, isRequired: true, products: LEGACY_COMBOS.map(toProduct) },
       { id: 2, name: "加購好物", description: "可自由搭配", sortOrder: 1, isRequired: false, products: LEGACY_ADDONS.map(toProduct) },
@@ -101,6 +102,9 @@ export default function OrderPage() {
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
   const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "active">("loading");
   const [outOfRangeInfo, setOutOfRangeInfo] = useState<{ startDate: string; endDate: string; name: string } | null>(null);
+
+  // 是否支持過 Jam for Love
+  const [isSupporter, setIsSupporter] = useState(false);
 
   // 選購數量：key = productId
   const [selections, setSelections] = useState<Record<number, number>>({});
@@ -133,6 +137,7 @@ export default function OrderPage() {
     orderId: number;
     items: OrderItem[];
     total: number;
+    discountAmount: number;
     customerName: string;
     phone: string;
     email: string;
@@ -249,6 +254,7 @@ export default function OrderPage() {
         if (data.selections) setSelections(data.selections);
         if (data.deliveryMethod) setDeliveryMethod(data.deliveryMethod);
         if (data.notes) setNotes(data.notes);
+        if (data.isSupporter) setIsSupporter(data.isSupporter);
       } catch { /* ignore */ }
       sessionStorage.removeItem("order_selections");
     }
@@ -257,13 +263,20 @@ export default function OrderPage() {
   // 計算
   const allProducts = useMemo(() => campaign?.groups.flatMap((g) => g.products) ?? [], [campaign]);
 
-  const grandTotal = useMemo(
+  const subtotal = useMemo(
     () => Object.entries(selections).reduce((sum, [id, qty]) => {
       const p = allProducts.find((p) => p.id === Number(id));
       return sum + (p ? p.price * qty : 0);
     }, 0),
     [selections, allProducts]
   );
+
+  const discountAmount = useMemo(
+    () => isSupporter && campaign?.supporterDiscount ? Math.round(subtotal * campaign.supporterDiscount / 100) : 0,
+    [isSupporter, campaign, subtotal]
+  );
+
+  const grandTotal = subtotal - discountAmount;
 
   const hasRequiredSelection = useMemo(() => {
     if (!campaign) return false;
@@ -295,6 +308,7 @@ export default function OrderPage() {
       setEmail(order.email || "");
       setDeliveryMethod(order.deliveryMethod || "shipping");
       setNotes(order.notes || "");
+      setIsSupporter(!!order.isSupporter);
       if (order.deliveryMethod === "shipping" && order.address) parseAndFillAddress(order.address);
 
       // 從 items 或 legacy combos/addons 恢復選擇
@@ -352,7 +366,7 @@ export default function OrderPage() {
         customerName, phone, email,
         address: finalAddress,
         deliveryMethod: isShipping ? "shipping" : "pickup",
-        items, notes, total: grandTotal,
+        items, notes, total: grandTotal, isSupporter,
       };
       if (isEditMode && existingOrderId) payload.orderId = existingOrderId;
 
@@ -365,7 +379,7 @@ export default function OrderPage() {
       if (!res.ok) { setError(data.error); setLoading(false); return; }
 
       setConfirmedOrder({
-        orderId: data.orderId, items, total: grandTotal,
+        orderId: data.orderId, items, total: grandTotal, discountAmount,
         customerName, phone, email, address: finalAddress, deliveryMethod, notes,
       });
     } catch {
@@ -480,10 +494,28 @@ export default function OrderPage() {
               </div>
             </div>
           ))}
-          <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
-            <p className="font-serif font-bold text-espresso">合計</p>
-            <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
-          </div>
+          {order.discountAmount > 0 && (
+            <div className="pt-3 mt-2 space-y-1" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+              <div className="flex justify-between text-sm">
+                <span className="text-espresso-light/60">小計</span>
+                <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-rose/70">♥ 舊朋友折扣</span>
+                <span className="text-rose">-NT$ {order.discountAmount}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <p className="font-serif font-bold text-espresso">合計</p>
+                <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
+              </div>
+            </div>
+          )}
+          {order.discountAmount === 0 && (
+            <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+              <p className="font-serif font-bold text-espresso">合計</p>
+              <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl p-6 mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.35s_both]" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>
@@ -551,6 +583,31 @@ export default function OrderPage() {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* 是否支持過 Jam for Love */}
+        {campaign.supporterDiscount > 0 && (
+          <div className="mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.08s_both]">
+            <button
+              type="button"
+              onClick={() => setIsSupporter((v) => !v)}
+              className={`w-full rounded-xl p-5 text-left transition-all duration-300 ${isSupporter ? "bg-rose/[0.06] ring-2 ring-rose shadow-md" : "bg-white/60 hover:bg-white/80"}`}
+              style={{ border: isSupporter ? undefined : "2px dashed rgba(30,15,8,0.12)" }}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-all ${isSupporter ? "bg-rose text-white" : "bg-linen ring-1 ring-linen-dark/40"}`}>
+                  {isSupporter && <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+                <div className="flex-1">
+                  <p className="font-serif text-lg font-bold text-espresso">是否支持過 Jam for Love 呢？</p>
+                  <p className="text-espresso-light/50 text-sm mt-0.5">
+                    曾經購買過的朋友，感謝你的持續支持！勾選即享 <span className="text-rose font-semibold">{campaign.supporterDiscount}% 折扣</span>
+                  </p>
+                </div>
+                {isSupporter && <span className="text-rose text-2xl">♥</span>}
+              </div>
+            </button>
+          </div>
+        )}
+
         <div className="relative pl-11 md:pl-14">
           <div className="absolute left-[17px] md:left-[21px] top-0 bottom-0 w-0" style={{ borderLeft: "2px dashed rgba(30,15,8,0.1)" }} />
 
@@ -651,7 +708,7 @@ export default function OrderPage() {
                 <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
                   {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
                 </button>
-                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, notes })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, notes, isSupporter })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
               </div>
             </div>
             <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
@@ -723,10 +780,28 @@ export default function OrderPage() {
                   );
                 })}
               </div>
-              <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
-                <span className="font-serif font-bold text-espresso">合計</span>
-                <span className="text-rose font-bold text-2xl" style={{ fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
-              </div>
+              {discountAmount > 0 && (
+                <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
+                  <div className="flex justify-between text-base">
+                    <span className="text-espresso-light">小計</span>
+                    <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
+                  </div>
+                  <div className="flex justify-between text-base">
+                    <span className="text-rose">♥ 舊朋友折扣（{campaign?.supporterDiscount}%）</span>
+                    <span className="text-rose font-medium tabular-nums">-NT$ {discountAmount}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline pt-1.5" style={{ borderTop: "1px dashed rgba(30,15,8,0.06)" }}>
+                    <span className="font-serif font-bold text-espresso">合計</span>
+                    <span className="text-rose font-bold text-2xl" style={{ fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
+                  </div>
+                </div>
+              )}
+              {discountAmount === 0 && (
+                <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
+                  <span className="font-serif font-bold text-espresso">合計</span>
+                  <span className="text-rose font-bold text-2xl" style={{ fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
+                </div>
+              )}
             </div>
           </div>
           </>

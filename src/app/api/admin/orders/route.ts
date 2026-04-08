@@ -23,6 +23,8 @@ export async function GET() {
       items: fundraiseOrders.items,
       combos: fundraiseOrders.combos,
       addons: fundraiseOrders.addons,
+      isSupporter: fundraiseOrders.isSupporter,
+      discountAmount: fundraiseOrders.discountAmount,
       notes: fundraiseOrders.notes,
       total: fundraiseOrders.total,
       status: fundraiseOrders.status,

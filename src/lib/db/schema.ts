@@ -143,6 +143,8 @@ export const campaigns = sqliteTable("campaigns", {
   endDate: text("end_date").notNull(),
   bannerUrl: text("banner_url").notNull().default(""),
   formStyle: text("form_style").notNull().default("classic"),
+  // 舊客戶折扣（百分比，例 10 = 打九折）
+  supporterDiscount: integer("supporter_discount").notNull().default(0),
   // JSON 陣列：面交取貨選項，例 ["小川阿姨","台大面交","宜蘭面交"]
   pickupOptions: text("pickup_options").notNull().default("[]"),
   createdAt: text("created_at")
@@ -206,6 +208,8 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
   items: text("items").notNull().default("[]"),
   combos: text("combos").notNull().default("[]"),
   addons: text("addons").notNull().default("[]"),
+  isSupporter: integer("is_supporter", { mode: "boolean" }).notNull().default(false),
+  discountAmount: integer("discount_amount").notNull().default(0),
   notes: text("notes").notNull().default(""),
   total: integer("total").notNull(),
   status: text("status", {

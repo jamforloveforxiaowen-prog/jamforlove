@@ -71,6 +71,7 @@ interface OrderEmailData {
   combos: OrderItem[];
   addons: OrderItem[];
   total: number;
+  discountAmount?: number;
   deliveryMethod: string;
   address: string;
   notes: string;
@@ -118,7 +119,7 @@ function buildOrderRows(combos: OrderItem[], addons: OrderItem[]) {
 export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   const {
     customerName, email, combos, addons,
-    total, deliveryMethod, address, notes, orderId,
+    total, discountAmount, deliveryMethod, address, notes, orderId,
   } = data;
 
   if (!email) return;
@@ -185,6 +186,16 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
 
       <!-- 合計 -->
       <div style="margin-top: 16px; padding-top: 16px; border-top: 2px dashed rgba(196,80,106,0.25);">
+        ${discountAmount && discountAmount > 0 ? `
+        <table style="width: 100%; margin-bottom: 8px;"><tr>
+          <td style="font-size: 14px; color: #5c3d2e; font-weight: 500;">小計</td>
+          <td style="font-size: 14px; color: #5c3d2e; text-align: right;">NT$ ${total + discountAmount}</td>
+        </tr></table>
+        <table style="width: 100%; margin-bottom: 8px;"><tr>
+          <td style="font-size: 14px; color: #c4506a; font-weight: 500;">♥ 舊朋友折扣</td>
+          <td style="font-size: 14px; color: #c4506a; text-align: right;">-NT$ ${discountAmount}</td>
+        </tr></table>
+        ` : ""}
         <table style="width: 100%;"><tr>
           <td style="font-size: 16px; color: #1e0f08; font-weight: 600;">合計</td>
           <td style="font-size: 22px; color: #c4506a; font-weight: 700; text-align: right;">NT$ ${total}</td>

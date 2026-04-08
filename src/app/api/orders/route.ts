@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { campaignId, customerName, phone, email, address, deliveryMethod, items, notes } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, items, notes, isSupporter } = body;
 
   // 新格式（有 campaignId）
   if (campaignId) {
@@ -126,7 +126,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: stockError }, { status: 400 });
     }
 
-    const computedTotal = await calculateTotal(campaignId, items);
+    const subtotal = await calculateTotal(campaignId, items);
+
+    // 計算舊客戶折扣
+    let discountAmount = 0;
+    if (isSupporter && campaign.supporterDiscount > 0) {
+      discountAmount = Math.round(subtotal * campaign.supporterDiscount / 100);
+    }
+    const computedTotal = subtotal - discountAmount;
 
     const order = await db
       .insert(fundraiseOrders)
@@ -141,6 +148,8 @@ export async function POST(req: NextRequest) {
         items: JSON.stringify(items),
         combos: "[]",
         addons: "[]",
+        isSupporter: !!isSupporter,
+        discountAmount,
         notes: notes || "",
         total: computedTotal,
       })
@@ -155,6 +164,7 @@ export async function POST(req: NextRequest) {
         combos: items.map((i: OrderItem) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
         addons: [],
         total: computedTotal,
+        discountAmount,
         deliveryMethod: deliveryMethod || "shipping",
         address,
         notes: notes || "",
@@ -219,7 +229,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, items, notes } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, items, notes, isSupporter } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
@@ -252,7 +262,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: stockError }, { status: 400 });
     }
 
-    const computedTotal = await calculateTotal(cId, items || []);
+    const subtotal = await calculateTotal(cId, items || []);
+
+    // 計算舊客戶折扣
+    const campaignData = await db.select().from(campaigns).where(eq(campaigns.id, cId)).get();
+    let discountAmount = 0;
+    if (isSupporter && campaignData && campaignData.supporterDiscount > 0) {
+      discountAmount = Math.round(subtotal * campaignData.supporterDiscount / 100);
+    }
+    const computedTotal = subtotal - discountAmount;
 
     await db
       .update(fundraiseOrders)
@@ -263,6 +281,8 @@ export async function PUT(req: NextRequest) {
         address,
         deliveryMethod: deliveryMethod || "shipping",
         items: JSON.stringify(items || []),
+        isSupporter: !!isSupporter,
+        discountAmount,
         notes: notes || "",
         total: computedTotal,
       })

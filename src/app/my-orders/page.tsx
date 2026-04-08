@@ -13,6 +13,8 @@ interface Order {
   deliveryMethod: string;
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
+  isSupporter: boolean;
+  discountAmount: number;
   notes: string;
   status: string;
   total: number;
@@ -157,8 +159,16 @@ export default function MyOrdersPage() {
                 ))}
               </div>
 
+              {/* 折扣 */}
+              {order.discountAmount > 0 && (
+                <div className="border-t border-linen-dark/40 mt-4 pt-3 flex justify-between text-sm">
+                  <span className="text-rose/70">♥ 舊朋友折扣</span>
+                  <span className="text-rose font-medium">-NT$ {order.discountAmount}</span>
+                </div>
+              )}
+
               {/* 收件資訊 + 總計 */}
-              <div className="border-t border-linen-dark/40 mt-4 pt-4 flex items-start justify-between gap-4">
+              <div className={`border-t border-linen-dark/40 ${order.discountAmount > 0 ? "mt-2 pt-3" : "mt-4 pt-4"} flex items-start justify-between gap-4`}>
                 <div className="text-xs text-espresso-light/50 space-y-0.5 min-w-0 break-words">
                   <p>
                     {order.customerName} / {order.phone}

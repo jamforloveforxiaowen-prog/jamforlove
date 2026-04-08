@@ -20,12 +20,14 @@ interface Campaign {
   endDate: string;
   bannerUrl: string;
   formStyle: string;
+  supporterDiscount: number;
   pickupOptions: string[];
   orderCount: number;
 }
 
 interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions"> {
   pickupOptions: string;
+  supporterDiscount: number;
   groups: { products: { name: string; price: number; limit: number | null }[] }[];
 }
 
@@ -69,6 +71,7 @@ export default function CampaignManager() {
   const [endDate, setEndDate] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [formStyle, setFormStyle] = useState("classic");
+  const [supporterDiscount, setSupporterDiscount] = useState(0);
   const [pickupOptions, setPickupOptions] = useState<string[]>([...DEFAULT_PICKUP]);
   const [newPickup, setNewPickup] = useState("");
   const [products, setProducts] = useState<ProductEntry[]>([{ name: "", price: 0, limit: null }]);
@@ -89,7 +92,7 @@ export default function CampaignManager() {
 
   function resetForm() {
     setName(""); setStartDate(""); setEndDate(""); setBannerUrl("");
-    setFormStyle("classic"); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
+    setFormStyle("classic"); setSupporterDiscount(0); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", price: 0, limit: null }]);
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null);
   }
@@ -100,6 +103,7 @@ export default function CampaignManager() {
     const data: CampaignDetail = await res.json();
     setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
     setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
+    setSupporterDiscount(data.supporterDiscount || 0);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) && opts.length > 0 ? opts : [...DEFAULT_PICKUP]);
     const prods = data.groups?.[0]?.products || [];
@@ -117,7 +121,7 @@ export default function CampaignManager() {
     setSubmitting(true); setError("");
 
     const payload = {
-      name, startDate, endDate, bannerUrl, formStyle,
+      name, startDate, endDate, bannerUrl, formStyle, supporterDiscount,
       pickupOptions: JSON.stringify(pickupOptions),
       groups: [{ name: "商品", description: "", sortOrder: 0, isRequired: true,
         products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
@@ -157,6 +161,7 @@ export default function CampaignManager() {
     const data: CampaignDetail = await res.json();
     setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
     setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
+    setSupporterDiscount(data.supporterDiscount || 0);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) ? opts : [...DEFAULT_PICKUP]);
     const prods = data.groups?.[0]?.products || [];
@@ -246,6 +251,23 @@ export default function CampaignManager() {
               <div>
                 <label className="block text-sm font-medium text-espresso mb-1">結束日期 *</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-espresso mb-1">舊朋友折扣（%）</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={supporterDiscount || ""}
+                  onChange={(e) => setSupporterDiscount(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  className={`${inputClass} w-32`}
+                  placeholder="0"
+                  min="0"
+                  max="100"
+                />
+                <span className="text-sm text-espresso-light/50">
+                  {supporterDiscount > 0 ? `曾支持過的顧客享 ${supporterDiscount}% 折扣（打${(10 - supporterDiscount / 10).toFixed(1).replace(/\.0$/, "")}折）` : "設為 0 表示不啟用"}
+                </span>
               </div>
             </div>
             <ImageUploader value={bannerUrl} onChange={setBannerUrl} label="活動說明圖（選填）" previewWidth={160} previewHeight={100} />
