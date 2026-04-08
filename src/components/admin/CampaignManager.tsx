@@ -433,7 +433,10 @@ export default function CampaignManager() {
                     <h3 className="font-serif font-bold text-espresso text-base">{c.name}</h3>
                     <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>{STATUS_LABELS[c.status]}</span>
                   </div>
-                  <p className="text-espresso-light/50 text-sm">{c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單</p>
+                  <p className="text-espresso-light/50 text-sm">
+                    {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
+                    {c.supporterDiscount > 0 && <span className="ml-2 text-rose">♥ 支持者折扣已啟用</span>}
+                  </p>
                 </div>
                 {c.bannerUrl && <Image src={c.bannerUrl} alt="" width={80} height={50} className="rounded-md object-cover shrink-0" />}
               </div>
