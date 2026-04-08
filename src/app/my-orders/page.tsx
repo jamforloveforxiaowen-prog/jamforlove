@@ -6,6 +6,7 @@ import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
 
 interface Order {
   id: number;
+  campaignName: string;
   customerName: string;
   phone: string;
   email: string;
@@ -109,7 +110,7 @@ export default function MyOrdersPage() {
               className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5 sm:p-6 hover:ring-rose/20 hover:shadow-lg hover:shadow-rose/[0.04] transition-all duration-300"
             >
               {/* 標題列 */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-3">
                   <span
                     className="font-bold text-espresso"
@@ -127,13 +128,12 @@ export default function MyOrdersPage() {
                 <span className="px-3 py-1 rounded-md text-xs font-semibold bg-sage/15 text-sage">
                   已下單
                 </span>
-                <a
-                  href="/order"
-                  className="px-3 py-1 rounded-md text-xs font-medium text-rose/70 hover:text-rose hover:bg-rose/5 transition-all ring-1 ring-rose/20"
-                >
-                  修改
-                </a>
               </div>
+              {order.campaignName && (
+                <p className="text-sm text-espresso-light/50 mb-3">
+                  <span className="text-rose/60">♥</span> {order.campaignName}
+                </p>
+              )}
 
               {/* 組合明細 */}
               <div className="border-t border-linen-dark/40 pt-4 space-y-1.5">

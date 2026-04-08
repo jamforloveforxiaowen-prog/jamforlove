@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fundraiseOrders, campaigns, campaignProducts, siteSettings } from "@/lib/db/schema";
+import type { InferSelectModel } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
@@ -286,17 +287,22 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userOrders = await db
-    .select()
+  const rows = await db
+    .select({
+      order: fundraiseOrders,
+      campaignName: campaigns.name,
+    })
     .from(fundraiseOrders)
+    .leftJoin(campaigns, eq(fundraiseOrders.campaignId, campaigns.id))
     .where(eq(fundraiseOrders.userId, session.id))
     .orderBy(fundraiseOrders.createdAt);
 
-  const result = userOrders.map((o) => ({
-    ...o,
-    items: JSON.parse(o.items || "[]"),
-    combos: JSON.parse(o.combos),
-    addons: JSON.parse(o.addons),
+  const result = rows.map((r) => ({
+    ...r.order,
+    campaignName: r.campaignName || "",
+    items: JSON.parse(r.order.items || "[]"),
+    combos: JSON.parse(r.order.combos),
+    addons: JSON.parse(r.order.addons),
   }));
 
   return NextResponse.json(result);
