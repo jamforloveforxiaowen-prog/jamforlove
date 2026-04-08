@@ -359,15 +359,22 @@ test.describe("後台管理", () => {
       const admin = new AdminPage(page);
       await admin.switchToSettings();
 
-      // 填寫匯款資訊 textarea（加入 timestamp 確保內容不重複，使按鈕不為 disabled）
+      // 填寫匯款資訊 textarea（加入 timestamp 確保內容不重複）
       const bankTextarea = page.locator('textarea[placeholder*="銀行"]');
-      await bankTextarea.fill(`銀行：台灣銀行（004）\n帳號：012-345-678-901\n戶名：Jam for Love\n更新時間：${Date.now()}`);
+      await bankTextarea.click();
+      await bankTextarea.clear();
+      const newContent = `銀行：台灣銀行（004）\n帳號：012-345-678-901\n戶名：Jam for Love\n更新時間：${Date.now()}`;
+      await bankTextarea.fill(newContent);
+
+      // 等待儲存按鈕變為可用（內容改變後 disabled 會解除）
+      const saveBtn = page.locator('div:has(> h3:text("匯款資訊")) ~ button:text("儲存"), div:has(textarea[placeholder*="銀行"]) button:text("儲存")').first();
+      await expect(saveBtn).toBeEnabled({ timeout: 5_000 });
 
       const [saveRes] = await Promise.all([
         page.waitForResponse(
           (r) => r.url().includes("/api/admin/site-settings") && r.request().method() === "PUT"
         ),
-        page.getByRole("button", { name: "儲存" }).click(),
+        saveBtn.click(),
       ]);
       expect(saveRes.status()).toBeLessThan(400);
 
