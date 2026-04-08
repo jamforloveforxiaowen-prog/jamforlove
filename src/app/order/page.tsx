@@ -147,7 +147,21 @@ export default function OrderPage() {
   // 欄位驗證
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  // 訂單確認頁
+  // 訂單確認頁（尚未送出，僅預覽）
+  const [pendingOrder, setPendingOrder] = useState<{
+    items: OrderItem[];
+    total: number;
+    discountAmount: number;
+    customerName: string;
+    phone: string;
+    email: string;
+    address: string;
+    deliveryMethod: string;
+    notes: string;
+    isSupporter: boolean;
+  } | null>(null);
+
+  // 送出成功
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: number;
     items: OrderItem[];
@@ -348,8 +362,8 @@ export default function OrderPage() {
   if (touched.email && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) fieldErrors.email = "Email 格式不正確";
   if (touched.addressDetail && deliveryMethod === "shipping" && !addressDetail.trim()) fieldErrors.addressDetail = "請填寫詳細地址";
 
-  // 送出
-  async function handleSubmit(e: React.FormEvent) {
+  // 進入確認頁（不送 API）
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!campaign) return;
     if (!hasRequiredSelection) { setError("請至少從必填分組中選擇一項"); return; }
@@ -358,7 +372,7 @@ export default function OrderPage() {
     if (!customerName.trim() || !phone.trim()) { setError("請填寫必填欄位"); return; }
     if (deliveryMethod === "shipping" && !addressDetail.trim()) { setError("請填寫收件地址"); return; }
 
-    setError(""); setLoading(true);
+    setError("");
 
     const items: OrderItem[] = Object.entries(selections)
       .filter(([, qty]) => qty > 0)
@@ -373,14 +387,32 @@ export default function OrderPage() {
       ? `${zipcode} ${city}${district}${addressDetail}`.trim()
       : deliveryMethod.startsWith("pickup:") ? deliveryMethod.replace("pickup:", "") : "面交";
 
+    setPendingOrder({
+      items, total: grandTotal, discountAmount,
+      customerName, phone, email, address: finalAddress, deliveryMethod, notes, isSupporter,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // 真正送出訂單
+  async function handleConfirmSubmit() {
+    if (!campaign || !pendingOrder) return;
+    setError(""); setLoading(true);
+
     try {
       const method = isEditMode ? "PUT" : "POST";
+      const isShipping = pendingOrder.deliveryMethod === "shipping";
       const payload: Record<string, unknown> = {
         campaignId: campaign.id,
-        customerName, phone, email,
-        address: finalAddress,
+        customerName: pendingOrder.customerName,
+        phone: pendingOrder.phone,
+        email: pendingOrder.email,
+        address: pendingOrder.address,
         deliveryMethod: isShipping ? "shipping" : "pickup",
-        items, notes, total: grandTotal, isSupporter,
+        items: pendingOrder.items,
+        notes: pendingOrder.notes,
+        total: pendingOrder.total,
+        isSupporter: pendingOrder.isSupporter,
       };
       if (isEditMode && existingOrderId) payload.orderId = existingOrderId;
 
@@ -393,13 +425,23 @@ export default function OrderPage() {
       if (!res.ok) { setError(data.error); setLoading(false); return; }
 
       setConfirmedOrder({
-        orderId: data.orderId, items, total: grandTotal, discountAmount,
-        customerName, phone, email, address: finalAddress, deliveryMethod, notes,
+        orderId: data.orderId,
+        items: pendingOrder.items,
+        total: pendingOrder.total,
+        discountAmount: pendingOrder.discountAmount,
+        customerName: pendingOrder.customerName,
+        phone: pendingOrder.phone,
+        email: pendingOrder.email,
+        address: pendingOrder.address,
+        deliveryMethod: pendingOrder.deliveryMethod,
+        notes: pendingOrder.notes,
       });
+      setPendingOrder(null);
+      setSubmitted(true);
     } catch {
-      setError("網路連線失敗，請稍後再試"); setLoading(false); return;
+      setError("網路連線失敗，請稍後再試");
     }
-    setLoading(false); setSubmitted(true);
+    setLoading(false);
   }
 
   /* ─── 載入中 ─── */
@@ -464,6 +506,117 @@ export default function OrderPage() {
             <button onClick={() => router.push("/my-orders")} className="btn-primary">查看我的訂單</button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  /* ─── 確認訂單（預覽，尚未送出）─── */
+  if (pendingOrder) {
+    const order = pendingOrder;
+    const groupedItems = order.items.reduce<Record<string, OrderItem[]>>((acc, item) => {
+      (acc[item.group] ??= []).push(item);
+      return acc;
+    }, {});
+
+    return (
+      <div className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative overflow-hidden">
+        <div className="text-center mb-8 relative z-10 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ background: "linear-gradient(135deg, var(--color-honey), var(--color-honey-light))" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-espresso mb-2" style={{ fontStyle: "italic" }}>請確認訂單內容</h1>
+          <p className="text-espresso-light/50 text-sm">確認無誤後，請點擊下方按鈕送出訂單</p>
+        </div>
+
+        {/* 訂單明細 */}
+        <div className="rounded-2xl p-6 mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.2s_both]" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>
+          <h2 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2"><span className="text-rose">♥</span> 訂單明細</h2>
+          {Object.entries(groupedItems).map(([groupName, items]) => (
+            <div key={groupName} className="mb-4">
+              <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-2">{groupName}</p>
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div key={item.productId} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: "1px dashed rgba(30,15,8,0.06)" }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-espresso font-medium">{item.name}</p>
+                      {item.description && <p className="text-espresso-light/50 text-xs mt-0.5">{item.description}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-espresso text-sm">x{item.quantity}</p>
+                      <p className="text-espresso-light/60 text-xs">NT$ {item.price * item.quantity}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {order.discountAmount > 0 && (
+            <div className="pt-3 mt-2 space-y-1" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+              <div className="flex justify-between text-sm">
+                <span className="text-espresso-light/60">小計</span>
+                <span className="text-espresso">NT$ {order.total + order.discountAmount}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-rose/70">♥ 舊朋友折扣</span>
+                <span className="text-rose">-NT$ {order.discountAmount}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <p className="font-serif font-bold text-espresso">合計</p>
+                <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
+              </div>
+            </div>
+          )}
+          {order.discountAmount === 0 && (
+            <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+              <p className="font-serif font-bold text-espresso">合計</p>
+              <p className="font-serif font-bold text-xl text-rose">NT$ {order.total}</p>
+            </div>
+          )}
+        </div>
+
+        {/* 收件資訊 */}
+        <div className="rounded-2xl p-6 mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.35s_both]" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>
+          <h2 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2"><span className="text-rose">♥</span> 收件資訊</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">收件人</span><span className="text-espresso">{order.customerName}</span></div>
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">電話</span><span className="text-espresso">{order.phone}</span></div>
+            {order.email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{order.email}</span></div>}
+            <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span><span className="text-espresso">{order.deliveryMethod === "shipping" ? "郵寄" : order.address}</span></div>
+            {order.deliveryMethod === "shipping" && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">地址</span><span className="text-espresso">{order.address}</span></div>}
+            {order.notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{order.notes}</span></div>}
+          </div>
+        </div>
+
+        {/* 錯誤訊息 */}
+        {error && <p className="text-rose text-sm font-medium mb-4 text-center animate-shake" role="alert">{error}</p>}
+
+        {/* 按鈕 */}
+        <div className="flex gap-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.5s_both]">
+          <button
+            onClick={() => { setPendingOrder(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className="flex-1 py-4 rounded-lg font-serif font-bold text-base text-espresso-light hover:text-espresso active:scale-[0.97] transition-all"
+            style={{ border: "2px dashed rgba(30,15,8,0.15)" }}
+            disabled={loading}
+          >
+            返回修改
+          </button>
+          <button
+            onClick={handleConfirmSubmit}
+            disabled={loading}
+            className="flex-1 py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-60"
+            style={{ background: "var(--color-rose)", border: "2px dashed rgba(196,80,106,0.3)", boxShadow: "0 4px 16px rgba(196,80,106,0.2)" }}
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
+                送出中...
+              </span>
+            ) : isEditMode ? "確認更新訂單" : "確認送出訂單"}
+          </button>
+        </div>
+        <p className="text-center text-espresso-light/30 text-sm mt-4">
+          如有需要修改，請點擊「返回修改」
+        </p>
       </div>
     );
   }
