@@ -85,6 +85,7 @@ export async function GET() {
     campaign: {
       ...campaign,
       pickupOptions: JSON.parse(campaign.pickupOptions || "[]"),
+      supportOptions: JSON.parse(campaign.supportOptions || "[]"),
       groups: groupsWithProducts,
       totalOrders,
     },

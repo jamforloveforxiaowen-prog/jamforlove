@@ -143,8 +143,10 @@ export const campaigns = sqliteTable("campaigns", {
   endDate: text("end_date").notNull(),
   bannerUrl: text("banner_url").notNull().default(""),
   formStyle: text("form_style").notNull().default("classic"),
-  // 舊客戶折扣（百分比，例 10 = 打九折）
+  // 舊客戶折扣（> 0 表示啟用支持者折扣選項）
   supporterDiscount: integer("supporter_discount").notNull().default(0),
+  // JSON 陣列：支持者折扣選項，例 [{"label":"曾經購買","discount":10}]
+  supportOptions: text("support_options").notNull().default("[]"),
   // JSON 陣列：面交取貨選項，例 ["小川阿姨","台大面交","宜蘭面交"]
   pickupOptions: text("pickup_options").notNull().default("[]"),
   createdAt: text("created_at")

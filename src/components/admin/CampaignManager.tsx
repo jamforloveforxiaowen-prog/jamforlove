@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import ImageUploader from "@/components/ImageUploader";
+import { DEFAULT_SUPPORT_OPTIONS, discountToLabel, type SupportOption } from "@/lib/supportTypes";
 
 /* ─── 型別 ─── */
 
@@ -21,13 +22,15 @@ interface Campaign {
   bannerUrl: string;
   formStyle: string;
   supporterDiscount: number;
+  supportOptions: SupportOption[];
   pickupOptions: string[];
   orderCount: number;
 }
 
-interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions"> {
+interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" | "supportOptions"> {
   pickupOptions: string;
   supporterDiscount: number;
+  supportOptions: string;
   groups: { products: { name: string; price: number; limit: number | null }[] }[];
 }
 
@@ -72,6 +75,7 @@ export default function CampaignManager() {
   const [bannerUrl, setBannerUrl] = useState("");
   const [formStyle, setFormStyle] = useState("classic");
   const [supporterDiscount, setSupporterDiscount] = useState(0);
+  const [supportOptions, setSupportOptions] = useState<SupportOption[]>([]);
   const [pickupOptions, setPickupOptions] = useState<string[]>([...DEFAULT_PICKUP]);
   const [newPickup, setNewPickup] = useState("");
   const [products, setProducts] = useState<ProductEntry[]>([{ name: "", price: 0, limit: null }]);
@@ -83,6 +87,7 @@ export default function CampaignManager() {
       if (Array.isArray(data)) setCampaigns(data.map((c: Record<string, unknown>) => ({
         ...c,
         pickupOptions: typeof c.pickupOptions === "string" ? JSON.parse(c.pickupOptions as string) : c.pickupOptions || [],
+        supportOptions: typeof c.supportOptions === "string" ? JSON.parse(c.supportOptions as string) : c.supportOptions || [],
       })) as Campaign[]);
     } catch { setError("無法載入"); }
     finally { setLoading(false); }
@@ -92,7 +97,7 @@ export default function CampaignManager() {
 
   function resetForm() {
     setName(""); setStartDate(""); setEndDate(""); setBannerUrl("");
-    setFormStyle("classic"); setSupporterDiscount(0); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
+    setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", price: 0, limit: null }]);
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null);
   }
@@ -104,6 +109,8 @@ export default function CampaignManager() {
     setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
     setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
+    const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
+    setSupportOptions(Array.isArray(sOpts) && sOpts.length > 0 ? sOpts : []);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) && opts.length > 0 ? opts : [...DEFAULT_PICKUP]);
     const prods = data.groups?.[0]?.products || [];
@@ -121,7 +128,9 @@ export default function CampaignManager() {
     setSubmitting(true); setError("");
 
     const payload = {
-      name, startDate, endDate, bannerUrl, formStyle, supporterDiscount,
+      name, startDate, endDate, bannerUrl, formStyle,
+      supporterDiscount: supportOptions.length > 0 ? 1 : 0,
+      supportOptions: JSON.stringify(supportOptions),
       pickupOptions: JSON.stringify(pickupOptions),
       groups: [{ name: "商品", description: "", sortOrder: 0, isRequired: true,
         products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
@@ -162,6 +171,8 @@ export default function CampaignManager() {
     setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
     setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
+    const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
+    setSupportOptions(Array.isArray(sOpts) ? sOpts : []);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) ? opts : [...DEFAULT_PICKUP]);
     const prods = data.groups?.[0]?.products || [];
@@ -253,20 +264,59 @@ export default function CampaignManager() {
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
               </div>
             </div>
+            {/* 支持者折扣選項 */}
             <div>
-              <label className="block text-sm font-medium text-espresso mb-1">支持者折扣</label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSupporterDiscount(supporterDiscount > 0 ? 0 : 1)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${supporterDiscount > 0 ? "bg-sage" : "bg-espresso-light/20"}`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${supporterDiscount > 0 ? "translate-x-6" : ""}`} />
-                </button>
-                <span className="text-sm text-espresso-light/50">
-                  {supporterDiscount > 0 ? "已啟用 — 消費者可選擇支持方式，享 9 折 / 85 折 / 7 折優惠" : "未啟用"}
-                </span>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-espresso">支持者折扣選項</label>
+                {supportOptions.length === 0 ? (
+                  <button type="button" onClick={() => setSupportOptions([...DEFAULT_SUPPORT_OPTIONS])}
+                    className="text-xs px-3 py-1 rounded-md bg-sage/10 ring-1 ring-sage/30 text-sage font-medium hover:bg-sage/20 transition-all">
+                    + 啟用折扣選項
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => { if (window.confirm("確定要移除所有折扣選項嗎？")) setSupportOptions([]); }}
+                    className="text-xs px-3 py-1 rounded-md ring-1 ring-rose/30 text-rose/60 hover:text-rose hover:ring-rose transition-all">
+                    移除全部
+                  </button>
+                )}
               </div>
+              {supportOptions.length > 0 && (
+                <div className="space-y-2">
+                  {supportOptions.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-linen/50 rounded-lg p-3 ring-1 ring-linen-dark/40">
+                      <input
+                        value={opt.label}
+                        onChange={(e) => setSupportOptions((prev) => prev.map((o, idx) => idx === i ? { ...o, label: e.target.value } : o))}
+                        className="flex-1 px-2 py-1.5 text-sm text-espresso bg-white rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
+                        placeholder="選項文字"
+                      />
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input
+                          type="number"
+                          value={opt.discount}
+                          onChange={(e) => setSupportOptions((prev) => prev.map((o, idx) => idx === i ? { ...o, discount: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } : o))}
+                          className="w-16 px-2 py-1.5 text-sm text-espresso bg-white rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose text-center"
+                          min="0" max="100"
+                        />
+                        <span className="text-xs text-espresso-light/50 w-10">
+                          {opt.discount > 0 ? discountToLabel(opt.discount) : "無折扣"}
+                        </span>
+                      </div>
+                      <button type="button" onClick={() => setSupportOptions((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="p-1 rounded text-espresso-light/30 hover:text-rose transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setSupportOptions((prev) => [...prev, { label: "", discount: 0 }])}
+                    className="w-full py-2 text-sm text-espresso-light/40 hover:text-rose ring-1 ring-dashed ring-linen-dark/30 rounded-lg hover:ring-rose/40 transition-all">
+                    + 新增選項
+                  </button>
+                </div>
+              )}
+              {supportOptions.length === 0 && (
+                <p className="text-xs text-espresso-light/40">未啟用 — 點擊上方按鈕可新增預設折扣選項</p>
+              )}
             </div>
             <ImageUploader value={bannerUrl} onChange={setBannerUrl} label="活動說明圖（選填）" previewWidth={160} previewHeight={100} />
           </div>
@@ -435,7 +485,7 @@ export default function CampaignManager() {
                   </div>
                   <p className="text-espresso-light/50 text-sm">
                     {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
-                    {c.supporterDiscount > 0 && <span className="ml-2 text-rose">♥ 支持者折扣已啟用</span>}
+                    {c.supportOptions.length > 0 && <span className="ml-2 text-rose">♥ 支持者折扣 {c.supportOptions.length} 個選項</span>}
                   </p>
                 </div>
                 {c.bannerUrl && <Image src={c.bannerUrl} alt="" width={80} height={50} className="rounded-md object-cover shrink-0" />}

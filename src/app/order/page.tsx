@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
-import { SUPPORT_TYPES, type SupportType, getDiscountPercent } from "@/lib/supportTypes";
+import { parseSupportOptions, discountToLabel, type SupportOption } from "@/lib/supportTypes";
 
 /* ─── 型別定義 ─────────────────────────────────── */
 
@@ -41,6 +41,7 @@ interface ActiveCampaign {
   bannerUrl: string;
   formStyle: string;
   supporterDiscount: number;
+  supportOptions: SupportOption[];
   pickupOptions: string[];
   groups: CampaignGroup[];
   totalOrders: number;
@@ -85,7 +86,7 @@ function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign
   });
   return {
     id: 0, name: "Jam for Love", status: "active", startDate, endDate,
-    bannerUrl: "", formStyle: "classic", supporterDiscount: 0, pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
+    bannerUrl: "", formStyle: "classic", supporterDiscount: 0, supportOptions: [], pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
     groups: [
       { id: 1, name: "產品組合", description: "每組 NT$500，可複選多組", sortOrder: 0, isRequired: true, products: LEGACY_COMBOS.map(toProduct) },
       { id: 2, name: "加購好物", description: "可自由搭配", sortOrder: 1, isRequired: false, products: LEGACY_ADDONS.map(toProduct) },
@@ -138,8 +139,8 @@ export default function OrderPage() {
   const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "active">("loading");
   const [outOfRangeInfo, setOutOfRangeInfo] = useState<{ startDate: string; endDate: string; name: string } | null>(null);
 
-  // 支持類型選擇
-  const [supportType, setSupportType] = useState<SupportType | "">("");
+  // 支持類型選擇（存選項 index）
+  const [supportIdx, setSupportIdx] = useState<number | null>(null);
 
   // 選購數量：key = productId
   const [selections, setSelections] = useState<Record<number, number>>({});
@@ -178,7 +179,8 @@ export default function OrderPage() {
     paymentMethod: string;
     notes: string;
     isSupporter: boolean;
-    supportType: SupportType | "";
+    supportType: string;
+    supportDiscount: number;
   } | null>(null);
 
   // 送出成功
@@ -239,9 +241,11 @@ export default function OrderPage() {
           // 預覽模式：admin API 回傳 detail 格式，轉換為 ActiveCampaign
           if (!detail || detail.error) { setCampaignStatus("none"); return; }
           const pickupOpts = typeof detail.pickupOptions === "string" ? JSON.parse(detail.pickupOptions) : detail.pickupOptions || [];
+          const sOpts = typeof detail.supportOptions === "string" ? JSON.parse(detail.supportOptions) : detail.supportOptions || [];
           setCampaign({
             ...detail,
             pickupOptions: pickupOpts,
+            supportOptions: sOpts,
             groups: detail.groups?.map((g: Record<string, unknown>) => ({
               ...g,
               products: (g.products as Record<string, unknown>[])?.map((p: Record<string, unknown>) => ({
@@ -296,7 +300,7 @@ export default function OrderPage() {
         if (data.selections) setSelections(data.selections);
         if (data.deliveryMethod) setDeliveryMethod(data.deliveryMethod);
         if (data.notes) setNotes(data.notes);
-        if (data.supportType) setSupportType(data.supportType);
+        if (data.supportIdx != null) setSupportIdx(data.supportIdx);
         if (data.paymentMethod) setPaymentMethod(data.paymentMethod);
       } catch { /* ignore */ }
       sessionStorage.removeItem("order_selections");
@@ -314,13 +318,14 @@ export default function OrderPage() {
     [selections, allProducts]
   );
 
+  const selectedOption = supportIdx !== null ? campaign?.supportOptions?.[supportIdx] ?? null : null;
+
   const discountAmount = useMemo(
     () => {
-      if (!supportType || !campaign?.supporterDiscount) return 0;
-      const pct = getDiscountPercent(supportType);
-      return pct > 0 ? Math.round(subtotal * pct / 100) : 0;
+      if (!selectedOption || selectedOption.discount <= 0) return 0;
+      return Math.round(subtotal * selectedOption.discount / 100);
     },
-    [supportType, campaign, subtotal]
+    [selectedOption, subtotal]
   );
 
   const grandTotal = subtotal - discountAmount;
@@ -358,7 +363,7 @@ export default function OrderPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!campaign) return;
-    if (campaign.supporterDiscount > 0 && !supportType) { setError("請選擇您曾經以何種方式支持 Jam for Love"); return; }
+    if (campaign.supportOptions.length > 0 && supportIdx === null) { setError("請選擇您曾經以何種方式支持 Jam for Love"); return; }
     if (!hasRequiredSelection) { setError("請至少從必填分組中選擇一項"); return; }
 
     setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
@@ -382,7 +387,9 @@ export default function OrderPage() {
 
     setPendingOrder({
       items, total: grandTotal, discountAmount,
-      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes, supportType, isSupporter: supportType !== "" && supportType !== "first_time",
+      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes,
+      supportType: selectedOption?.label || "", supportDiscount: selectedOption?.discount || 0,
+      isSupporter: !!selectedOption && selectedOption.discount > 0,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -408,6 +415,7 @@ export default function OrderPage() {
         total: pendingOrder.total,
         isSupporter: pendingOrder.isSupporter,
         supportType: pendingOrder.supportType,
+        supportDiscount: pendingOrder.supportDiscount,
       };
 
       const res = await fetch("/api/orders", {
@@ -724,18 +732,19 @@ export default function OrderPage() {
 
       <form onSubmit={handleSubmit}>
         {/* 您曾經以何種方式支持 Jam for Love? */}
-        {campaign.supporterDiscount > 0 && (
+        {campaign.supportOptions.length > 0 && (
           <div className="mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.08s_both]">
             <div className="rounded-xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
               <p className="font-serif text-lg font-bold text-espresso mb-4">您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
               <div className="space-y-3">
-                {(Object.entries(SUPPORT_TYPES) as [SupportType, typeof SUPPORT_TYPES[SupportType]][]).map(([key, opt]) => {
-                  const selected = supportType === key;
+                {campaign.supportOptions.map((opt, i) => {
+                  const selected = supportIdx === i;
+                  const label = discountToLabel(opt.discount);
                   return (
                     <button
-                      key={key}
+                      key={i}
                       type="button"
-                      onClick={() => setSupportType(key)}
+                      onClick={() => setSupportIdx(i)}
                       className={`w-full rounded-xl p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
                       style={selected ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `1px solid ${theme.border}` }}
                     >
@@ -745,7 +754,7 @@ export default function OrderPage() {
                         </div>
                         <span className="text-base text-espresso">
                           {opt.label}
-                          {opt.discountLabel && <span className="ml-1 font-semibold" style={{ color: theme.accent }}>({opt.discountLabel})</span>}
+                          {label && <span className="ml-1 font-semibold" style={{ color: theme.accent }}>(可享 {label}優惠！)</span>}
                         </span>
                       </div>
                     </button>
@@ -856,7 +865,7 @@ export default function OrderPage() {
                 <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
                   {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
                 </button>
-                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportType })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportIdx })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
               </div>
             </div>
             <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
@@ -959,7 +968,7 @@ export default function OrderPage() {
                     <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
                   </div>
                   <div className="flex justify-between text-base">
-                    <span style={{ color: theme.accent }}>♥ {supportType ? SUPPORT_TYPES[supportType].label : "折扣"}（{getDiscountPercent(supportType)}%）</span>
+                    <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
                     <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
                   </div>
                   <div className="flex justify-between items-baseline pt-1.5" style={{ borderTop: `1px dashed ${theme.border}` }}>

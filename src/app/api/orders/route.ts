@@ -5,7 +5,6 @@ import type { InferSelectModel } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
-import { getDiscountPercent } from "@/lib/supportTypes";
 
 interface OrderItem {
   productId: number;
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType, supportDiscount } = body;
 
   // 新格式（有 campaignId）
   if (campaignId) {
@@ -118,11 +117,9 @@ export async function POST(req: NextRequest) {
 
     // 計算折扣（根據支持類型）
     let discountAmount = 0;
-    if (supportType && campaign.supporterDiscount > 0) {
-      const pct = getDiscountPercent(supportType);
-      if (pct > 0) {
-        discountAmount = Math.round(subtotal * pct / 100);
-      }
+    const pct = Number(supportDiscount) || 0;
+    if (pct > 0 && campaign.supporterDiscount > 0) {
+      discountAmount = Math.round(subtotal * pct / 100);
     }
     const computedTotal = subtotal - discountAmount;
 
@@ -223,7 +220,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType, supportDiscount } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
@@ -261,11 +258,9 @@ export async function PUT(req: NextRequest) {
     // 計算折扣（根據支持類型）
     const campaignData = await db.select().from(campaigns).where(eq(campaigns.id, cId)).get();
     let discountAmount = 0;
-    if (supportType && campaignData && campaignData.supporterDiscount > 0) {
-      const pct = getDiscountPercent(supportType);
-      if (pct > 0) {
-        discountAmount = Math.round(subtotal * pct / 100);
-      }
+    const putPct = Number(supportDiscount) || 0;
+    if (putPct > 0 && campaignData && campaignData.supporterDiscount > 0) {
+      discountAmount = Math.round(subtotal * putPct / 100);
     }
     const computedTotal = subtotal - discountAmount;
 
