@@ -6,6 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e/tests",
+  globalSetup: "./e2e/global-setup.ts",
   // 每個測試最長執行時間
   timeout: 30_000,
   // 全域測試期望 timeout

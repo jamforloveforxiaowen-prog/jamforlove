@@ -49,7 +49,8 @@ next-env.d.ts
 # test artifacts
 /playwright-report/
 /test-results/
-/e2e/
+/e2e/fixtures/*-auth-state.json
+/e2e/fixtures/test-consumer.json
 
 # preview files
 /login-previews/
