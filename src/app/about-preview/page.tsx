@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 
 const P1 =
   "「Jam for Love」是一個由「國立暨南大學國際文教與比較教育系」師生所共同組成的募資團隊。我們的起心動念很單純：在這個社會的許多角落，有許多非營利組織（NGO與NPO）正默默耕耘，無論是陪伴弱勢孩童、推動教育發展，或是傳遞和平與善意，他們總是無私地奉獻著自己的專業與時間。";
@@ -11,7 +11,77 @@ const P2 =
 const P3 =
   "這份透過果醬傳遞愛的行動，即將邁入充滿意義的第十年。十年來，我們不求成為耀眼的光，只願做那陣輕柔的風，為助人者輕輕推動前行的風帆。每一罐果醬，都承載著我們對這片土地的祝福。我們誠摯地邀請您，與我們一起品嚐這份甜蜜，讓這股溫柔的力量持續陪伴更多 NGO 與 NPO，在帶來希望的道路上走得更穩、更長遠。";
 
-/* ── 區塊包裝：編號 + 名稱 + bakeSwing 動畫 ── */
+const PARAGRAPHS = [P1, P2, P3];
+const QUOTE = "用果醬傳遞愛，陪伴助人者走得更遠。";
+
+/* ─── 共用品牌元件（保留原設計語彙） ─── */
+
+function BrandHeading({ align = "left" }: { align?: "left" | "center" }) {
+  const alignClass = align === "center" ? "text-center" : "";
+  return (
+    <div className={`mb-12 ${alignClass}`}>
+      <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-3">
+        About Us
+      </p>
+      <h2 className="font-serif text-3xl md:text-4xl font-bold text-espresso">
+        關於我們
+      </h2>
+      <div
+        className={`w-12 h-[2px] bg-rose mt-5 ${align === "center" ? "mx-auto" : ""}`}
+      />
+    </div>
+  );
+}
+
+function BrandQuote({
+  size = "md",
+  withDash = true,
+  align = "left",
+}: {
+  size?: "sm" | "md" | "lg";
+  withDash?: boolean;
+  align?: "left" | "center";
+}) {
+  const fontSize =
+    size === "lg"
+      ? "clamp(1.8rem, 4vw, 2.4rem)"
+      : size === "sm"
+        ? "clamp(1.15rem, 2.2vw, 1.4rem)"
+        : "clamp(1.4rem, 3vw, 1.7rem)";
+  return (
+    <div className={align === "center" ? "text-center" : ""}>
+      <p
+        className="font-serif font-bold text-rose leading-snug"
+        style={{ fontSize }}
+      >
+        「{QUOTE}」
+      </p>
+      {withDash && (
+        <div
+          className={`mt-5 w-10 ${align === "center" ? "mx-auto" : ""}`}
+          style={{ borderTop: "2px dashed rgba(196,80,106,0.3)" }}
+        />
+      )}
+    </div>
+  );
+}
+
+function BodyParagraph({
+  text,
+  className = "",
+}: {
+  text: string;
+  className?: string;
+}) {
+  return (
+    <p className={`text-[1.05rem] leading-[1.9] text-espresso-light/70 ${className}`}>
+      {text}
+    </p>
+  );
+}
+
+/* ─── 外框 ─── */
+
 function Section({
   index,
   title,
@@ -23,12 +93,9 @@ function Section({
 }) {
   return (
     <section className="py-12">
-      {/* 分隔線（第一個不需要） */}
       {index > 1 && (
         <hr className="mb-12 border-t border-[var(--color-linen-dark)]" />
       )}
-
-      {/* 編號 + 風格名稱 */}
       <div
         className="mb-8 flex items-center gap-3"
         style={{
@@ -36,120 +103,110 @@ function Section({
           animationDelay: `${index * 0.12}s`,
         }}
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-rose)] text-sm font-bold text-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose text-sm font-bold text-white">
           {index}
         </span>
         <h2 className="text-xl font-bold text-espresso">{title}</h2>
       </div>
-
-      {/* 內容 */}
       <div
+        className="rounded-2xl bg-white/40 p-8 md:p-12"
         style={{
           animation: `bakeSwing 0.7s cubic-bezier(0.34,1.56,0.64,1) both`,
           animationDelay: `${index * 0.12 + 0.15}s`,
+          border: "1px solid rgba(235,226,212,0.8)",
         }}
       >
-        {children}
+        <div className="max-w-5xl mx-auto">{children}</div>
       </div>
     </section>
   );
 }
 
 /* ═══════════════════════════════════════
-   1. 經典置中
+   1. 原始版（左引言 + 右正文）
    ═══════════════════════════════════════ */
 function Style01() {
   return (
-    <Section index={1} title="經典置中">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-lg leading-relaxed text-espresso">{P1}</p>
-        <p className="my-6 text-2xl text-[var(--color-rose)]">「 」</p>
-        <p className="text-lg leading-relaxed text-espresso">{P2}</p>
-        <p className="my-6 text-2xl text-[var(--color-rose)]">「 」</p>
-        <p className="text-lg leading-relaxed text-espresso">{P3}</p>
+    <Section index={1} title="原始版 — 左引言 + 右正文">
+      <BrandHeading />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
+        <div className="md:col-span-4">
+          <BrandQuote />
+        </div>
+        <div className="md:col-span-8 space-y-6">
+          {PARAGRAPHS.map((p, i) => (
+            <BodyParagraph key={i} text={p} />
+          ))}
+        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   2. 雜誌編排
+   2. 鏡像版（左正文 + 右引言）
    ═══════════════════════════════════════ */
 function Style02() {
   return (
-    <Section index={2} title="雜誌編排">
-      <div className="mx-auto max-w-3xl">
-        {/* first-letter 需要 inline style 因為 Tailwind 無法直接設定 */}
-        <p
-          className="mb-6 text-lg leading-relaxed text-espresso"
-          style={{}}
-        >
-          <span
-            className="float-left mr-3 mt-1 text-5xl font-bold leading-none text-[var(--color-rose)]"
-            style={{ fontFamily: "serif" }}
-          >
-            {P1.charAt(0)}
-          </span>
-          {P1.slice(1)}
-        </p>
-        <p className="mb-6 text-lg leading-relaxed text-espresso-light">
-          {P2}
-        </p>
-        <p className="text-lg leading-relaxed text-espresso-light">{P3}</p>
-        <div className="mt-8 h-1 w-16 bg-[var(--color-rose)]" />
+    <Section index={2} title="鏡像版 — 右引言 + 左正文">
+      <BrandHeading />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
+        <div className="md:col-span-8 space-y-6 order-2 md:order-1">
+          {PARAGRAPHS.map((p, i) => (
+            <BodyParagraph key={i} text={p} />
+          ))}
+        </div>
+        <div className="md:col-span-4 order-1 md:order-2 md:text-right">
+          <BrandQuote align="left" />
+        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   3. 時間軸敘事
+   3. 置中大標 + 單欄細長正文
    ═══════════════════════════════════════ */
 function Style03() {
-  const items = [
-    { label: "起源", text: P1 },
-    { label: "行動", text: P2 },
-    { label: "第十年", text: P3 },
-  ];
-
   return (
-    <Section index={3} title="時間軸敘事">
-      <div className="relative mx-auto max-w-3xl pl-10">
-        {/* 垂直虛線 */}
-        <div className="absolute left-3 top-0 h-full w-px border-l-2 border-dashed border-[var(--color-rose-light)]" />
-
-        {items.map((item, i) => (
-          <div key={i} className="relative mb-10 last:mb-0">
-            {/* 圓形節點 */}
-            <div className="absolute -left-10 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-rose)] text-xs font-bold text-white">
-              {i + 1}
-            </div>
-            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[var(--color-honey)]">
-              {item.label}
-            </p>
-            <p className="text-lg leading-relaxed text-espresso">{item.text}</p>
-          </div>
-        ))}
+    <Section index={3} title="置中大標 — 標題置中、正文窄欄">
+      <BrandHeading align="center" />
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-10 text-center">
+          <BrandQuote size="md" align="center" withDash />
+        </div>
+        <div className="space-y-6">
+          {PARAGRAPHS.map((p, i) => (
+            <BodyParagraph key={i} text={p} />
+          ))}
+        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   4. 卡片分段
+   4. 三欄段落（橫向並列）
    ═══════════════════════════════════════ */
 function Style04() {
-  const cards = [P1, P2, P3];
-
+  const labels = ["緣起", "行動", "十年"];
   return (
-    <Section index={4} title="卡片分段">
-      <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
-        {cards.map((text, i) => (
-          <div
-            key={i}
-            className="rounded-xl border-2 border-dashed border-[var(--color-linen-dark)] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-rose-light)] hover:shadow-lg"
-          >
-            <p className="text-base leading-relaxed text-espresso">{text}</p>
+    <Section index={4} title="三欄段落 — 起源／行動／十年 並列">
+      <BrandHeading />
+      <div className="mb-10">
+        <BrandQuote />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+        {PARAGRAPHS.map((p, i) => (
+          <div key={i}>
+            <p className="text-rose text-[0.7rem] font-semibold tracking-[0.3em] uppercase mb-3">
+              {labels[i]}
+            </p>
+            <div
+              className="w-8 h-px bg-rose/40 mb-4"
+              style={{ borderTop: "1px dashed rgba(196,80,106,0.4)" }}
+            />
+            <BodyParagraph text={p} />
           </div>
         ))}
       </div>
@@ -158,55 +215,22 @@ function Style04() {
 }
 
 /* ═══════════════════════════════════════
-   5. 左圖右文
+   5. 大型引言 Hero + 下方單欄
    ═══════════════════════════════════════ */
 function Style05() {
   return (
-    <Section index={5} title="左圖右文">
-      <div className="mx-auto flex max-w-4xl flex-col items-start gap-8 md:flex-row">
-        {/* 左側裝飾 */}
-        <div className="flex shrink-0 flex-col items-center gap-4 text-7xl md:sticky md:top-8">
-          <span className="text-[var(--color-rose)]" aria-hidden="true">
-            ♥
-          </span>
-          <span aria-hidden="true">🫙</span>
-        </div>
-        {/* 右側文字 */}
-        <div className="space-y-5">
-          <p className="text-lg leading-relaxed text-espresso">{P1}</p>
-          <p className="text-lg leading-relaxed text-espresso">{P2}</p>
-          <p className="text-lg leading-relaxed text-espresso">{P3}</p>
-        </div>
+    <Section index={5} title="Hero 引言 — 巨型引言置頂，正文窄欄置中">
+      <BrandHeading align="center" />
+      <div className="mb-14 text-center">
+        <BrandQuote size="lg" align="center" withDash={false} />
+        <div
+          className="mt-6 w-16 mx-auto"
+          style={{ borderTop: "2px dashed rgba(196,80,106,0.3)" }}
+        />
       </div>
-    </Section>
-  );
-}
-
-/* ═══════════════════════════════════════
-   6. 全幅引言
-   ═══════════════════════════════════════ */
-function Style06() {
-  const sections = [
-    { quote: "我們的起心動念很單純", body: P1 },
-    { quote: "成為一份溫柔而堅定的陪伴力量", body: P2 },
-    { quote: "即將邁入充滿意義的第十年", body: P3 },
-  ];
-
-  return (
-    <Section index={6} title="全幅引言">
-      <div className="mx-auto max-w-3xl space-y-10">
-        {sections.map((s, i) => (
-          <div key={i}>
-            <p
-              className="mb-4 font-bold text-[var(--color-rose)]"
-              style={{ fontSize: "1.6rem", lineHeight: 1.4 }}
-            >
-              「{s.quote}」
-            </p>
-            <p className="text-base leading-relaxed text-espresso-light">
-              {s.body}
-            </p>
-          </div>
+      <div className="max-w-3xl mx-auto space-y-6">
+        {PARAGRAPHS.map((p, i) => (
+          <BodyParagraph key={i} text={p} />
         ))}
       </div>
     </Section>
@@ -214,129 +238,171 @@ function Style06() {
 }
 
 /* ═══════════════════════════════════════
-   7. 手寫信風
+   6. 引言嵌入中段（首段 → 引言 → 其餘）
+   ═══════════════════════════════════════ */
+function Style06() {
+  return (
+    <Section index={6} title="引言穿插 — 首段後穿插引言分隔">
+      <BrandHeading />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <BodyParagraph text={P1} />
+        <div className="py-6">
+          <BrandQuote size="md" align="left" withDash={false} />
+        </div>
+        <BodyParagraph text={P2} />
+        <BodyParagraph text={P3} />
+      </div>
+    </Section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   7. 左直排標題 + 右大型引言與正文
    ═══════════════════════════════════════ */
 function Style07() {
   return (
-    <Section index={7} title="手寫信風">
-      <div
-        className="mx-auto max-w-2xl rounded-lg bg-white p-8 shadow-sm"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(transparent, transparent 31px, var(--color-linen-dark) 31px, var(--color-linen-dark) 32px)",
-          backgroundPositionY: "12px",
-          transform: "rotate(-0.5deg)",
-        }}
-      >
-        <p className="mb-6 text-lg leading-[32px] text-espresso">{P1}</p>
-        <p className="mb-6 text-lg leading-[32px] text-espresso">{P2}</p>
-        <p className="mb-8 text-lg leading-[32px] text-espresso">{P3}</p>
-        <p className="text-right text-lg italic text-[var(--color-rose)]">
-          Jam for Love 團隊 敬上
-        </p>
+    <Section index={7} title="直排標題 — 左側垂直排文，右側內容">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-start">
+        <div className="md:col-span-3">
+          <p className="text-rose text-xs font-semibold tracking-[0.3em] uppercase mb-4">
+            About Us
+          </p>
+          <h2
+            className="font-serif font-bold text-espresso"
+            style={{
+              writingMode: "vertical-rl",
+              letterSpacing: "0.4em",
+              fontSize: "clamp(2rem, 4vw, 2.6rem)",
+              lineHeight: 1,
+            }}
+          >
+            關於我們
+          </h2>
+          <div
+            className="mt-6"
+            style={{
+              width: 2,
+              height: 48,
+              background: "var(--color-rose)",
+            }}
+          />
+        </div>
+        <div className="md:col-span-9 space-y-8">
+          <BrandQuote size="md" />
+          {PARAGRAPHS.map((p, i) => (
+            <BodyParagraph key={i} text={p} />
+          ))}
+        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   8. 數字亮點
+   8. 虛線軌道 + 節點
    ═══════════════════════════════════════ */
 function Style08() {
-  const highlights = [
-    { number: "第 10 年", color: "var(--color-rose)" },
-    { number: "NGO & NPO", color: "var(--color-sage)" },
-    { number: "暨南大學", color: "var(--color-honey)" },
-  ];
-
   return (
-    <Section index={8} title="數字亮點">
-      <div className="mx-auto max-w-4xl">
-        {/* 數字亮點列 */}
-        <div className="mb-10 flex flex-wrap items-center justify-center gap-8">
-          {highlights.map((h, i) => (
-            <div key={i} className="text-center">
-              <p
-                className="text-3xl font-extrabold md:text-4xl"
-                style={{ color: h.color }}
-              >
-                {h.number}
-              </p>
+    <Section index={8} title="虛線軌道 — 左側玫瑰節點串起三段">
+      <BrandHeading />
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-10">
+          <BrandQuote />
+        </div>
+        <div
+          className="relative pl-10"
+          style={{
+            borderLeft: "2px dashed rgba(196,80,106,0.3)",
+          }}
+        >
+          {PARAGRAPHS.map((p, i) => (
+            <div key={i} className="relative mb-10 last:mb-0">
+              <span
+                className="absolute flex items-center justify-center"
+                style={{
+                  left: "-2.75rem",
+                  top: 6,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: "var(--color-rose)",
+                  boxShadow: "0 0 0 4px rgba(255,255,255,0.9)",
+                }}
+              />
+              <BodyParagraph text={p} />
             </div>
           ))}
         </div>
-        {/* 正文 */}
-        <div className="space-y-5">
-          <p className="text-lg leading-relaxed text-espresso">{P1}</p>
-          <p className="text-lg leading-relaxed text-espresso">{P2}</p>
-          <p className="text-lg leading-relaxed text-espresso">{P3}</p>
-        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   9. 摺疊展開
+   9. 首段強調（首段放大 espresso 深色）
    ═══════════════════════════════════════ */
 function Style09() {
-  const [expanded, setExpanded] = useState(false);
-
   return (
-    <Section index={9} title="摺疊展開">
-      <div className="mx-auto max-w-3xl">
-        <p className="mb-4 text-lg leading-relaxed text-espresso">{P1}</p>
-
-        {/* 可摺疊區域：grid-template-rows transition */}
-        <div
-          className="grid transition-[grid-template-rows] duration-500 ease-in-out"
-          style={{
-            gridTemplateRows: expanded ? "1fr" : "0fr",
-          }}
-        >
-          <div className="overflow-hidden">
-            <p className="mb-4 text-lg leading-relaxed text-espresso">{P2}</p>
-            <p className="text-lg leading-relaxed text-espresso">{P3}</p>
-          </div>
+    <Section index={9} title="首段強調 — 第一段放大加深，其餘柔和">
+      <BrandHeading />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
+        <div className="md:col-span-4">
+          <BrandQuote />
         </div>
-
-        <button
-          onClick={() => setExpanded((prev) => !prev)}
-          className="mt-4 font-semibold text-[var(--color-rose)] underline underline-offset-4 transition-colors hover:text-[var(--color-rose-dark)]"
-        >
-          {expanded ? "收起" : "閱讀更多"}
-        </button>
+        <div className="md:col-span-8 space-y-6">
+          <p
+            className="font-serif text-espresso leading-[1.8]"
+            style={{ fontSize: "clamp(1.1rem, 1.8vw, 1.25rem)" }}
+          >
+            {P1}
+          </p>
+          <BodyParagraph text={P2} />
+          <BodyParagraph text={P3} />
+        </div>
       </div>
     </Section>
   );
 }
 
 /* ═══════════════════════════════════════
-   10. 雙欄對比
+   10. 不對稱格線（小引言卡 + 偏移正文）
    ═══════════════════════════════════════ */
 function Style10() {
   return (
-    <Section index={10} title="雙欄對比">
-      <div className="mx-auto max-w-4xl">
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* 左欄 */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold text-[var(--color-rose)]">
-              我們的信念
-            </h3>
-            <p className="text-lg leading-relaxed text-espresso">{P1}</p>
-          </div>
-          {/* 右欄 */}
-          <div>
-            <h3 className="mb-4 text-xl font-bold text-[var(--color-sage)]">
-              我們的行動
-            </h3>
-            <p className="text-lg leading-relaxed text-espresso">{P2}</p>
+    <Section index={10} title="不對稱格線 — 懸浮引言卡 + 偏移正文">
+      <BrandHeading />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        <div className="md:col-span-5 md:col-start-1">
+          <div
+            className="relative p-6 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.8)",
+              border: "1px solid rgba(196,80,106,0.2)",
+              boxShadow: "0 10px 40px rgba(30,15,8,0.06)",
+            }}
+          >
+            <span
+              className="absolute text-rose font-serif"
+              style={{
+                top: -18,
+                left: 16,
+                fontSize: "4rem",
+                lineHeight: 1,
+                fontStyle: "italic",
+                fontWeight: 300,
+                fontFamily: "var(--font-display)",
+              }}
+              aria-hidden="true"
+            >
+              &ldquo;
+            </span>
+            <BrandQuote size="sm" withDash={false} />
           </div>
         </div>
-        {/* 底部跨欄 */}
-        <div className="mt-8 rounded-xl bg-white p-6 shadow-sm">
-          <p className="text-lg leading-relaxed text-espresso">{P3}</p>
+        <div className="md:col-span-7 md:col-start-6 space-y-6">
+          {PARAGRAPHS.map((p, i) => (
+            <BodyParagraph key={i} text={p} />
+          ))}
         </div>
       </div>
     </Section>
@@ -348,8 +414,10 @@ function Style10() {
    ═══════════════════════════════════════ */
 export default function AboutPreviewPage() {
   return (
-    <main className="min-h-screen bg-linen px-4 py-12 sm:px-6 lg:px-8">
-      {/* 頁面標題 */}
+    <main
+      className="min-h-screen px-4 py-12 sm:px-6 lg:px-8"
+      style={{ background: "var(--color-linen)" }}
+    >
       <h1
         className="mb-4 text-center text-3xl font-extrabold text-espresso md:text-4xl"
         style={{
@@ -365,19 +433,21 @@ export default function AboutPreviewPage() {
           animationDelay: "0.1s",
         }}
       >
-        共 10 種風格，供挑選最適合品牌調性的版面
+        共 10 種排版，皆保留原設計風格（玫瑰粉標語、襯線大標、短線、斜體引言、柔和咖啡正文）
       </p>
 
-      <Style01 />
-      <Style02 />
-      <Style03 />
-      <Style04 />
-      <Style05 />
-      <Style06 />
-      <Style07 />
-      <Style08 />
-      <Style09 />
-      <Style10 />
+      <div className="max-w-6xl mx-auto">
+        <Style01 />
+        <Style02 />
+        <Style03 />
+        <Style04 />
+        <Style05 />
+        <Style06 />
+        <Style07 />
+        <Style08 />
+        <Style09 />
+        <Style10 />
+      </div>
     </main>
   );
 }
