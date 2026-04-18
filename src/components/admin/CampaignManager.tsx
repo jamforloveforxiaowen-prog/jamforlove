@@ -198,13 +198,27 @@ export default function CampaignManager() {
     const mainGroup = groups.find((g) => g.isRequired !== false) || groups[0];
     const addonGroup = groups.find((g) => g.isRequired === false);
 
-    const mainProds = mainGroup?.products || [];
-    setProducts(mainProds.length > 0
-      ? mainProds.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
+    const rawMain = mainGroup?.products || [];
+    const rawAddons = addonGroup?.products || [];
+
+    // 將主商品中名稱含「加購」的項目自動移到加購商品欄位，並移除「加購」前綴
+    const isAddon = (name: string) => name.includes("加購");
+    const stripAddon = (name: string) => name.replace(/加購[\s:：\-—_／/]*/g, "").trim();
+
+    const mainOnly = rawMain.filter((p) => !isAddon(p.name));
+    const movedAddons = rawMain
+      .filter((p) => isAddon(p.name))
+      .map((p) => ({ ...p, name: stripAddon(p.name) || p.name }));
+
+    setProducts(mainOnly.length > 0
+      ? mainOnly.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
       : [{ name: "", price: 0, limit: null }]);
 
-    const addonProds = addonGroup?.products || [];
-    setAddons(addonProds.map((p) => ({ name: p.name, price: p.price, limit: p.limit })));
+    const mergedAddons = [
+      ...movedAddons,
+      ...rawAddons.map((p) => ({ ...p, name: isAddon(p.name) ? stripAddon(p.name) || p.name : p.name })),
+    ];
+    setAddons(mergedAddons.map((p) => ({ name: p.name, price: p.price, limit: p.limit })));
   }
 
   async function startEdit(id: number) {
