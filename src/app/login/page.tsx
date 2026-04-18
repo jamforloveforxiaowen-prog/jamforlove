@@ -224,6 +224,20 @@ export default function LoginPage() {
               註冊
             </Link>
           </p>
+
+          {/* 管理員登入入口 */}
+          <div className="mt-6 pt-6 border-t border-espresso-light/15">
+            <Link
+              href="/admin/login"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-espresso/5 hover:bg-espresso/10 border border-espresso-light/15 text-espresso-light/60 hover:text-espresso text-[0.8125rem] font-medium transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              管理員登入
+            </Link>
+          </div>
         </div>
       </div>
     </div>

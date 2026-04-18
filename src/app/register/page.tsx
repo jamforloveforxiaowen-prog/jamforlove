@@ -7,6 +7,8 @@ import Link from "next/link";
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +21,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, email, phone }),
       });
 
       const data = await res.json();
@@ -184,31 +186,67 @@ export default function RegisterPage() {
               加入我們
             </h1>
             <p className="text-espresso-light/50 text-[0.8125rem]">
-              輸入名稱即可註冊
+              填寫基本資料以便後續聯繫
             </p>
           </div>
 
           {/* 表單 */}
           <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label
-                htmlFor="reg-name"
-                className="block text-sm font-medium text-espresso mb-1.5"
-              >
-                名稱
-              </label>
-              <input
-                id="reg-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClass}
-                placeholder="1-20 個字元"
-                minLength={1}
-                maxLength={20}
-                autoFocus
-                required
-              />
+            <div className="space-y-4 mb-4">
+              <div>
+                <label
+                  htmlFor="reg-name"
+                  className="block text-sm font-medium text-espresso mb-1.5"
+                >
+                  名稱
+                </label>
+                <input
+                  id="reg-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={inputClass}
+                  placeholder="1-20 個字元"
+                  minLength={1}
+                  maxLength={20}
+                  autoFocus
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="reg-email"
+                  className="block text-sm font-medium text-espresso mb-1.5"
+                >
+                  Email
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass}
+                  placeholder="用於訂單通知"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="reg-phone"
+                  className="block text-sm font-medium text-espresso mb-1.5"
+                >
+                  聯絡電話
+                </label>
+                <input
+                  id="reg-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inputClass}
+                  placeholder="例：0912345678"
+                  required
+                />
+              </div>
             </div>
             {error && (
               <p className="text-rose text-sm font-medium animate-shake" role="alert">

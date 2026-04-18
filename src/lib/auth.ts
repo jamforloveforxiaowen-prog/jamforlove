@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users } from "./db/schema";
 import { eq } from "drizzle-orm";
@@ -14,6 +15,14 @@ export interface SessionUser {
   username: string;
   role: string;
   name: string;
+}
+
+export async function hashPassword(password: string) {
+  return bcrypt.hash(password, 10);
+}
+
+export async function verifyPassword(password: string, hash: string) {
+  return bcrypt.compare(password, hash);
 }
 
 export async function createToken(user: SessionUser) {
@@ -39,7 +48,11 @@ export async function getSession(): Promise<SessionUser | null> {
   return verifyToken(token);
 }
 
-export async function register(name: string) {
+export async function register(
+  name: string,
+  email: string,
+  phone: string
+) {
   const existing = await db
     .select()
     .from(users)
@@ -52,7 +65,7 @@ export async function register(name: string) {
 
   const result = await db
     .insert(users)
-    .values({ username: name, passwordHash: "", name, email: "" })
+    .values({ username: name, passwordHash: "", name, email, phone })
     .returning()
     .get();
 
@@ -68,6 +81,37 @@ export async function login(name: string) {
 
   if (!user) {
     return { error: "找不到此名稱，請先註冊" };
+  }
+
+  // 管理員需走管理員登入頁
+  if (user.role === "admin") {
+    return { error: "此帳號為管理員，請使用管理員登入" };
+  }
+
+  const token = await createToken({
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    name: user.name,
+  });
+
+  return { token, user };
+}
+
+export async function adminLogin(username: string, password: string) {
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .get();
+
+  if (!user || user.role !== "admin") {
+    return { error: "帳號或密碼錯誤" };
+  }
+
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) {
+    return { error: "帳號或密碼錯誤" };
   }
 
   const token = await createToken({

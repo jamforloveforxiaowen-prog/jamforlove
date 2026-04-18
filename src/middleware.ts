@@ -12,6 +12,7 @@ function getSecret(): Uint8Array {
 
 const protectedPaths = ["/order", "/my-orders"];
 const adminPaths = ["/admin"];
+const adminPublicPaths = ["/admin/login"];
 const authPaths = ["/login", "/register"];
 
 // M1: 速率限制 — 以 IP 為單位的 sliding window（in-memory）
@@ -21,6 +22,7 @@ const rateLimitStore = new Map<string, { count: number; windowStart: number }>()
 const RATE_LIMIT_RULES: Record<string, { maxRequests: number; windowMs: number }> = {
   "/api/auth/login": { maxRequests: 5, windowMs: 60_000 },
   "/api/auth/register": { maxRequests: 3, windowMs: 60_000 },
+  "/api/auth/admin-login": { maxRequests: 5, windowMs: 60_000 },
 };
 
 function checkRateLimit(ip: string, path: string): boolean {
@@ -76,9 +78,16 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  const isAdminPublic = adminPublicPaths.some((p) => path.startsWith(p));
+
   // Redirect logged-in users away from auth pages
   if (authPaths.some((p) => path.startsWith(p)) && user) {
     return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  // 管理員登入頁：已是管理員則直接進後台
+  if (isAdminPublic && user?.role === "admin") {
+    return NextResponse.redirect(new URL("/admin", req.url));
   }
 
   // Protect member pages
@@ -86,10 +95,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Protect admin pages
-  if (adminPaths.some((p) => path.startsWith(p))) {
+  // Protect admin pages（管理員登入頁除外）
+  if (adminPaths.some((p) => path.startsWith(p)) && !isAdminPublic) {
     if (!user || user.role !== "admin") {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
   }
 
@@ -105,5 +114,6 @@ export const config = {
     "/register",
     "/api/auth/login",
     "/api/auth/register",
+    "/api/auth/admin-login",
   ],
 };
