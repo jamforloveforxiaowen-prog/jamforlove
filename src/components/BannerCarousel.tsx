@@ -114,9 +114,6 @@ export default function BannerCarousel() {
                 />
               )}
 
-              {/* 遮罩 */}
-              <div className="absolute inset-0 bg-black/30" />
-
               {/* 文字 */}
               <div className="relative z-10 text-center px-6 max-w-3xl">
                 {banner.title && (
