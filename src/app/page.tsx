@@ -8,21 +8,21 @@ export default function HomePage() {
   return (
     <div>
       {/* ── Hero ─────────────────────────── */}
-      <section className="min-h-[calc(100vh-3.5rem)] flex items-center">
-        <div className="max-w-6xl mx-auto px-6 w-full py-20 md:py-0">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 items-center">
+      <section className="flex items-center">
+        <div className="max-w-6xl mx-auto px-6 w-full py-10 md:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-6 items-center">
             {/* 左側文字 */}
             <div className="md:col-span-7 order-2 md:order-1">
-              <p className="text-rose text-xs font-semibold tracking-[0.35em] uppercase mb-8">
+              <p className="text-rose text-xs font-semibold tracking-[0.35em] uppercase mb-4">
                 Handmade with Love
               </p>
               <h1
-                className="leading-[0.85] mb-8"
+                className="leading-[0.9] mb-5"
                 style={{
                   fontFamily: "var(--font-display)",
                   fontStyle: "italic",
                   fontWeight: 300,
-                  fontSize: "clamp(4rem, 10vw, 9rem)",
+                  fontSize: "clamp(3.5rem, 8vw, 7rem)",
                   color: "var(--color-espresso)",
                 }}
               >
@@ -30,10 +30,10 @@ export default function HomePage() {
                 <br />
                 <span className="text-rose">For Love</span>
               </h1>
-              <p className="font-serif text-espresso-light text-xl md:text-2xl leading-relaxed mb-4 max-w-lg">
+              <p className="font-serif text-espresso-light text-lg md:text-xl leading-relaxed mb-2 max-w-lg">
                 嚴選當季新鮮水果，不添加人工色素與防腐劑。
               </p>
-              <p className="text-espresso-light/60 leading-relaxed mb-10 max-w-md">
+              <p className="text-espresso-light/60 leading-relaxed mb-6 max-w-md">
                 每一口，都是用愛熬出的幸福滋味。
               </p>
               <Link href="/order" className="btn-primary text-base px-10 py-4">
