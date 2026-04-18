@@ -118,17 +118,112 @@ function BankTransferInfo() {
 
 /* ─── 表單風格配色 ─────────────────────────────── */
 
-const FORM_STYLE_THEMES: Record<string, { accent: string; accentLight: string; bg: string; cardBg: string; border: string; stepColors: string[] }> = {
-  classic:  { accent: "#c4506a", accentLight: "#d87a90", bg: "transparent", cardBg: "rgba(255,255,255,0.5)", border: "rgba(30,15,8,0.12)", stepColors: ["#c4506a", "#c89530", "#5a7c52", "#1e0f08"] },
-  minimal:  { accent: "#333333", accentLight: "#666666", bg: "#fafafa", cardBg: "rgba(255,255,255,0.9)", border: "rgba(0,0,0,0.08)", stepColors: ["#333333", "#555555", "#777777", "#999999"] },
-  warm:     { accent: "#d4764e", accentLight: "#e8a07a", bg: "#fdf6ee", cardBg: "rgba(255,248,238,0.8)", border: "rgba(180,140,100,0.2)", stepColors: ["#d4764e", "#c89530", "#8b7355", "#6b4e37"] },
-  elegant:  { accent: "#9b6b9e", accentLight: "#c49cc6", bg: "#faf5fb", cardBg: "rgba(255,250,255,0.7)", border: "rgba(155,107,158,0.15)", stepColors: ["#9b6b9e", "#c4849b", "#7b9b8e", "#6b5b7b"] },
-  rustic:   { accent: "#8b5e3c", accentLight: "#a87d5a", bg: "#f8f1e8", cardBg: "rgba(248,241,232,0.8)", border: "rgba(139,94,60,0.2)", stepColors: ["#8b5e3c", "#a07040", "#6b7b52", "#5c4033"] },
-  playful:  { accent: "#e85d75", accentLight: "#ff8fa0", bg: "#fff8f5", cardBg: "rgba(255,255,255,0.7)", border: "rgba(232,93,117,0.15)", stepColors: ["#e85d75", "#f5a623", "#4ecdc4", "#7b68ee"] },
-  modern:   { accent: "#2d3436", accentLight: "#636e72", bg: "#f5f5f5", cardBg: "rgba(255,255,255,0.95)", border: "rgba(0,0,0,0.1)", stepColors: ["#2d3436", "#636e72", "#00b894", "#0984e3"] },
-  vintage:  { accent: "#8b4513", accentLight: "#a0522d", bg: "#f5efe0", cardBg: "rgba(245,239,224,0.8)", border: "rgba(139,69,19,0.2)", stepColors: ["#8b4513", "#b8860b", "#556b2f", "#4a3728"] },
-  nature:   { accent: "#2d6a4f", accentLight: "#52b788", bg: "#f0f7f0", cardBg: "rgba(240,247,240,0.7)", border: "rgba(45,106,79,0.15)", stepColors: ["#2d6a4f", "#52b788", "#95d5b2", "#1b4332"] },
-  festival: { accent: "#c41e3a", accentLight: "#e74c3c", bg: "#fff8f0", cardBg: "rgba(255,252,245,0.8)", border: "rgba(196,30,58,0.15)", stepColors: ["#c41e3a", "#d4a017", "#c41e3a", "#8b0000"] },
+interface FormTheme {
+  accent: string;
+  accentLight: string;
+  bg: string;
+  cardBg: string;
+  border: string;
+  stepColors: string[];
+  /** 邊框線型 */
+  borderStyle: "dashed" | "solid" | "dotted" | "double";
+  /** 邊框粗細（px 數字） */
+  borderWidth: number;
+  /** tailwind-style 圓角 class 補丁（用 class 名） */
+  radiusCard: string;
+  radiusButton: string;
+  radiusPill: string;
+  /** Heading 字體 (CSS variable / font-family) */
+  fontHeading: string;
+  /** Heading 字體樣式：italic 或 normal */
+  headingItalic: boolean;
+  /** 大寫字母距離（例如 modern 風） */
+  headingTracking: string;
+  /** 裝飾符號（表頭左右、步驟分隔） */
+  decoSymbol: string;
+  /** 背景圖樣 (CSS background-image)，可選 */
+  bgPattern?: string;
+  /** 卡片陰影 */
+  cardShadow: string;
+}
+
+const FORM_STYLE_THEMES: Record<string, FormTheme> = {
+  classic:  {
+    accent: "#c4506a", accentLight: "#d87a90", bg: "transparent", cardBg: "rgba(255,255,255,0.5)", border: "rgba(30,15,8,0.12)",
+    stepColors: ["#c4506a", "#c89530", "#5a7c52", "#1e0f08"],
+    borderStyle: "dashed", borderWidth: 2, radiusCard: "rounded-2xl", radiusButton: "rounded-lg", radiusPill: "rounded-full",
+    fontHeading: "var(--font-display), serif", headingItalic: true, headingTracking: "normal",
+    decoSymbol: "♥", cardShadow: "0 8px 24px rgba(196,80,106,0.08)",
+  },
+  minimal:  {
+    accent: "#1a1a1a", accentLight: "#555555", bg: "#fafafa", cardBg: "#ffffff", border: "rgba(0,0,0,0.08)",
+    stepColors: ["#1a1a1a", "#333333", "#666666", "#999999"],
+    borderStyle: "solid", borderWidth: 1, radiusCard: "rounded-md", radiusButton: "rounded", radiusPill: "rounded",
+    fontHeading: "var(--font-sans), system-ui, sans-serif", headingItalic: false, headingTracking: "0.05em",
+    decoSymbol: "—", cardShadow: "none",
+  },
+  warm:     {
+    accent: "#d4764e", accentLight: "#e8a07a", bg: "#fdf6ee", cardBg: "#fff8ee", border: "rgba(180,140,100,0.35)",
+    stepColors: ["#d4764e", "#c89530", "#8b7355", "#6b4e37"],
+    borderStyle: "dashed", borderWidth: 2, radiusCard: "rounded-2xl", radiusButton: "rounded-lg", radiusPill: "rounded-full",
+    fontHeading: "var(--font-handwritten), cursive", headingItalic: false, headingTracking: "0.02em",
+    decoSymbol: "✦", cardShadow: "0 6px 18px rgba(180,120,70,0.12)",
+    bgPattern: "repeating-linear-gradient(45deg, rgba(212,118,78,0.04) 0 2px, transparent 2px 12px)",
+  },
+  elegant:  {
+    accent: "#9b6b9e", accentLight: "#c49cc6", bg: "#faf5fb", cardBg: "rgba(255,250,255,0.85)", border: "rgba(155,107,158,0.22)",
+    stepColors: ["#9b6b9e", "#c4849b", "#7b9b8e", "#6b5b7b"],
+    borderStyle: "solid", borderWidth: 1, radiusCard: "rounded-3xl", radiusButton: "rounded-full", radiusPill: "rounded-full",
+    fontHeading: "var(--font-display), serif", headingItalic: true, headingTracking: "0.02em",
+    decoSymbol: "❀", cardShadow: "0 10px 30px rgba(155,107,158,0.15)",
+    bgPattern: "radial-gradient(circle at 20% 20%, rgba(196,156,198,0.12) 0 40%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(196,132,155,0.1) 0 40%, transparent 40%)",
+  },
+  rustic:   {
+    accent: "#8b5e3c", accentLight: "#a87d5a", bg: "#f1e4cd", cardBg: "rgba(248,237,215,0.92)", border: "rgba(139,94,60,0.45)",
+    stepColors: ["#8b5e3c", "#a07040", "#6b7b52", "#5c4033"],
+    borderStyle: "double", borderWidth: 4, radiusCard: "rounded-lg", radiusButton: "rounded", radiusPill: "rounded",
+    fontHeading: "var(--font-vintage), Georgia, serif", headingItalic: false, headingTracking: "0.04em",
+    decoSymbol: "❧", cardShadow: "0 4px 0 rgba(139,94,60,0.25)",
+    bgPattern: "repeating-linear-gradient(90deg, rgba(139,94,60,0.06) 0 1px, transparent 1px 6px), repeating-linear-gradient(0deg, rgba(139,94,60,0.04) 0 1px, transparent 1px 40px)",
+  },
+  playful:  {
+    accent: "#e85d75", accentLight: "#ff8fa0", bg: "#fff5f8", cardBg: "#ffffff", border: "rgba(232,93,117,0.3)",
+    stepColors: ["#e85d75", "#f5a623", "#4ecdc4", "#7b68ee"],
+    borderStyle: "solid", borderWidth: 3, radiusCard: "rounded-3xl", radiusButton: "rounded-full", radiusPill: "rounded-full",
+    fontHeading: "var(--font-handwritten), cursive", headingItalic: false, headingTracking: "0",
+    decoSymbol: "✿", cardShadow: "0 8px 0 rgba(232,93,117,0.18)",
+  },
+  modern:   {
+    accent: "#1a1a1a", accentLight: "#636e72", bg: "#ffffff", cardBg: "#f7f7f7", border: "#1a1a1a",
+    stepColors: ["#1a1a1a", "#444444", "#888888", "#bbbbbb"],
+    borderStyle: "solid", borderWidth: 2, radiusCard: "rounded-none", radiusButton: "rounded-none", radiusPill: "rounded-none",
+    fontHeading: "var(--font-condensed), Impact, sans-serif", headingItalic: false, headingTracking: "0.12em",
+    decoSymbol: "│", cardShadow: "6px 6px 0 #1a1a1a",
+  },
+  vintage:  {
+    accent: "#8b4513", accentLight: "#b8860b", bg: "#f5e9d0", cardBg: "#fbf3de", border: "rgba(139,69,19,0.35)",
+    stepColors: ["#8b4513", "#b8860b", "#556b2f", "#4a3728"],
+    borderStyle: "dotted", borderWidth: 2, radiusCard: "rounded-sm", radiusButton: "rounded-sm", radiusPill: "rounded",
+    fontHeading: "var(--font-vintage), Georgia, serif", headingItalic: true, headingTracking: "0.08em",
+    decoSymbol: "§", cardShadow: "0 2px 0 rgba(139,69,19,0.2)",
+    bgPattern: "repeating-radial-gradient(circle at 20% 30%, rgba(139,69,19,0.04) 0 1px, transparent 1px 6px)",
+  },
+  nature:   {
+    accent: "#2d6a4f", accentLight: "#52b788", bg: "#eef6ea", cardBg: "rgba(255,255,255,0.85)", border: "rgba(45,106,79,0.3)",
+    stepColors: ["#2d6a4f", "#52b788", "#95d5b2", "#1b4332"],
+    borderStyle: "solid", borderWidth: 2, radiusCard: "rounded-[28px]", radiusButton: "rounded-full", radiusPill: "rounded-full",
+    fontHeading: "var(--font-serif), serif", headingItalic: false, headingTracking: "0.02em",
+    decoSymbol: "🌿", cardShadow: "0 6px 18px rgba(45,106,79,0.12)",
+    bgPattern: "radial-gradient(circle at 10% 10%, rgba(82,183,136,0.08) 0 30%, transparent 30%), radial-gradient(circle at 90% 70%, rgba(45,106,79,0.06) 0 25%, transparent 25%)",
+  },
+  festival: {
+    accent: "#c41e3a", accentLight: "#d4a017", bg: "#fff2e0", cardBg: "rgba(255,248,232,0.92)", border: "rgba(212,160,23,0.5)",
+    stepColors: ["#c41e3a", "#d4a017", "#c41e3a", "#8b0000"],
+    borderStyle: "double", borderWidth: 4, radiusCard: "rounded-xl", radiusButton: "rounded-md", radiusPill: "rounded-full",
+    fontHeading: "var(--font-vintage), Georgia, serif", headingItalic: false, headingTracking: "0.06em",
+    decoSymbol: "★", cardShadow: "0 6px 18px rgba(196,30,58,0.2)",
+    bgPattern: "repeating-linear-gradient(45deg, rgba(212,160,23,0.08) 0 10px, transparent 10px 20px)",
+  },
 };
 
 /* ─── 商品卡片元件 ─────────────────────────────── */
@@ -153,8 +248,8 @@ function ProductCard({
 
   return (
     <div
-      className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"} ${critical ? "ring-2 ring-rose/40" : ""}`}
-      style={{ border: isSelected ? `2px dashed ${theme.accent}` : `2px dashed ${theme.border}`, background: isSelected ? `${theme.accent}08` : theme.cardBg }}
+      className={`${theme.radiusCard} p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"} ${critical ? "ring-2 ring-rose/40" : ""}`}
+      style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${isSelected ? theme.accent : theme.border}`, background: isSelected ? `${theme.accent}10` : theme.cardBg, boxShadow: isSelected ? theme.cardShadow : "none" }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -189,22 +284,22 @@ function ProductCard({
         </div>
         <div className="shrink-0">
           {soldOut ? (
-            <span className="px-4 py-2 rounded-lg text-base font-medium text-espresso-light/30" style={{ border: "2px dashed rgba(30,15,8,0.08)" }}>售完</span>
+            <span className={`px-4 py-2 ${theme.radiusButton} text-base font-medium text-espresso-light/30`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} rgba(30,15,8,0.08)` }}>售完</span>
           ) : isSelected ? (
             <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => onUpdate(-1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
+              <button type="button" onClick={() => onUpdate(-1)} className={`w-9 h-9 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>−</button>
               <span key={qty} className="w-7 text-center font-bold text-espresso tabular-nums text-base animate-[number-pop_0.3s_ease]">{qty}</span>
-              <button type="button" onClick={() => onUpdate(1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
+              <button type="button" onClick={() => onUpdate(1)} className={`w-9 h-9 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>+</button>
             </div>
           ) : (
-            <button type="button" onClick={() => onUpdate(1)} className="px-4 py-2 rounded-lg text-base font-medium hover:text-white active:scale-95 transition-all" style={{ color: theme.accent, border: `2px dashed ${theme.accent}50` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
+            <button type="button" onClick={() => onUpdate(1)} className={`px-4 py-2 ${theme.radiusButton} text-base font-medium hover:text-white active:scale-95 transition-all`} style={{ color: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
           )}
         </div>
       </div>
       {isSelected && (
-        <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: `1px dashed ${theme.border}` }}>
+        <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: `1px ${theme.borderStyle} ${theme.border}` }}>
           <span className="text-espresso-light/40 text-base">{qty} {product.unit} × NT${product.price}</span>
-          <span className="font-bold text-base" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {qty * product.price}</span>
+          <span className="font-bold text-base" style={{ color: theme.accent, fontFamily: theme.fontHeading }}>NT$ {qty * product.price}</span>
         </div>
       )}
     </div>
@@ -234,7 +329,7 @@ function StepIndicator({
             )}
             <div className="flex items-center gap-1.5">
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                className={`w-7 h-7 ${theme.radiusPill} flex items-center justify-center text-xs font-bold transition-all`}
                 style={isActive
                   ? { background: theme.accent, color: "#fff", boxShadow: `0 2px 8px ${theme.accent}40` }
                   : isDone
@@ -892,18 +987,30 @@ export default function OrderPage() {
   const bannerImages = parseBannerUrls(campaign.bannerUrl);
 
   const inputClass = "w-full py-3 px-0 bg-transparent text-lg text-espresso outline-none placeholder:text-espresso-light/30 transition-colors";
-  const inputBorder = { borderBottom: `2px dashed ${theme.border}` };
+  const inputBorder = { borderBottom: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` };
   const inputBorderFocus = `focus-within:[border-bottom-color:${theme.accent}]`;
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-10 md:py-16" style={{ background: theme.bg }}>
+    <div
+      className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative"
+      style={{ background: theme.bg, backgroundImage: theme.bgPattern }}
+    >
       {/* 標頭 */}
       <div className="text-center mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-        <h1 className="font-serif text-3xl md:text-4xl font-bold text-espresso" style={{ fontStyle: "italic" }}>
+        <h1
+          className="text-3xl md:text-5xl font-bold text-espresso"
+          style={{
+            fontFamily: theme.fontHeading,
+            fontStyle: theme.headingItalic ? "italic" : "normal",
+            letterSpacing: theme.headingTracking,
+          }}
+        >
           {campaign.name}
         </h1>
         <div className="flex items-center justify-center gap-3 mt-4">
-          <span className="w-10 h-px" style={{ background: `${theme.accent}50` }} /><span className="text-sm" style={{ color: theme.accent }}>♥</span><span className="w-10 h-px" style={{ background: `${theme.accent}50` }} />
+          <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
+          <span className="text-base" style={{ color: theme.accent }}>{theme.decoSymbol}</span>
+          <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
         </div>
       </div>
 
@@ -914,12 +1021,19 @@ export default function OrderPage() {
       {currentStepKey === "intro" && (
         <div className="space-y-4 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           {bannerImages.map((url, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(30,15,8,0.08)", border: "1px solid rgba(235,226,212,0.8)" }}>
+            <div
+              key={i}
+              className={`${theme.radiusCard} overflow-hidden`}
+              style={{ boxShadow: theme.cardShadow, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
+            >
               <Image src={url} alt={`活動說明 ${i + 1}`} width={800} height={800} className="w-full h-auto" />
             </div>
           ))}
           {campaign.description?.trim() && (
-            <div className="rounded-2xl px-5 py-4" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
+            <div
+              className={`${theme.radiusCard} px-5 py-4`}
+              style={{ background: theme.cardBg, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, boxShadow: theme.cardShadow }}
+            >
               <p className="text-base md:text-lg leading-relaxed text-espresso whitespace-pre-wrap">{campaign.description}</p>
             </div>
           )}
@@ -932,8 +1046,8 @@ export default function OrderPage() {
           {/* 支持者選項 */}
           {campaign.supportOptions.length > 0 && (
             <div className="mb-8">
-              <div className="rounded-xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
-                <p className="font-serif text-lg font-bold text-espresso mb-4">您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
+              <div className={`${theme.radiusCard} p-5`} style={{ background: theme.cardBg, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, boxShadow: theme.cardShadow }}>
+                <p className="text-lg font-bold text-espresso mb-4" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
                 <div className="space-y-3">
                   {campaign.supportOptions.map((opt, i) => {
                     const selected = supportIdx === i;
@@ -943,8 +1057,8 @@ export default function OrderPage() {
                         key={i}
                         type="button"
                         onClick={() => setSupportIdx(i)}
-                        className={`w-full rounded-xl p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
-                        style={selected ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `1px solid ${theme.border}` }}
+                        className={`w-full ${theme.radiusButton} p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
+                        style={selected ? { background: `${theme.accent}10`, border: `${theme.borderWidth}px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all" style={selected ? { background: theme.accent, border: `2px solid ${theme.accent}` } : { background: "transparent", border: "2px solid rgba(30,15,8,0.2)" }}>
@@ -966,7 +1080,7 @@ export default function OrderPage() {
           {/* 必填商品分組 */}
           {requiredGroups.map((group) => (
             <div key={group.id} className="mb-8">
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">
+              <h2 className="text-2xl md:text-3xl font-bold text-espresso mb-1" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>
                 {group.name} <span className="text-rose text-sm font-normal">*</span>
               </h2>
               {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
@@ -987,7 +1101,7 @@ export default function OrderPage() {
           {/* 如果沒有加購商品，也顯示非必填分組在這一步 */}
           {!hasAddonProducts && addonGroups.map((group) => (
             <div key={group.id} className="mb-8">
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">{group.name}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-espresso mb-1" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>{group.name}</h2>
               {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
               <div className="space-y-2.5">
                 {group.products.map((product) => (
@@ -1005,7 +1119,7 @@ export default function OrderPage() {
 
           {/* 已選小計 */}
           {hasAnySelection && (
-            <div className="rounded-lg p-4 mb-6" style={{ background: theme.cardBg, border: `1px dashed ${theme.border}` }}>
+            <div className={`${theme.radiusCard} p-4 mb-6`} style={{ background: theme.cardBg, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, boxShadow: theme.cardShadow }}>
               <div className="flex justify-between items-baseline">
                 <span className="text-espresso-light/60 text-base">目前小計</span>
                 <span className="font-bold text-xl" style={{ color: theme.accent }}>NT$ {subtotal}</span>
@@ -1020,7 +1134,7 @@ export default function OrderPage() {
         <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           {addonGroups.map((group) => (
             <div key={group.id} className="mb-8">
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">{group.name}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-espresso mb-1" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>{group.name}</h2>
               {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
               <p className="text-espresso-light/40 text-sm mb-4">可跳過，直接點下一步</p>
               <div className="space-y-2.5">
@@ -1038,7 +1152,7 @@ export default function OrderPage() {
           ))}
 
           {/* 已選小計 */}
-          <div className="rounded-lg p-4 mb-6" style={{ background: theme.cardBg, border: `1px dashed ${theme.border}` }}>
+          <div className={`${theme.radiusCard} p-4 mb-6`} style={{ background: theme.cardBg, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, boxShadow: theme.cardShadow }}>
             <div className="flex justify-between items-baseline">
               <span className="text-espresso-light/60 text-base">目前小計</span>
               <span className="font-bold text-xl" style={{ color: theme.accent }}>NT$ {subtotal}</span>
@@ -1051,7 +1165,7 @@ export default function OrderPage() {
       {currentStepKey === "info" && (
         <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">填寫資料</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-espresso" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>填寫資料</h2>
             <div className="flex items-center gap-2">
               <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
                 {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
@@ -1086,8 +1200,8 @@ export default function OrderPage() {
               <select
                 value={deliveryMethod}
                 onChange={(e) => setDeliveryMethod(e.target.value)}
-                className="w-full py-3 px-4 rounded-lg text-lg text-espresso bg-white outline-none transition-colors"
-                style={{ border: `2px dashed ${theme.border}` }}
+                className={`w-full py-3 px-4 ${theme.radiusButton} text-lg text-espresso bg-white outline-none transition-colors`}
+                style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
               >
                 <option value="shipping">郵寄</option>
                 {(campaign.pickupOptions || []).map((opt) => (
@@ -1115,10 +1229,10 @@ export default function OrderPage() {
                     key={opt.value}
                     type="button"
                     onClick={() => setPaymentMethod(opt.value)}
-                    className={`flex-1 py-3 px-4 rounded-lg text-left transition-all ${paymentMethod === opt.value ? "shadow-sm" : ""}`}
+                    className={`flex-1 py-3 px-4 ${theme.radiusButton} text-left transition-all ${paymentMethod === opt.value ? "shadow-sm" : ""}`}
                     style={paymentMethod === opt.value
-                      ? { border: `2px solid ${theme.accent}`, background: `${theme.accent}08` }
-                      : { border: `2px dashed ${theme.border}`, background: theme.cardBg }}
+                      ? { border: `${theme.borderWidth}px solid ${theme.accent}`, background: `${theme.accent}10` }
+                      : { border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, background: theme.cardBg }}
                   >
                     <p className="text-base font-medium text-espresso">{opt.label}</p>
                     <p className="text-xs text-espresso-light/40 mt-0.5">{opt.desc}</p>
@@ -1139,8 +1253,8 @@ export default function OrderPage() {
       {/* ═══ Step: 確認訂單 ═══ */}
       {currentStepKey === "summary" && (
         <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-          <div className="rounded-lg p-5 mb-6" style={{ border: `2px dashed ${theme.border}`, background: theme.cardBg }}>
-            <h3 className="font-serif text-2xl font-bold text-espresso mb-3">訂單摘要</h3>
+          <div className={`${theme.radiusCard} p-5 mb-6`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, background: theme.cardBg, boxShadow: theme.cardShadow }}>
+            <h3 className="text-2xl font-bold text-espresso mb-3" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>訂單摘要</h3>
             <div className="space-y-1.5">
               {Object.entries(selections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
                 const p = allProducts.find((p) => p.id === Number(id));
@@ -1161,7 +1275,7 @@ export default function OrderPage() {
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-base">
-                    <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
+                    <span style={{ color: theme.accent }}>{theme.decoSymbol} 支持者折扣（{selectedOption?.discount}%）</span>
                     <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
                   </div>
                 )}
@@ -1179,15 +1293,15 @@ export default function OrderPage() {
                 )}
               </div>
             )}
-            <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `2px dashed ${theme.border}` }}>
-              <span className="font-serif font-bold text-espresso">合計</span>
-              <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
+            <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>
+              <span className="font-bold text-espresso" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal" }}>合計</span>
+              <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: theme.fontHeading }}>NT$ {grandTotal}</span>
             </div>
           </div>
 
           {/* 收件摘要 */}
-          <div className="rounded-lg p-5 mb-6" style={{ border: `1px dashed ${theme.border}`, background: theme.cardBg }}>
-            <h3 className="font-serif text-lg font-bold text-espresso mb-3">收件資訊</h3>
+          <div className={`${theme.radiusCard} p-5 mb-6`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, background: theme.cardBg, boxShadow: theme.cardShadow }}>
+            <h3 className="text-lg font-bold text-espresso mb-3" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>收件資訊</h3>
             <div className="space-y-1.5 text-base">
               <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">收件人</span><span className="text-espresso">{customerName}</span></div>
               <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">電話</span><span className="text-espresso">{phone}</span></div>
@@ -1211,8 +1325,8 @@ export default function OrderPage() {
           <button
             type="button"
             onClick={goBack}
-            className="flex-1 py-4 rounded-lg font-serif font-bold text-base text-espresso-light hover:text-espresso active:scale-[0.97] transition-all"
-            style={{ border: `2px dashed ${theme.border}` }}
+            className={`flex-1 py-4 ${theme.radiusButton} font-bold text-base text-espresso-light hover:text-espresso active:scale-[0.97] transition-all`}
+            style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, fontFamily: theme.fontHeading, letterSpacing: theme.headingTracking }}
           >
             上一步
           </button>
@@ -1223,8 +1337,8 @@ export default function OrderPage() {
             type="button"
             onClick={goNext}
             disabled={currentStepKey === "products" && !hasAnySelection}
-            className="flex-1 py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
-            style={{ background: theme.accent, border: `2px dashed ${theme.accent}50`, boxShadow: `0 4px 16px ${theme.accent}30` }}
+            className={`flex-1 py-4 text-white font-bold text-lg ${theme.radiusButton} transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none`}
+            style={{ background: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60`, boxShadow: theme.cardShadow, fontFamily: theme.fontHeading, letterSpacing: theme.headingTracking }}
           >
             {currentStepKey === "products" && !hasAnySelection ? "請先選擇商品" : "下一步"}
           </button>
@@ -1233,8 +1347,8 @@ export default function OrderPage() {
             type="button"
             onClick={handleSubmitOrder}
             disabled={loading}
-            className="flex-1 py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-60"
-            style={{ background: theme.accent, border: `2px dashed ${theme.accent}50`, boxShadow: `0 4px 16px ${theme.accent}30` }}
+            className={`flex-1 py-4 text-white font-bold text-lg ${theme.radiusButton} transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-60`}
+            style={{ background: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60`, boxShadow: theme.cardShadow, fontFamily: theme.fontHeading, letterSpacing: theme.headingTracking }}
           >
             {`確認訂購 — NT$ ${grandTotal}`}
           </button>
