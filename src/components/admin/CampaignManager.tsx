@@ -186,8 +186,6 @@ export default function CampaignManager() {
   const [newPickup, setNewPickup] = useState("");
   const [products, setProducts] = useState<ProductEntry[]>([{ name: "", description: "", price: 0, limit: null }]);
   const [addons, setAddons] = useState<ProductEntry[]>([]);
-  const [mainGroupDesc, setMainGroupDesc] = useState("");
-  const [addonGroupDesc, setAddonGroupDesc] = useState("");
 
   async function loadCampaigns() {
     try {
@@ -209,7 +207,6 @@ export default function CampaignManager() {
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", description: "", price: 0, limit: null }]);
     setAddons([]);
-    setMainGroupDesc(""); setAddonGroupDesc("");
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
   }
 
@@ -239,9 +236,6 @@ export default function CampaignManager() {
       ...rawAddons.map((p) => ({ ...p, name: isAddon(p.name) ? stripAddon(p.name) || p.name : p.name })),
     ];
     setAddons(mergedAddons.map((p) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit })));
-
-    setMainGroupDesc(mainGroup?.description || "");
-    setAddonGroupDesc(addonGroup?.description || "");
   }
 
   async function startEdit(id: number) {
@@ -259,8 +253,7 @@ export default function CampaignManager() {
     setEditingId(id); setShowForm(true);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveCampaign(openPreview: boolean) {
     if (!name || !startDate || !endDate) { setError("請填寫表單名稱和日期"); return; }
     const validProducts = products.filter((p) => p.name.trim());
     if (validProducts.length === 0) { setError("請至少新增一項商品"); return; }
@@ -270,14 +263,14 @@ export default function CampaignManager() {
 
     const groups = [
       {
-        name: "商品", description: mainGroupDesc, sortOrder: 0, isRequired: true,
+        name: "商品", description: "", sortOrder: 0, isRequired: true,
         products: validProducts.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       },
     ];
 
     if (validAddons.length > 0) {
       groups.push({
-        name: "加購商品", description: addonGroupDesc || "可自由搭配加購", sortOrder: 1, isRequired: false,
+        name: "加購商品", description: "", sortOrder: 1, isRequired: false,
         products: validAddons.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       });
     }
@@ -302,7 +295,7 @@ export default function CampaignManager() {
       setSubmitting(false);
       const savedId = editingId || result.id;
       resetForm(); loadCampaigns();
-      if (savedId) setPreviewId(savedId);
+      if (openPreview && savedId) setPreviewId(savedId);
     } catch { setError("網路連線失敗"); setSubmitting(false); }
   }
 
@@ -369,8 +362,7 @@ export default function CampaignManager() {
     <div>
       {error && <p className="text-rose text-sm font-medium mb-4">{error}</p>}
 
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">預購表單</h2>
+      <div className="flex items-center justify-end mb-6">
         <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary-sm">+ 建立表單</button>
       </div>
 
@@ -399,7 +391,7 @@ export default function CampaignManager() {
 
       {/* ═══ 編輯表單 ═══ */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); saveCampaign(false); }} className="mb-8 space-y-4">
           <h3 className="font-serif font-bold text-espresso text-lg">{editingId ? "編輯表單" : "建立預購表單"}</h3>
 
           {/* 基本資訊卡片 */}
@@ -488,12 +480,6 @@ export default function CampaignManager() {
           {/* ═══ 商品列表 ═══ */}
           <div className="space-y-3">
             <h4 className="font-serif font-bold text-espresso text-base">商品</h4>
-            <textarea
-              value={mainGroupDesc}
-              onChange={(e) => setMainGroupDesc(e.target.value)}
-              className={`${inputClass} min-h-[56px] leading-relaxed`}
-              placeholder="商品區說明（選填，例：每組 NT$500，可複選多組）"
-            />
             {products.map((p, i) => (
               <ProductCard
                 key={i}
@@ -535,14 +521,6 @@ export default function CampaignManager() {
             </div>
             {addons.length === 0 && (
               <p className="text-xs text-espresso-light/40">未設定加購商品 — 消費者只會看到主要商品</p>
-            )}
-            {addons.length > 0 && (
-              <textarea
-                value={addonGroupDesc}
-                onChange={(e) => setAddonGroupDesc(e.target.value)}
-                className={`${inputClass} min-h-[56px] leading-relaxed`}
-                placeholder="加購區說明（選填，例：可自由搭配加購）"
-              />
             )}
             {addons.map((p, i) => (
               <ProductCard
@@ -611,9 +589,12 @@ export default function CampaignManager() {
           </div>
 
           {/* 送出 */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button type="submit" disabled={submitting} className="btn-primary-sm">
-              {submitting ? "儲存中..." : editingId ? "儲存並預覽" : "建立並預覽"}
+              {submitting ? "儲存中..." : "儲存"}
+            </button>
+            <button type="button" disabled={submitting} onClick={() => saveCampaign(true)} className="btn-primary-sm">
+              預覽
             </button>
             <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
           </div>
