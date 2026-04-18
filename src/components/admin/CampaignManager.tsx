@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import ImageUploader from "@/components/ImageUploader";
+import MultiImageUploader from "@/components/MultiImageUploader";
 import { DEFAULT_SUPPORT_OPTIONS, discountToLabel, type SupportOption } from "@/lib/supportTypes";
+import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 
 /* ─── 型別 ─── */
 
@@ -31,7 +32,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { products: { name: string; price: number; limit: number | null }[] }[];
+  groups: { name: string; isRequired: boolean; products: { name: string; price: number; limit: number | null }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -56,7 +57,94 @@ const FORM_STYLES = [
 
 const DEFAULT_PICKUP = ["小川阿姨", "台大面交", "宜蘭面交"];
 
-/* ─── 元件 ─── */
+/* ─── 商品卡片元件 ─── */
+
+function ProductCard({
+  product,
+  index,
+  total,
+  isFocused,
+  onFocus,
+  onUpdate,
+  onRemove,
+  onDuplicate,
+  onMove,
+  inputClass,
+}: {
+  product: ProductEntry;
+  index: number;
+  total: number;
+  isFocused: boolean;
+  onFocus: () => void;
+  onUpdate: (field: keyof ProductEntry, value: unknown) => void;
+  onRemove: () => void;
+  onDuplicate: () => void;
+  onMove: (to: number) => void;
+  inputClass: string;
+}) {
+  return (
+    <div
+      className={`bg-white rounded-lg ring-1 transition-all duration-200 ${isFocused ? "ring-rose ring-2 shadow-md" : "ring-linen-dark/60"}`}
+      style={isFocused ? { borderLeft: "4px solid var(--color-rose)" } : { borderLeft: "4px solid transparent" }}
+      onClick={onFocus}
+    >
+      <div className="flex justify-center pt-2 pb-1 cursor-grab text-espresso-light/20 hover:text-espresso-light/40">
+        <svg width="20" height="6" viewBox="0 0 20 6"><circle cx="4" cy="1" r="1" fill="currentColor" /><circle cx="10" cy="1" r="1" fill="currentColor" /><circle cx="16" cy="1" r="1" fill="currentColor" /><circle cx="4" cy="5" r="1" fill="currentColor" /><circle cx="10" cy="5" r="1" fill="currentColor" /><circle cx="16" cy="5" r="1" fill="currentColor" /></svg>
+      </div>
+
+      <div className="px-5 pb-2">
+        <input
+          value={product.name}
+          onChange={(e) => onUpdate("name", e.target.value)}
+          className="w-full py-2 text-lg text-espresso bg-transparent outline-none placeholder:text-espresso-light/30"
+          style={{ borderBottom: isFocused ? "2px solid var(--color-rose)" : "1px solid rgba(30,15,8,0.1)" }}
+          placeholder={isFocused ? "輸入品名，例：香辣香菇醬" : "品名"}
+          autoFocus={isFocused && !product.name}
+        />
+
+        {isFocused && (
+          <div className="flex items-center gap-4 mt-3 animate-[bakeSwing_0.3s_ease_both]">
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-espresso-light/50">NT$</span>
+              <input type="number" value={product.price || ""} onChange={(e) => onUpdate("price", Number(e.target.value))} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="價格" min="0" />
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-espresso-light/50">限量</span>
+              <input type="number" value={product.limit ?? ""} onChange={(e) => onUpdate("limit", e.target.value ? Number(e.target.value) : null)} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="不限" min="0" />
+            </div>
+          </div>
+        )}
+
+        {!isFocused && product.name && (
+          <div className="flex items-center gap-3 mt-1 text-sm text-espresso-light/40">
+            <span>NT$ {product.price}</span>
+            {product.limit != null && <span>· 限量 {product.limit}</span>}
+          </div>
+        )}
+      </div>
+
+      {isFocused && (
+        <div className="flex items-center justify-end gap-1 px-4 py-2 border-t border-linen-dark/20 animate-[bakeSwing_0.3s_ease_both]">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMove(index - 1); }} disabled={index === 0} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="上移">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+          </button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMove(index + 1); }} disabled={index === total - 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="下移">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+          </button>
+          <div className="w-px h-5 bg-linen-dark/30 mx-1" />
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen transition-all" title="複製">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
+          </button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} disabled={total <= 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-rose hover:bg-rose/5 disabled:opacity-20 transition-all" title="刪除">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── 主元件 ─── */
 
 export default function CampaignManager() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -67,18 +155,20 @@ export default function CampaignManager() {
   const [error, setError] = useState("");
   const [previewId, setPreviewId] = useState<number | null>(null);
   const [focusedProduct, setFocusedProduct] = useState<number | null>(null);
+  const [focusedAddon, setFocusedAddon] = useState<number | null>(null);
 
   // 表單欄位
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
+  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
   const [formStyle, setFormStyle] = useState("classic");
   const [supporterDiscount, setSupporterDiscount] = useState(0);
   const [supportOptions, setSupportOptions] = useState<SupportOption[]>([]);
   const [pickupOptions, setPickupOptions] = useState<string[]>([...DEFAULT_PICKUP]);
   const [newPickup, setNewPickup] = useState("");
   const [products, setProducts] = useState<ProductEntry[]>([{ name: "", price: 0, limit: null }]);
+  const [addons, setAddons] = useState<ProductEntry[]>([]);
 
   async function loadCampaigns() {
     try {
@@ -96,10 +186,25 @@ export default function CampaignManager() {
   useEffect(() => { loadCampaigns(); }, []);
 
   function resetForm() {
-    setName(""); setStartDate(""); setEndDate(""); setBannerUrl("");
+    setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]);
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", price: 0, limit: null }]);
-    setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null);
+    setAddons([]);
+    setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
+  }
+
+  function loadGroupsFromDetail(data: CampaignDetail) {
+    const groups = data.groups || [];
+    const mainGroup = groups.find((g) => g.isRequired !== false) || groups[0];
+    const addonGroup = groups.find((g) => g.isRequired === false);
+
+    const mainProds = mainGroup?.products || [];
+    setProducts(mainProds.length > 0
+      ? mainProds.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
+      : [{ name: "", price: 0, limit: null }]);
+
+    const addonProds = addonGroup?.products || [];
+    setAddons(addonProds.map((p) => ({ name: p.name, price: p.price, limit: p.limit })));
   }
 
   async function startEdit(id: number) {
@@ -107,16 +212,13 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
-    setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
+    setBannerUrls(parseBannerUrls(data.bannerUrl)); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
     setSupportOptions(Array.isArray(sOpts) && sOpts.length > 0 ? sOpts : []);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) && opts.length > 0 ? opts : [...DEFAULT_PICKUP]);
-    const prods = data.groups?.[0]?.products || [];
-    setProducts(prods.length > 0
-      ? prods.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
-      : [{ name: "", price: 0, limit: null }]);
+    loadGroupsFromDetail(data);
     setEditingId(id); setShowForm(true);
   }
 
@@ -127,14 +229,30 @@ export default function CampaignManager() {
     if (validProducts.length === 0) { setError("請至少新增一項商品"); return; }
     setSubmitting(true); setError("");
 
+    const validAddons = addons.filter((p) => p.name.trim());
+
+    const groups = [
+      {
+        name: "商品", description: "", sortOrder: 0, isRequired: true,
+        products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+      },
+    ];
+
+    if (validAddons.length > 0) {
+      groups.push({
+        name: "加購商品", description: "可自由搭配加購", sortOrder: 1, isRequired: false,
+        products: validAddons.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+      });
+    }
+
     const payload = {
-      name, startDate, endDate, bannerUrl, formStyle,
+      name, startDate, endDate,
+      bannerUrl: serializeBannerUrls(bannerUrls),
+      formStyle,
       supporterDiscount: supportOptions.length > 0 ? 1 : 0,
       supportOptions: JSON.stringify(supportOptions),
       pickupOptions: JSON.stringify(pickupOptions),
-      groups: [{ name: "商品", description: "", sortOrder: 0, isRequired: true,
-        products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
-      }],
+      groups,
     };
 
     try {
@@ -144,7 +262,6 @@ export default function CampaignManager() {
       if (!res.ok) { setError(result.error || "儲存失敗"); setSubmitting(false); return; }
 
       setSubmitting(false);
-      // 儲存後自動開預覽
       const savedId = editingId || result.id;
       resetForm(); loadCampaigns();
       if (savedId) setPreviewId(savedId);
@@ -169,42 +286,41 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${c.id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
-    setBannerUrl(data.bannerUrl || ""); setFormStyle(data.formStyle || "classic");
+    setBannerUrls(parseBannerUrls(data.bannerUrl)); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
     setSupportOptions(Array.isArray(sOpts) ? sOpts : []);
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) ? opts : [...DEFAULT_PICKUP]);
-    const prods = data.groups?.[0]?.products || [];
-    setProducts(prods.length > 0 ? prods.map((p) => ({ name: p.name, price: p.price, limit: p.limit })) : [{ name: "", price: 0, limit: null }]);
+    loadGroupsFromDetail(data);
     setEditingId(null); setShowForm(true);
   }
 
-  // 品項操作
-  function updateProduct(i: number, field: keyof ProductEntry, value: unknown) {
-    setProducts((prev) => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
+  // 品項操作（共用）
+  function updateItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, i: number, field: keyof ProductEntry, value: unknown) {
+    setter((prev) => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
   }
-  function addProduct() {
-    setProducts((prev) => [...prev, { name: "", price: 0, limit: null }]);
-    setTimeout(() => setFocusedProduct(products.length), 50);
+  function addItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
+    setter((prev) => [...prev, { name: "", price: 0, limit: null }]);
+    setTimeout(() => focusSetter(items.length), 50);
   }
-  function removeProduct(i: number) {
-    if (products.length <= 1) return;
-    setProducts((prev) => prev.filter((_, idx) => idx !== i));
-    setFocusedProduct(null);
+  function removeItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], i: number, focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
+    if (items.length <= 1) return;
+    setter((prev) => prev.filter((_, idx) => idx !== i));
+    focusSetter(null);
   }
-  function duplicateProduct(i: number) {
-    setProducts((prev) => [...prev.slice(0, i + 1), { ...prev[i] }, ...prev.slice(i + 1)]);
+  function duplicateItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, i: number) {
+    setter((prev) => [...prev.slice(0, i + 1), { ...prev[i] }, ...prev.slice(i + 1)]);
   }
-  function moveProduct(from: number, to: number) {
-    if (to < 0 || to >= products.length) return;
-    setProducts((prev) => {
+  function moveItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], from: number, to: number, focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
+    if (to < 0 || to >= items.length) return;
+    setter((prev) => {
       const next = [...prev];
       const [item] = next.splice(from, 1);
       next.splice(to, 0, item);
       return next;
     });
-    setFocusedProduct(to);
+    focusSetter(to);
   }
 
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
@@ -318,108 +434,82 @@ export default function CampaignManager() {
                 <p className="text-xs text-espresso-light/40">未啟用 — 點擊上方按鈕可新增預設折扣選項</p>
               )}
             </div>
-            <ImageUploader value={bannerUrl} onChange={setBannerUrl} label="活動說明圖（選填）" previewWidth={160} previewHeight={100} />
+            <MultiImageUploader value={bannerUrls} onChange={setBannerUrls} label="活動說明圖（選填，最多 5 張）" maxImages={5} previewWidth={120} previewHeight={80} />
           </div>
 
-          {/* ═══ 商品列表（Google Forms 風格）═══ */}
+          {/* ═══ 商品列表 ═══ */}
           <div className="space-y-3">
-            {products.map((p, i) => {
-              const isFocused = focusedProduct === i;
-              return (
-                <div
-                  key={i}
-                  className={`bg-white rounded-lg ring-1 transition-all duration-200 ${isFocused ? "ring-rose ring-2 shadow-md" : "ring-linen-dark/60"}`}
-                  style={isFocused ? { borderLeft: "4px solid var(--color-rose)" } : { borderLeft: "4px solid transparent" }}
-                  onClick={() => setFocusedProduct(i)}
-                >
-                  {/* 拖曳把手 */}
-                  <div className="flex justify-center pt-2 pb-1 cursor-grab text-espresso-light/20 hover:text-espresso-light/40">
-                    <svg width="20" height="6" viewBox="0 0 20 6"><circle cx="4" cy="1" r="1" fill="currentColor" /><circle cx="10" cy="1" r="1" fill="currentColor" /><circle cx="16" cy="1" r="1" fill="currentColor" /><circle cx="4" cy="5" r="1" fill="currentColor" /><circle cx="10" cy="5" r="1" fill="currentColor" /><circle cx="16" cy="5" r="1" fill="currentColor" /></svg>
-                  </div>
-
-                  <div className="px-5 pb-2">
-                    {/* 品名 */}
-                    <input
-                      value={p.name}
-                      onChange={(e) => updateProduct(i, "name", e.target.value)}
-                      className="w-full py-2 text-lg text-espresso bg-transparent outline-none placeholder:text-espresso-light/30"
-                      style={{ borderBottom: isFocused ? "2px solid var(--color-rose)" : "1px solid rgba(30,15,8,0.1)" }}
-                      placeholder={isFocused ? "輸入品名，例：香辣香菇醬" : "品名"}
-                      autoFocus={isFocused && !p.name}
-                    />
-
-                    {/* 價格 + 限量（focus 時顯示） */}
-                    {isFocused && (
-                      <div className="flex items-center gap-4 mt-3 animate-[bakeSwing_0.3s_ease_both]">
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-espresso-light/50">NT$</span>
-                          <input
-                            type="number"
-                            value={p.price || ""}
-                            onChange={(e) => updateProduct(i, "price", Number(e.target.value))}
-                            className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
-                            placeholder="價格"
-                            min="0"
-                          />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-espresso-light/50">限量</span>
-                          <input
-                            type="number"
-                            value={p.limit ?? ""}
-                            onChange={(e) => updateProduct(i, "limit", e.target.value ? Number(e.target.value) : null)}
-                            className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
-                            placeholder="不限"
-                            min="0"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 非 focus 時顯示摘要 */}
-                    {!isFocused && p.name && (
-                      <div className="flex items-center gap-3 mt-1 text-sm text-espresso-light/40">
-                        <span>NT$ {p.price}</span>
-                        {p.limit != null && <span>· 限量 {p.limit}</span>}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 底部工具列（focus 時顯示）*/}
-                  {isFocused && (
-                    <div className="flex items-center justify-end gap-1 px-4 py-2 border-t border-linen-dark/20 animate-[bakeSwing_0.3s_ease_both]">
-                      {/* 上移 */}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveProduct(i, i - 1); }} disabled={i === 0} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="上移">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
-                      </button>
-                      {/* 下移 */}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveProduct(i, i + 1); }} disabled={i === products.length - 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen disabled:opacity-20 transition-all" title="下移">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
-                      </button>
-                      <div className="w-px h-5 bg-linen-dark/30 mx-1" />
-                      {/* 複製 */}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); duplicateProduct(i); }} className="p-1.5 rounded-md text-espresso-light/40 hover:text-espresso hover:bg-linen transition-all" title="複製">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>
-                      </button>
-                      {/* 刪除 */}
-                      <button type="button" onClick={(e) => { e.stopPropagation(); removeProduct(i); }} disabled={products.length <= 1} className="p-1.5 rounded-md text-espresso-light/40 hover:text-rose hover:bg-rose/5 disabled:opacity-20 transition-all" title="刪除">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* 新增商品按鈕 */}
+            <h4 className="font-serif font-bold text-espresso text-base">商品</h4>
+            {products.map((p, i) => (
+              <ProductCard
+                key={i}
+                product={p}
+                index={i}
+                total={products.length}
+                isFocused={focusedProduct === i}
+                onFocus={() => { setFocusedProduct(i); setFocusedAddon(null); }}
+                onUpdate={(field, value) => updateItem(setProducts, i, field, value)}
+                onRemove={() => removeItem(setProducts, products, i, setFocusedProduct)}
+                onDuplicate={() => duplicateItem(setProducts, i)}
+                onMove={(to) => moveItem(setProducts, products, i, to, setFocusedProduct)}
+                inputClass={inputClass}
+              />
+            ))}
             <button
               type="button"
-              onClick={addProduct}
+              onClick={() => addItem(setProducts, products, setFocusedProduct)}
               className="w-full py-3 bg-white rounded-lg ring-1 ring-dashed ring-linen-dark/40 text-espresso-light/50 hover:text-rose hover:ring-rose/40 transition-all flex items-center justify-center gap-2 text-base"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
               新增商品
             </button>
+          </div>
+
+          {/* ═══ 加購商品列表 ═══ */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-serif font-bold text-espresso text-base">加購商品（選填）</h4>
+              {addons.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setAddons([{ name: "", price: 0, limit: null }]); setTimeout(() => setFocusedAddon(0), 50); }}
+                  className="text-xs px-3 py-1 rounded-md bg-honey/10 ring-1 ring-honey/30 text-honey font-medium hover:bg-honey/20 transition-all"
+                >
+                  + 新增加購區
+                </button>
+              )}
+            </div>
+            {addons.length === 0 && (
+              <p className="text-xs text-espresso-light/40">未設定加購商品 — 消費者只會看到主要商品</p>
+            )}
+            {addons.map((p, i) => (
+              <ProductCard
+                key={i}
+                product={p}
+                index={i}
+                total={addons.length}
+                isFocused={focusedAddon === i}
+                onFocus={() => { setFocusedAddon(i); setFocusedProduct(null); }}
+                onUpdate={(field, value) => updateItem(setAddons, i, field, value)}
+                onRemove={() => {
+                  if (addons.length <= 1) { setAddons([]); setFocusedAddon(null); return; }
+                  removeItem(setAddons, addons, i, setFocusedAddon);
+                }}
+                onDuplicate={() => duplicateItem(setAddons, i)}
+                onMove={(to) => moveItem(setAddons, addons, i, to, setFocusedAddon)}
+                inputClass={inputClass}
+              />
+            ))}
+            {addons.length > 0 && (
+              <button
+                type="button"
+                onClick={() => addItem(setAddons, addons, setFocusedAddon)}
+                className="w-full py-3 bg-white rounded-lg ring-1 ring-dashed ring-honey/40 text-espresso-light/50 hover:text-honey hover:ring-honey/60 transition-all flex items-center justify-center gap-2 text-base"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v8M8 12h8" /></svg>
+                新增加購商品
+              </button>
+            )}
           </div>
 
           {/* 面交選項 */}
@@ -475,42 +565,53 @@ export default function CampaignManager() {
         </div>
       ) : (
         <div className="space-y-3">
-          {campaigns.filter((c) => c.id !== editingId).map((c) => (
-            <div key={c.id} className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h3 className="font-serif font-bold text-espresso text-base">{c.name}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>{STATUS_LABELS[c.status]}</span>
+          {campaigns.filter((c) => c.id !== editingId).map((c) => {
+            const thumbUrls = parseBannerUrls(c.bannerUrl);
+            return (
+              <div key={c.id} className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <h3 className="font-serif font-bold text-espresso text-base">{c.name}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>{STATUS_LABELS[c.status]}</span>
+                    </div>
+                    <p className="text-espresso-light/50 text-sm">
+                      {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
+                    </p>
                   </div>
-                  <p className="text-espresso-light/50 text-sm">
-                    {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
-                  </p>
+                  {thumbUrls.length > 0 && (
+                    <div className="flex gap-1 shrink-0">
+                      {thumbUrls.slice(0, 3).map((url, i) => (
+                        <Image key={i} src={url} alt="" width={50} height={35} className="rounded-md object-cover" />
+                      ))}
+                      {thumbUrls.length > 3 && (
+                        <span className="text-xs text-espresso-light/40 self-center">+{thumbUrls.length - 3}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {c.bannerUrl && <Image src={c.bannerUrl} alt="" width={80} height={50} className="rounded-md object-cover shrink-0" />}
-              </div>
 
-              <div className="flex gap-2 mt-3 pt-3 flex-wrap" style={{ borderTop: "1px dashed rgba(30,15,8,0.06)" }}>
-                {/* 預覽按鈕（醒目） */}
-                <button onClick={() => setPreviewId(c.id)} className="text-xs px-4 py-1.5 rounded-md bg-sage/10 ring-1 ring-sage/30 text-sage font-medium hover:bg-sage/20 hover:ring-sage transition-all">
-                  👁 預覽
-                </button>
-                <button onClick={() => startEdit(c.id)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">編輯</button>
-                <button onClick={() => toggleStatus(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">
-                  {c.status === "draft" ? "發佈" : c.status === "active" ? "結束" : "重新開放"}
-                </button>
-                {c.status !== "draft" && (
-                  <button onClick={async () => {
-                    if (!window.confirm(`確定要隱藏「${c.name}」嗎？消費者將看不到此表單。`)) return;
-                    await fetch(`/api/admin/campaigns/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) });
-                    loadCampaigns();
-                  }} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-espresso-light/20 text-espresso-light/50 hover:text-espresso hover:ring-espresso-light transition-all">隱藏</button>
-                )}
-                <button onClick={() => duplicateCampaign(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">複製</button>
-                <button onClick={() => handleDelete(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/60 hover:text-rose hover:ring-rose transition-all">刪除</button>
+                <div className="flex gap-2 mt-3 pt-3 flex-wrap" style={{ borderTop: "1px dashed rgba(30,15,8,0.06)" }}>
+                  <button onClick={() => setPreviewId(c.id)} className="text-xs px-4 py-1.5 rounded-md bg-sage/10 ring-1 ring-sage/30 text-sage font-medium hover:bg-sage/20 hover:ring-sage transition-all">
+                    預覽
+                  </button>
+                  <button onClick={() => startEdit(c.id)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">編輯</button>
+                  <button onClick={() => toggleStatus(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">
+                    {c.status === "draft" ? "發佈" : c.status === "active" ? "結束" : "重新開放"}
+                  </button>
+                  {c.status !== "draft" && (
+                    <button onClick={async () => {
+                      if (!window.confirm(`確定要隱藏「${c.name}」嗎？消費者將看不到此表單。`)) return;
+                      await fetch(`/api/admin/campaigns/${c.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "draft" }) });
+                      loadCampaigns();
+                    }} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-espresso-light/20 text-espresso-light/50 hover:text-espresso hover:ring-espresso-light transition-all">隱藏</button>
+                  )}
+                  <button onClick={() => duplicateCampaign(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all">複製</button>
+                  <button onClick={() => handleDelete(c)} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/60 hover:text-rose hover:ring-rose transition-all">刪除</button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

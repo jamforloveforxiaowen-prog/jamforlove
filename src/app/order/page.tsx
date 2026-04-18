@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import TaiwanAddressSelector from "@/components/TaiwanAddressSelector";
-import { parseSupportOptions, discountToLabel, type SupportOption } from "@/lib/supportTypes";
+import { discountToLabel, type SupportOption } from "@/lib/supportTypes";
+import { parseBannerUrls } from "@/lib/bannerUrls";
 
 /* ─── 型別定義 ─────────────────────────────────── */
 
@@ -129,6 +130,115 @@ const FORM_STYLE_THEMES: Record<string, { accent: string; accentLight: string; b
   festival: { accent: "#c41e3a", accentLight: "#e74c3c", bg: "#fff8f0", cardBg: "rgba(255,252,245,0.8)", border: "rgba(196,30,58,0.15)", stepColors: ["#c41e3a", "#d4a017", "#c41e3a", "#8b0000"] },
 };
 
+/* ─── 商品卡片元件 ─────────────────────────────── */
+
+function ProductCard({
+  product,
+  qty,
+  theme,
+  onUpdate,
+}: {
+  product: CampaignProduct;
+  qty: number;
+  theme: typeof FORM_STYLE_THEMES.classic;
+  onUpdate: (delta: number) => void;
+}) {
+  const isSelected = qty > 0;
+  const soldOut = product.remaining !== null && product.remaining <= 0 && qty === 0;
+
+  return (
+    <div
+      className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"}`}
+      style={{ border: isSelected ? `2px dashed ${theme.accent}` : `2px dashed ${theme.border}`, background: isSelected ? `${theme.accent}08` : theme.cardBg }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="font-serif font-bold text-espresso text-lg">{product.name}</span>
+            <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)" }}>${product.price}</span>
+            {soldOut ? (
+              <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-espresso-light/10 text-espresso-light/50">已售完</span>
+            ) : product.remaining !== null ? (
+              <span className={`text-sm ${product.remaining <= 5 ? "text-rose font-semibold" : "text-espresso-light/30"}`}>
+                剩 {product.remaining} {product.unit}
+              </span>
+            ) : product.limit ? (
+              <span className="text-espresso-light/30 text-sm">限 {product.limit} {product.unit}</span>
+            ) : null}
+          </div>
+          {product.description && <p className="text-espresso-light/50 text-[1.05rem]">{product.description}</p>}
+          {product.note && <p className="text-rose/60 text-sm mt-0.5">{product.note}</p>}
+        </div>
+        <div className="shrink-0">
+          {soldOut ? (
+            <span className="px-4 py-2 rounded-lg text-base font-medium text-espresso-light/30" style={{ border: "2px dashed rgba(30,15,8,0.08)" }}>售完</span>
+          ) : isSelected ? (
+            <div className="flex items-center gap-1.5">
+              <button type="button" onClick={() => onUpdate(-1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
+              <span key={qty} className="w-7 text-center font-bold text-espresso tabular-nums text-base animate-[number-pop_0.3s_ease]">{qty}</span>
+              <button type="button" onClick={() => onUpdate(1)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => onUpdate(1)} className="px-4 py-2 rounded-lg text-base font-medium hover:text-white active:scale-95 transition-all" style={{ color: theme.accent, border: `2px dashed ${theme.accent}50` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
+          )}
+        </div>
+      </div>
+      {isSelected && (
+        <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: `1px dashed ${theme.border}` }}>
+          <span className="text-espresso-light/40 text-base">{qty} {product.unit} × NT${product.price}</span>
+          <span className="font-bold text-base" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {qty * product.price}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── 步驟指示器 ─────────────────────────────── */
+
+function StepIndicator({
+  steps,
+  currentStep,
+  theme,
+}: {
+  steps: { key: string; label: string }[];
+  currentStep: number;
+  theme: typeof FORM_STYLE_THEMES.classic;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1 mb-8">
+      {steps.map((step, i) => {
+        const isActive = i === currentStep;
+        const isDone = i < currentStep;
+        return (
+          <div key={step.key} className="flex items-center gap-1">
+            {i > 0 && (
+              <div className="w-6 h-0.5 rounded-full" style={{ background: isDone ? theme.accent : theme.border }} />
+            )}
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                style={isActive
+                  ? { background: theme.accent, color: "#fff", boxShadow: `0 2px 8px ${theme.accent}40` }
+                  : isDone
+                    ? { background: `${theme.accent}20`, color: theme.accent }
+                    : { background: theme.border, color: "rgba(30,15,8,0.3)" }}
+              >
+                {isDone ? "✓" : i + 1}
+              </div>
+              <span
+                className="text-xs font-medium hidden sm:inline"
+                style={{ color: isActive ? theme.accent : isDone ? theme.accent : "rgba(30,15,8,0.3)" }}
+              >
+                {step.label}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── 主頁面 ────────────────────────────────────── */
 
 export default function OrderPage() {
@@ -144,6 +254,9 @@ export default function OrderPage() {
 
   // 選購數量：key = productId
   const [selections, setSelections] = useState<Record<number, number>>({});
+
+  // 分頁步驟
+  const [currentStep, setCurrentStep] = useState(0);
 
   // 收件資料
   const [customerName, setCustomerName] = useState("");
@@ -161,7 +274,6 @@ export default function OrderPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
 
   // 欄位驗證
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -232,6 +344,10 @@ export default function OrderPage() {
     }).catch(() => {});
   }
 
+  // 預覽模式
+  const [searchParams] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams());
+  const previewCampaignId = searchParams.get("preview");
+
   // 載入活動與既有訂單
   useEffect(() => {
     const campaignUrl = previewCampaignId
@@ -240,7 +356,6 @@ export default function OrderPage() {
 
     const loadCampaign = previewCampaignId
       ? fetch(campaignUrl).then((r) => r.json()).then((detail) => {
-          // 預覽模式：admin API 回傳 detail 格式，轉換為 ActiveCampaign
           if (!detail || detail.error) { setCampaignStatus("none"); return; }
           const pickupOpts = typeof detail.pickupOptions === "string" ? JSON.parse(detail.pickupOptions) : detail.pickupOptions || [];
           const sOpts = typeof detail.supportOptions === "string" ? JSON.parse(detail.supportOptions) : detail.supportOptions || [];
@@ -266,7 +381,6 @@ export default function OrderPage() {
         setCampaignStatus("out_of_range");
         setOutOfRangeInfo({ startDate: data.campaign.startDate, endDate: data.campaign.endDate, name: data.campaign.name });
       } else {
-        // Fallback：用 site_settings 的預購期間
         const [sRes, eRes] = await Promise.all([
           fetch("/api/site-settings?key=fundraise_start").then((r) => r.json()),
           fetch("/api/site-settings?key=fundraise_end").then((r) => r.json()),
@@ -276,7 +390,6 @@ export default function OrderPage() {
         const end = eRes.value ? new Date(eRes.value + "T23:59:59") : null;
 
         if (start && end && now >= start && now <= end) {
-          // 用 hardcoded 商品建立虛擬 campaign
           setCampaign(buildLegacyCampaign(sRes.value, eRes.value));
           setCampaignStatus("active");
         } else if (sRes.value && eRes.value) {
@@ -308,6 +421,22 @@ export default function OrderPage() {
       sessionStorage.removeItem("order_selections");
     }
   }, []);
+
+  // 分組
+  const requiredGroups = useMemo(() => campaign?.groups.filter((g) => g.isRequired) ?? [], [campaign]);
+  const addonGroups = useMemo(() => campaign?.groups.filter((g) => !g.isRequired) ?? [], [campaign]);
+  const hasAddonProducts = useMemo(() => addonGroups.some((g) => g.products.length > 0), [addonGroups]);
+
+  // 計算步驟
+  const wizardSteps = useMemo(() => {
+    const steps = [{ key: "products", label: "選購商品" }];
+    if (hasAddonProducts) steps.push({ key: "addons", label: "加購商品" });
+    steps.push({ key: "info", label: "收件資料" });
+    steps.push({ key: "summary", label: "確認訂單" });
+    return steps;
+  }, [hasAddonProducts]);
+
+  const currentStepKey = wizardSteps[currentStep]?.key ?? "products";
 
   // 計算
   const allProducts = useMemo(() => campaign?.groups.flatMap((g) => g.products) ?? [], [campaign]);
@@ -344,9 +473,6 @@ export default function OrderPage() {
   }, [campaign, selections]);
 
   const hasAnySelection = Object.values(selections).some((q) => q > 0);
-  // 預覽模式
-  const [searchParams] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams());
-  const previewCampaignId = searchParams.get("preview");
 
   function updateSelection(productId: number, delta: number, remaining: number | null) {
     setSelections((prev) => {
@@ -354,6 +480,35 @@ export default function OrderPage() {
       if (remaining !== null && next > remaining) return prev;
       return { ...prev, [productId]: next };
     });
+  }
+
+  // 步驟導航
+  function goNext() {
+    setError("");
+    if (currentStepKey === "products") {
+      if (campaign?.supportOptions && campaign.supportOptions.length > 0 && supportIdx === null) {
+        setError("請選擇您曾經以何種方式支持 Jam for Love");
+        return;
+      }
+      if (!hasRequiredSelection) {
+        setError("請至少從必填分組中選擇一項");
+        return;
+      }
+    }
+    if (currentStepKey === "info") {
+      setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
+      if (!customerName.trim() || !phone.trim()) { setError("請填寫必填欄位"); return; }
+      if (deliveryMethod === "shipping" && !addressDetail.trim()) { setError("請填寫收件地址"); return; }
+      if (phone.trim() && !/^0\d{8,9}$/.test(phone.trim())) { setError("電話格式不正確"); return; }
+    }
+    setCurrentStep((s) => Math.min(s + 1, wizardSteps.length - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goBack() {
+    setError("");
+    setCurrentStep((s) => Math.max(s - 1, 0));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // 欄位驗證
@@ -366,17 +521,8 @@ export default function OrderPage() {
   if (touched.addressDetail && deliveryMethod === "shipping" && !addressDetail.trim()) fieldErrors.addressDetail = "請填寫詳細地址";
 
   // 進入確認頁（不送 API）
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSubmitOrder() {
     if (!campaign) return;
-    if (campaign.supportOptions.length > 0 && supportIdx === null) { setError("請選擇您曾經以何種方式支持 Jam for Love"); return; }
-    if (!hasRequiredSelection) { setError("請至少從必填分組中選擇一項"); return; }
-
-    setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
-    if (!customerName.trim() || !phone.trim()) { setError("請填寫必填欄位"); return; }
-    if (deliveryMethod === "shipping" && !addressDetail.trim()) { setError("請填寫收件地址"); return; }
-
-    setError("");
 
     const items: OrderItem[] = Object.entries(selections)
       .filter(([, qty]) => qty > 0)
@@ -406,7 +552,6 @@ export default function OrderPage() {
     setError(""); setLoading(true);
 
     try {
-      const method = "POST";
       const isShipping = pendingOrder.deliveryMethod === "shipping";
       const payload: Record<string, unknown> = {
         campaignId: campaign.id,
@@ -426,7 +571,7 @@ export default function OrderPage() {
       };
 
       const res = await fetch("/api/orders", {
-        method,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -584,13 +729,11 @@ export default function OrderPage() {
           </div>
         </div>
 
-        {/* 錯誤訊息 */}
         {error && <p className="text-rose text-sm font-medium mb-4 text-center animate-shake" role="alert">{error}</p>}
 
-        {/* 按鈕 */}
         <div className="flex gap-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.5s_both]">
           <button
-            onClick={() => { setPendingOrder(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            onClick={() => { setPendingOrder(null); setCurrentStep(wizardSteps.length - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="flex-1 py-4 rounded-lg font-serif font-bold text-base text-espresso-light hover:text-espresso active:scale-[0.97] transition-all"
             style={{ border: "2px dashed rgba(30,15,8,0.15)" }}
             disabled={loading}
@@ -621,7 +764,6 @@ export default function OrderPage() {
   /* ─── 送出成功 ─── */
   if (submitted && confirmedOrder) {
     const order = confirmedOrder;
-    // 按 group 分組顯示
     const groupedItems = order.items.reduce<Record<string, OrderItem[]>>((acc, item) => {
       (acc[item.group] ??= []).push(item);
       return acc;
@@ -715,23 +857,20 @@ export default function OrderPage() {
     );
   }
 
-  /* ─── 表單 ─── */
+  /* ─── 表單 (Wizard) ─── */
   if (!campaign) return null;
 
   const theme = FORM_STYLE_THEMES[campaign.formStyle] || FORM_STYLE_THEMES.classic;
+  const bannerImages = parseBannerUrls(campaign.bannerUrl);
 
   const inputClass = "w-full py-3 px-0 bg-transparent text-lg text-espresso outline-none placeholder:text-espresso-light/30 transition-colors";
   const inputBorder = { borderBottom: `2px dashed ${theme.border}` };
   const inputBorderFocus = `focus-within:[border-bottom-color:${theme.accent}]`;
 
-  const stepColors = theme.stepColors;
-  // Steps: each group + 收件資料 + 訂單摘要
-  let stepIdx = 0;
-
   return (
     <div className="max-w-2xl mx-auto px-5 py-10 md:py-16" style={{ background: theme.bg }}>
       {/* 標頭 */}
-      <div className="text-center mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+      <div className="text-center mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
         <h1 className="font-serif text-3xl md:text-4xl font-bold text-espresso" style={{ fontStyle: "italic" }}>
           {campaign.name}
         </h1>
@@ -743,307 +882,338 @@ export default function OrderPage() {
         </p>
       </div>
 
-      {/* 說明圖 */}
-      {campaign.bannerUrl && (
-        <div className="mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.05s_both]">
-          <div className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(30,15,8,0.08)", border: "1px solid rgba(235,226,212,0.8)" }}>
-            <Image src={campaign.bannerUrl} alt="活動說明" width={800} height={800} className="w-full h-auto" />
-          </div>
+      {/* 說明圖（多張） */}
+      {bannerImages.length > 0 && currentStep === 0 && (
+        <div className="mb-8 space-y-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.05s_both]">
+          {bannerImages.map((url, i) => (
+            <div key={i} className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(30,15,8,0.08)", border: "1px solid rgba(235,226,212,0.8)" }}>
+              <Image src={url} alt={`活動說明 ${i + 1}`} width={800} height={800} className="w-full h-auto" />
+            </div>
+          ))}
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        {/* 您曾經以何種方式支持 Jam for Love? */}
-        {campaign.supportOptions.length > 0 && (
-          <div className="mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.08s_both]">
-            <div className="rounded-xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
-              <p className="font-serif text-lg font-bold text-espresso mb-4">您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
-              <div className="space-y-3">
-                {campaign.supportOptions.map((opt, i) => {
-                  const selected = supportIdx === i;
-                  const label = discountToLabel(opt.discount);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setSupportIdx(i)}
-                      className={`w-full rounded-xl p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
-                      style={selected ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `1px solid ${theme.border}` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all" style={selected ? { background: theme.accent, border: `2px solid ${theme.accent}` } : { background: "transparent", border: "2px solid rgba(30,15,8,0.2)" }}>
-                          {selected && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <span className="text-base text-espresso">
-                          {opt.label}
-                          {label && <span className="ml-1 font-semibold" style={{ color: theme.accent }}>(可享 {label}優惠！)</span>}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+      {/* 步驟指示器 */}
+      <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />
 
-        <div className="relative pl-11 md:pl-14">
-          <div className="absolute left-[17px] md:left-[21px] top-0 bottom-0 w-0" style={{ borderLeft: "2px dashed rgba(30,15,8,0.1)" }} />
-
-          {/* 動態分組 */}
-          {campaign.groups.map((group) => {
-            const currentStep = ++stepIdx;
-            const color = stepColors[(currentStep - 1) % stepColors.length];
-            const hasGroupSelection = group.products.some((p) => (selections[p.id] || 0) > 0);
-
-            return (
-              <div key={group.id} className="relative mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.1s_both]">
-                <div
-                  className="absolute -left-11 md:-left-14 w-[34px] md:w-[42px] h-[34px] md:h-[42px] rounded-full flex items-center justify-center font-serif font-bold text-white text-sm"
-                  style={{ background: color, border: `3px dashed ${color}40`, boxShadow: `0 2px 8px ${color}30` }}
-                >
-                  {currentStep}
-                </div>
-                <div className="mb-1">
-                  <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">
-                    {group.name} {group.isRequired && <span className="text-rose text-sm font-normal">*</span>}
-                  </h2>
-                  {group.description && <p className="text-espresso-light/40 text-base">{group.description}</p>}
-                </div>
-
-                <div className="space-y-2.5 mt-4">
-                  {group.products.map((product) => {
-                    const qty = selections[product.id] || 0;
-                    const isSelected = qty > 0;
-                    const soldOut = product.remaining !== null && product.remaining <= 0 && qty === 0;
-
+      {/* ═══ Step: 選購商品 ═══ */}
+      {currentStepKey === "products" && (
+        <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          {/* 支持者選項 */}
+          {campaign.supportOptions.length > 0 && (
+            <div className="mb-8">
+              <div className="rounded-xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
+                <p className="font-serif text-lg font-bold text-espresso mb-4">您曾經以何種方式支持 Jam for Love？<span className="text-rose ml-1">*</span></p>
+                <div className="space-y-3">
+                  {campaign.supportOptions.map((opt, i) => {
+                    const selected = supportIdx === i;
+                    const label = discountToLabel(opt.discount);
                     return (
-                      <div
-                        key={product.id}
-                        className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"}`}
-                        style={{ border: isSelected ? `2px dashed ${theme.accent}` : `2px dashed ${theme.border}`, background: isSelected ? `${theme.accent}08` : theme.cardBg }}
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSupportIdx(i)}
+                        className={`w-full rounded-xl p-4 text-left transition-all duration-200 ${selected ? "shadow-md" : "hover:bg-white/80"}`}
+                        style={selected ? { background: `${theme.accent}0a`, border: `2px solid ${theme.accent}` } : { background: "rgba(255,255,255,0.6)", border: `1px solid ${theme.border}` }}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <span className="font-serif font-bold text-espresso text-lg">{product.name}</span>
-                              <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)" }}>
-                                ${product.price}
-                              </span>
-                              {soldOut ? (
-                                <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-espresso-light/10 text-espresso-light/50">已售完</span>
-                              ) : product.remaining !== null ? (
-                                <span className={`text-sm ${product.remaining <= 5 ? "text-rose font-semibold" : "text-espresso-light/30"}`}>
-                                  剩 {product.remaining} {product.unit}
-                                </span>
-                              ) : product.limit ? (
-                                <span className="text-espresso-light/30 text-sm">限 {product.limit} {product.unit}</span>
-                              ) : null}
-                            </div>
-                            {product.description && <p className="text-espresso-light/50 text-[1.05rem]">{product.description}</p>}
-                            {product.note && <p className="text-rose/60 text-sm mt-0.5">{product.note}</p>}
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all" style={selected ? { background: theme.accent, border: `2px solid ${theme.accent}` } : { background: "transparent", border: "2px solid rgba(30,15,8,0.2)" }}>
+                            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
                           </div>
-                          <div className="shrink-0">
-                            {soldOut ? (
-                              <span className="px-4 py-2 rounded-lg text-base font-medium text-espresso-light/30" style={{ border: "2px dashed rgba(30,15,8,0.08)" }}>售完</span>
-                            ) : isSelected ? (
-                              <div className="flex items-center gap-1.5">
-                                <button type="button" onClick={() => updateSelection(product.id, -1, product.remaining)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>−</button>
-                                <span key={qty} className="w-7 text-center font-bold text-espresso tabular-nums text-base animate-[number-pop_0.3s_ease]">{qty}</span>
-                                <button type="button" onClick={() => updateSelection(product.id, 1, product.remaining)} className="w-9 h-9 rounded-lg text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg" style={{ border: "2px dashed rgba(30,15,8,0.12)" }}>+</button>
-                              </div>
-                            ) : (
-                              <button type="button" onClick={() => updateSelection(product.id, 1, product.remaining)} className="px-4 py-2 rounded-lg text-base font-medium hover:text-white active:scale-95 transition-all" style={{ color: theme.accent, border: `2px dashed ${theme.accent}50` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
-                            )}
-                          </div>
+                          <span className="text-base text-espresso">
+                            {opt.label}
+                            {label && <span className="ml-1 font-semibold" style={{ color: theme.accent }}>(可享 {label}優惠！)</span>}
+                          </span>
                         </div>
-                        {isSelected && (
-                          <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: `1px dashed ${theme.border}` }}>
-                            <span className="text-espresso-light/40 text-base">{qty} {product.unit} × NT${product.price}</span>
-                            <span className="font-bold text-base" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {qty * product.price}</span>
-                          </div>
-                        )}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          )}
 
-          {/* 收件資料 */}
+          {/* 必填商品分組 */}
+          {requiredGroups.map((group) => (
+            <div key={group.id} className="mb-8">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">
+                {group.name} <span className="text-rose text-sm font-normal">*</span>
+              </h2>
+              {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
+              <div className="space-y-2.5">
+                {group.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    qty={selections[product.id] || 0}
+                    theme={theme}
+                    onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* 如果沒有加購商品，也顯示非必填分組在這一步 */}
+          {!hasAddonProducts && addonGroups.map((group) => (
+            <div key={group.id} className="mb-8">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">{group.name}</h2>
+              {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
+              <div className="space-y-2.5">
+                {group.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    qty={selections[product.id] || 0}
+                    theme={theme}
+                    onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* 已選小計 */}
           {hasAnySelection && (
-          <>
-          <div className="relative mb-10 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.3s_both]">
-            <div
-              className="absolute -left-11 md:-left-14 w-[34px] md:w-[42px] h-[34px] md:h-[42px] rounded-full flex items-center justify-center font-serif font-bold text-white text-sm"
-              style={{ background: "var(--color-sage)", border: "3px dashed rgba(107,142,95,0.3)", boxShadow: "0 2px 8px rgba(107,142,95,0.2)" }}
-            >
-              {stepIdx + 1}
-            </div>
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">填寫資料</h2>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
-                  {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
-                </button>
-                <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportIdx })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+            <div className="rounded-lg p-4 mb-6" style={{ background: theme.cardBg, border: `1px dashed ${theme.border}` }}>
+              <div className="flex justify-between items-baseline">
+                <span className="text-espresso-light/60 text-base">目前小計</span>
+                <span className="font-bold text-xl" style={{ color: theme.accent }}>NT$ {subtotal}</span>
               </div>
             </div>
-            <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
-
-            <div className="space-y-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-                <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-sm font-semibold text-espresso-light/50 pt-2">姓名 *</label>
-                  <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} onBlur={() => markTouched("customerName")} className={inputClass} required />
-                  {fieldErrors.customerName && <p className="text-rose text-xs mt-1">{fieldErrors.customerName}</p>}
-                </div>
-                <div className={inputBorderFocus} style={inputBorder}>
-                  <label className="block text-sm font-semibold text-espresso-light/50 pt-2">電話 *</label>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => markTouched("phone")} className={inputClass} required />
-                  {fieldErrors.phone && <p className="text-rose text-xs mt-1">{fieldErrors.phone}</p>}
-                </div>
-              </div>
-
-              <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => markTouched("email")} className={inputClass} placeholder="選填，用於訂單通知" />
-                {fieldErrors.email && <p className="text-rose text-xs mt-1">{fieldErrors.email}</p>}
-              </div>
-
-              <div className="pt-4 pb-2">
-                <label className="block text-sm font-semibold text-espresso-light/50 mb-3">取貨方式 *</label>
-                <select
-                  value={deliveryMethod}
-                  onChange={(e) => setDeliveryMethod(e.target.value)}
-                  className="w-full py-3 px-4 rounded-lg text-lg text-espresso bg-white outline-none transition-colors"
-                  style={{ border: `2px dashed ${theme.border}` }}
-                >
-                  <option value="shipping">📦 郵寄</option>
-                  {(campaign.pickupOptions || []).map((opt) => (
-                    <option key={opt} value={`pickup:${opt}`}>🤝 {opt}</option>
-                  ))}
-                </select>
-              </div>
-
-              {deliveryMethod === "shipping" && (
-                <div className="pt-2">
-                  <label className="block text-sm font-semibold text-espresso-light/50 mb-2">收件地址 *</label>
-                  <TaiwanAddressSelector zipcode={zipcode} city={city} district={district} detail={addressDetail} onChangeZipcode={handleChangeZipcode} onChangeCity={handleChangeCity} onChangeDistrict={handleChangeDistrict} onChangeDetail={(v) => { handleChangeDetail(v); markTouched("addressDetail"); }} />
-                  {fieldErrors.addressDetail && <p className="text-rose text-xs mt-1">{fieldErrors.addressDetail}</p>}
-                </div>
-              )}
-
-              <div className="pt-4 pb-2">
-                <label className="block text-sm font-semibold text-espresso-light/50 mb-3">付款方式 *</label>
-                <div className="flex gap-3">
-                  {([
-                    { value: "cash" as const, label: "💵 現金", desc: "面交時付款" },
-                    { value: "transfer" as const, label: "🏦 匯款", desc: "銀行轉帳" },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setPaymentMethod(opt.value)}
-                      className={`flex-1 py-3 px-4 rounded-lg text-left transition-all ${paymentMethod === opt.value ? "shadow-sm" : ""}`}
-                      style={paymentMethod === opt.value
-                        ? { border: `2px solid ${theme.accent}`, background: `${theme.accent}08` }
-                        : { border: `2px dashed ${theme.border}`, background: theme.cardBg }}
-                    >
-                      <p className="text-base font-medium text-espresso">{opt.label}</p>
-                      <p className="text-xs text-espresso-light/40 mt-0.5">{opt.desc}</p>
-                    </button>
-                  ))}
-                </div>
-                {paymentMethod === "transfer" && <BankTransferInfo />}
-              </div>
-
-              <div className={inputBorderFocus} style={inputBorder}>
-                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">備註</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} placeholder="有什麼想告訴我們的？" />
-              </div>
-            </div>
-          </div>
-
-          {/* 訂單摘要 */}
-          <div className="relative mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
-            <div className="absolute -left-11 md:-left-14 w-[34px] md:w-[42px] h-[34px] md:h-[42px] rounded-full flex items-center justify-center text-sm" style={{ background: "var(--color-espresso)", color: "var(--color-linen)", border: "3px dashed rgba(30,15,8,0.2)", fontFamily: "var(--font-display)" }}>♥</div>
-            <div className="rounded-lg p-5" style={{ border: `2px dashed ${theme.border}`, background: theme.cardBg }}>
-              <h3 className="font-serif text-2xl font-bold text-espresso mb-3">訂單摘要</h3>
-              <div className="space-y-1.5">
-                {Object.entries(selections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
-                  const p = allProducts.find((p) => p.id === Number(id));
-                  if (!p) return null;
-                  return (
-                    <div key={id} className="flex justify-between text-base">
-                      <span className="text-espresso-light">{p.name} × {qty}</span>
-                      <span className="text-espresso font-medium tabular-nums">NT$ {p.price * qty}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              {(discountAmount > 0 || shippingFee > 0) && (
-                <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
-                  <div className="flex justify-between text-base">
-                    <span className="text-espresso-light">小計</span>
-                    <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
-                  </div>
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-base">
-                      <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
-                      <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
-                    </div>
-                  )}
-                  {shippingFee > 0 && (
-                    <div className="flex justify-between text-base">
-                      <span className="text-espresso-light">運費</span>
-                      <span className="text-espresso tabular-nums">NT$ {shippingFee}</span>
-                    </div>
-                  )}
-                  {shippingFee === 0 && deliveryMethod === "shipping" && (
-                    <div className="flex justify-between text-base">
-                      <span className="text-espresso-light">運費</span>
-                      <span className="text-sage font-medium">免運費</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-baseline pt-1.5" style={{ borderTop: `1px dashed ${theme.border}` }}>
-                    <span className="font-serif font-bold text-espresso">合計</span>
-                    <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
-                  </div>
-                </div>
-              )}
-              {discountAmount === 0 && shippingFee === 0 && (
-                <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `2px dashed ${theme.border}` }}>
-                  <span className="font-serif font-bold text-espresso">合計</span>
-                  <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          </>
           )}
         </div>
+      )}
 
-        {/* 送出 */}
-        {error && <p className="text-rose text-sm font-medium mb-4 animate-shake" role="alert">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading || !hasAnySelection}
-          className="w-full py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.5s_both]"
-          style={{ background: theme.accent, border: `2px dashed ${theme.accent}50`, boxShadow: `0 4px 16px ${theme.accent}30` }}
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" style={{ animationDuration: "0.8s" }} />
-              送出中...
-            </span>
-          ) : hasAnySelection ? `確認訂購 — NT$ ${grandTotal}` : "請先選擇商品"}
-        </button>
-        <p className="text-center text-espresso-light/30 text-sm mt-4">
-          送出後我們會以電話或 Email 確認訂單 ♥
-        </p>
-      </form>
+      {/* ═══ Step: 加購商品 ═══ */}
+      {currentStepKey === "addons" && (
+        <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          {addonGroups.map((group) => (
+            <div key={group.id} className="mb-8">
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-1">{group.name}</h2>
+              {group.description && <p className="text-espresso-light/40 text-base mb-4">{group.description}</p>}
+              <p className="text-espresso-light/40 text-sm mb-4">可跳過，直接點下一步</p>
+              <div className="space-y-2.5">
+                {group.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    qty={selections[product.id] || 0}
+                    theme={theme}
+                    onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* 已選小計 */}
+          <div className="rounded-lg p-4 mb-6" style={{ background: theme.cardBg, border: `1px dashed ${theme.border}` }}>
+            <div className="flex justify-between items-baseline">
+              <span className="text-espresso-light/60 text-base">目前小計</span>
+              <span className="font-bold text-xl" style={{ color: theme.accent }}>NT$ {subtotal}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Step: 收件資料 ═══ */}
+      {currentStepKey === "info" && (
+        <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-serif text-2xl md:text-3xl font-bold text-espresso">填寫資料</h2>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={loadProfile} className="px-3 py-1.5 rounded-lg text-xs font-medium text-sage hover:bg-sage/10 transition-all" style={{ border: "1.5px dashed rgba(107,142,95,0.3)" }}>
+                {profileLoaded ? "✓ 已帶入" : "帶入個人資料"}
+              </button>
+              <Link href="/profile?from=order" onClick={() => { sessionStorage.setItem("order_selections", JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportIdx })); }} className="px-3 py-1.5 rounded-lg text-xs font-medium text-espresso-light/40 hover:text-espresso hover:bg-linen-dark/20 transition-all" style={{ border: "1.5px dashed rgba(30,15,8,0.08)" }}>編輯</Link>
+            </div>
+          </div>
+          <p className="text-espresso-light/40 text-base mb-5">請填寫正確資訊以便寄送</p>
+
+          <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+              <div className={inputBorderFocus} style={inputBorder}>
+                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">姓名 *</label>
+                <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} onBlur={() => markTouched("customerName")} className={inputClass} required />
+                {fieldErrors.customerName && <p className="text-rose text-xs mt-1">{fieldErrors.customerName}</p>}
+              </div>
+              <div className={inputBorderFocus} style={inputBorder}>
+                <label className="block text-sm font-semibold text-espresso-light/50 pt-2">電話 *</label>
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => markTouched("phone")} className={inputClass} required />
+                {fieldErrors.phone && <p className="text-rose text-xs mt-1">{fieldErrors.phone}</p>}
+              </div>
+            </div>
+
+            <div className={inputBorderFocus} style={inputBorder}>
+              <label className="block text-sm font-semibold text-espresso-light/50 pt-2">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => markTouched("email")} className={inputClass} placeholder="選填，用於訂單通知" />
+              {fieldErrors.email && <p className="text-rose text-xs mt-1">{fieldErrors.email}</p>}
+            </div>
+
+            <div className="pt-4 pb-2">
+              <label className="block text-sm font-semibold text-espresso-light/50 mb-3">取貨方式 *</label>
+              <select
+                value={deliveryMethod}
+                onChange={(e) => setDeliveryMethod(e.target.value)}
+                className="w-full py-3 px-4 rounded-lg text-lg text-espresso bg-white outline-none transition-colors"
+                style={{ border: `2px dashed ${theme.border}` }}
+              >
+                <option value="shipping">郵寄</option>
+                {(campaign.pickupOptions || []).map((opt) => (
+                  <option key={opt} value={`pickup:${opt}`}>{opt}</option>
+                ))}
+              </select>
+            </div>
+
+            {deliveryMethod === "shipping" && (
+              <div className="pt-2">
+                <label className="block text-sm font-semibold text-espresso-light/50 mb-2">收件地址 *</label>
+                <TaiwanAddressSelector zipcode={zipcode} city={city} district={district} detail={addressDetail} onChangeZipcode={handleChangeZipcode} onChangeCity={handleChangeCity} onChangeDistrict={handleChangeDistrict} onChangeDetail={(v) => { handleChangeDetail(v); markTouched("addressDetail"); }} />
+                {fieldErrors.addressDetail && <p className="text-rose text-xs mt-1">{fieldErrors.addressDetail}</p>}
+              </div>
+            )}
+
+            <div className="pt-4 pb-2">
+              <label className="block text-sm font-semibold text-espresso-light/50 mb-3">付款方式 *</label>
+              <div className="flex gap-3">
+                {([
+                  { value: "cash" as const, label: "現金", desc: "面交時付款" },
+                  { value: "transfer" as const, label: "匯款", desc: "銀行轉帳" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setPaymentMethod(opt.value)}
+                    className={`flex-1 py-3 px-4 rounded-lg text-left transition-all ${paymentMethod === opt.value ? "shadow-sm" : ""}`}
+                    style={paymentMethod === opt.value
+                      ? { border: `2px solid ${theme.accent}`, background: `${theme.accent}08` }
+                      : { border: `2px dashed ${theme.border}`, background: theme.cardBg }}
+                  >
+                    <p className="text-base font-medium text-espresso">{opt.label}</p>
+                    <p className="text-xs text-espresso-light/40 mt-0.5">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+              {paymentMethod === "transfer" && <BankTransferInfo />}
+            </div>
+
+            <div className={inputBorderFocus} style={inputBorder}>
+              <label className="block text-sm font-semibold text-espresso-light/50 pt-2">備註</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={`${inputClass} resize-none`} placeholder="有什麼想告訴我們的？" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Step: 確認訂單 ═══ */}
+      {currentStepKey === "summary" && (
+        <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="rounded-lg p-5 mb-6" style={{ border: `2px dashed ${theme.border}`, background: theme.cardBg }}>
+            <h3 className="font-serif text-2xl font-bold text-espresso mb-3">訂單摘要</h3>
+            <div className="space-y-1.5">
+              {Object.entries(selections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
+                const p = allProducts.find((p) => p.id === Number(id));
+                if (!p) return null;
+                return (
+                  <div key={id} className="flex justify-between text-base">
+                    <span className="text-espresso-light">{p.name} × {qty}</span>
+                    <span className="text-espresso font-medium tabular-nums">NT$ {p.price * qty}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {(discountAmount > 0 || shippingFee > 0) && (
+              <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
+                <div className="flex justify-between text-base">
+                  <span className="text-espresso-light">小計</span>
+                  <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-base">
+                    <span style={{ color: theme.accent }}>♥ 支持者折扣（{selectedOption?.discount}%）</span>
+                    <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
+                  </div>
+                )}
+                {shippingFee > 0 && (
+                  <div className="flex justify-between text-base">
+                    <span className="text-espresso-light">運費</span>
+                    <span className="text-espresso tabular-nums">NT$ {shippingFee}</span>
+                  </div>
+                )}
+                {shippingFee === 0 && deliveryMethod === "shipping" && (
+                  <div className="flex justify-between text-base">
+                    <span className="text-espresso-light">運費</span>
+                    <span className="text-sage font-medium">免運費</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `2px dashed ${theme.border}` }}>
+              <span className="font-serif font-bold text-espresso">合計</span>
+              <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: "var(--font-display)" }}>NT$ {grandTotal}</span>
+            </div>
+          </div>
+
+          {/* 收件摘要 */}
+          <div className="rounded-lg p-5 mb-6" style={{ border: `1px dashed ${theme.border}`, background: theme.cardBg }}>
+            <h3 className="font-serif text-lg font-bold text-espresso mb-3">收件資訊</h3>
+            <div className="space-y-1.5 text-base">
+              <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">收件人</span><span className="text-espresso">{customerName}</span></div>
+              <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">電話</span><span className="text-espresso">{phone}</span></div>
+              {email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{email}</span></div>}
+              <div className="flex gap-3">
+                <span className="text-espresso-light/40 shrink-0 w-16">取貨</span>
+                <span className="text-espresso">{deliveryMethod === "shipping" ? `郵寄 — ${zipcode} ${city}${district}${addressDetail}` : deliveryMethod.replace("pickup:", "")}</span>
+              </div>
+              <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款</span><span className="text-espresso">{paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
+              {notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{notes}</span></div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 導航按鈕 ═══ */}
+      {error && <p className="text-rose text-sm font-medium mb-4 animate-shake" role="alert">{error}</p>}
+
+      <div className="flex gap-3 mt-6">
+        {currentStep > 0 && (
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex-1 py-4 rounded-lg font-serif font-bold text-base text-espresso-light hover:text-espresso active:scale-[0.97] transition-all"
+            style={{ border: `2px dashed ${theme.border}` }}
+          >
+            上一步
+          </button>
+        )}
+
+        {currentStepKey !== "summary" ? (
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={currentStepKey === "products" && !hasAnySelection}
+            className="flex-1 py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
+            style={{ background: theme.accent, border: `2px dashed ${theme.accent}50`, boxShadow: `0 4px 16px ${theme.accent}30` }}
+          >
+            {currentStepKey === "products" && !hasAnySelection ? "請先選擇商品" : "下一步"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSubmitOrder}
+            disabled={loading}
+            className="flex-1 py-4 text-white font-serif font-bold text-lg rounded-lg transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-60"
+            style={{ background: theme.accent, border: `2px dashed ${theme.accent}50`, boxShadow: `0 4px 16px ${theme.accent}30` }}
+          >
+            {`確認訂購 — NT$ ${grandTotal}`}
+          </button>
+        )}
+      </div>
+
+      <p className="text-center text-espresso-light/30 text-sm mt-4">
+        {currentStepKey === "summary" ? "確認後將進入最終確認頁面" : "送出後我們會以電話或 Email 確認訂單 ♥"}
+      </p>
     </div>
   );
 }
