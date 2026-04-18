@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import MultiImageUploader from "@/components/MultiImageUploader";
+import ImageUploader from "@/components/ImageUploader";
 import { DEFAULT_SUPPORT_OPTIONS, discountToLabel, type SupportOption } from "@/lib/supportTypes";
 import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 
@@ -11,6 +12,7 @@ import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 interface ProductEntry {
   name: string;
   description: string;
+  imageUrl: string;
   price: number;
   limit: number | null;
 }
@@ -35,7 +37,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { name: string; description?: string; isRequired: boolean; products: { name: string; description?: string; price: number; limit: number | null }[] }[];
+  groups: { name: string; description?: string; isRequired: boolean; products: { name: string; description?: string; imageUrl?: string; price: number; limit: number | null }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -96,17 +98,29 @@ function ProductCard({
       </div>
 
       <div className="px-5 pb-2">
-        <input
-          value={product.name}
-          onChange={(e) => onUpdate("name", e.target.value)}
-          className="w-full py-2 text-lg text-espresso bg-transparent outline-none placeholder:text-espresso-light/30"
-          style={{ borderBottom: isFocused ? "2px solid var(--color-rose)" : "1px solid rgba(30,15,8,0.1)" }}
-          placeholder={isFocused ? "輸入品名，例：香辣香菇醬" : "品名"}
-          autoFocus={isFocused && !product.name}
-        />
+        <div className="flex items-start gap-3">
+          {product.imageUrl && (
+            <Image
+              src={product.imageUrl}
+              alt={product.name || "商品圖"}
+              width={56}
+              height={56}
+              className="rounded-md object-cover ring-1 ring-linen-dark/40 shrink-0"
+              style={{ width: 56, height: 56 }}
+            />
+          )}
+          <input
+            value={product.name}
+            onChange={(e) => onUpdate("name", e.target.value)}
+            className="flex-1 py-2 text-lg text-espresso bg-transparent outline-none placeholder:text-espresso-light/30"
+            style={{ borderBottom: isFocused ? "2px solid var(--color-rose)" : "1px solid rgba(30,15,8,0.1)" }}
+            placeholder={isFocused ? "輸入品名，例：香辣香菇醬" : "品名"}
+            autoFocus={isFocused && !product.name}
+          />
+        </div>
 
         {isFocused && (
-          <div className="mt-3 space-y-3 animate-[bakeSwing_0.3s_ease_both]">
+          <div className="mt-3 space-y-3 animate-[bakeSwing_0.3s_ease_both]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1">
                 <span className="text-sm text-espresso-light/50">NT$</span>
@@ -122,6 +136,13 @@ function ProductCard({
               onChange={(e) => onUpdate("description", e.target.value)}
               className="w-full py-2 px-3 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose min-h-[64px] leading-relaxed"
               placeholder="商品說明（選填，例：香辣香菇醬 + 馬告菜圃醬 + 手工皂）"
+            />
+            <ImageUploader
+              value={product.imageUrl || ""}
+              onChange={(url) => onUpdate("imageUrl", url)}
+              label="商品圖片（選填）"
+              previewWidth={80}
+              previewHeight={80}
             />
           </div>
         )}
@@ -184,7 +205,7 @@ export default function CampaignManager() {
   const [supportOptions, setSupportOptions] = useState<SupportOption[]>([]);
   const [pickupOptions, setPickupOptions] = useState<string[]>([...DEFAULT_PICKUP]);
   const [newPickup, setNewPickup] = useState("");
-  const [products, setProducts] = useState<ProductEntry[]>([{ name: "", description: "", price: 0, limit: null }]);
+  const [products, setProducts] = useState<ProductEntry[]>([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
   const [addons, setAddons] = useState<ProductEntry[]>([]);
 
   async function loadCampaigns() {
@@ -205,7 +226,7 @@ export default function CampaignManager() {
   function resetForm() {
     setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]); setDescription("");
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
-    setProducts([{ name: "", description: "", price: 0, limit: null }]);
+    setProducts([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
     setAddons([]);
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
   }
@@ -228,14 +249,14 @@ export default function CampaignManager() {
       .map((p) => ({ ...p, name: stripAddon(p.name) || p.name }));
 
     setProducts(mainOnly.length > 0
-      ? mainOnly.map((p) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit }))
-      : [{ name: "", description: "", price: 0, limit: null }]);
+      ? mainOnly.map((p) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit }))
+      : [{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
 
     const mergedAddons = [
       ...movedAddons,
       ...rawAddons.map((p) => ({ ...p, name: isAddon(p.name) ? stripAddon(p.name) || p.name : p.name })),
     ];
-    setAddons(mergedAddons.map((p) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit })));
+    setAddons(mergedAddons.map((p) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit })));
   }
 
   async function startEdit(id: number) {
@@ -264,14 +285,14 @@ export default function CampaignManager() {
     const groups = [
       {
         name: "商品", description: "", sortOrder: 0, isRequired: true,
-        products: validProducts.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        products: validProducts.map((p, i) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       },
     ];
 
     if (validAddons.length > 0) {
       groups.push({
         name: "加購商品", description: "", sortOrder: 1, isRequired: false,
-        products: validAddons.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        products: validAddons.map((p, i) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       });
     }
 
@@ -332,7 +353,7 @@ export default function CampaignManager() {
     setter((prev) => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
   }
   function addItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
-    setter((prev) => [...prev, { name: "", description: "", price: 0, limit: null }]);
+    setter((prev) => [...prev, { name: "", description: "", imageUrl: "", price: 0, limit: null }]);
     setTimeout(() => focusSetter(items.length), 50);
   }
   function removeItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], i: number, focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
@@ -512,7 +533,7 @@ export default function CampaignManager() {
               {addons.length === 0 && (
                 <button
                   type="button"
-                  onClick={() => { setAddons([{ name: "", description: "", price: 0, limit: null }]); setTimeout(() => setFocusedAddon(0), 50); }}
+                  onClick={() => { setAddons([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]); setTimeout(() => setFocusedAddon(0), 50); }}
                   className="text-xs px-3 py-1 rounded-md bg-honey/10 ring-1 ring-honey/30 text-honey font-medium hover:bg-honey/20 transition-all"
                 >
                   + 新增加購區

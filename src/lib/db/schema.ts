@@ -168,6 +168,7 @@ export const campaignProducts = sqliteTable("campaign_products", {
     .references(() => campaignGroups.id),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
+  imageUrl: text("image_url").notNull().default(""),
   price: integer("price").notNull(),
   limit: integer("limit"),
   unit: text("unit").notNull().default("份"),

@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
             groupId: g.id,
             name: product.name,
             description: product.description || "",
+            imageUrl: product.imageUrl || "",
             price: product.price,
             limit: product.limit || null,
             unit: product.unit || "份",

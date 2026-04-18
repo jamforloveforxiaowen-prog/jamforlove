@@ -14,6 +14,7 @@ interface CampaignProduct {
   id: number;
   name: string;
   description: string;
+  imageUrl: string;
   price: number;
   limit: number | null;
   unit: string;
@@ -82,7 +83,7 @@ const LEGACY_ADDONS = [
 
 function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign {
   const toProduct = (item: { id: number; name: string; desc?: string; price: number; limit: number | null }): CampaignProduct => ({
-    id: item.id, name: item.name, description: item.desc || "", price: item.price,
+    id: item.id, name: item.name, description: item.desc || "", imageUrl: "", price: item.price,
     limit: item.limit, unit: "份", sortOrder: 0, note: "", isActive: true,
     sold: 0, remaining: item.limit,
   });
@@ -252,6 +253,16 @@ function ProductCard({
       style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${isSelected ? theme.accent : theme.border}`, background: isSelected ? `${theme.accent}10` : theme.cardBg, boxShadow: isSelected ? theme.cardShadow : "none" }}
     >
       <div className="flex items-start justify-between gap-3">
+        {product.imageUrl && (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            width={84}
+            height={84}
+            className={`${theme.radiusButton} object-cover shrink-0`}
+            style={{ width: 84, height: 84, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-serif font-bold text-espresso text-lg">{product.name}</span>
