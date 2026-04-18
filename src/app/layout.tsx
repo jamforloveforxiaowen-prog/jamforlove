@@ -3,7 +3,6 @@ import { Cormorant, Noto_Serif_TC, Figtree, Caveat, Playfair_Display, Bebas_Neue
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import NewsPopup from "@/components/NewsPopup";
 import { CartProvider } from "@/contexts/CartContext";
 
 const display = Cormorant({
@@ -66,7 +65,6 @@ export default function RootLayout({
         className={`${display.variable} ${serif.variable} ${sans.variable} ${handwritten.variable} ${vintage.variable} ${condensed.variable} min-h-screen flex flex-col`}
       >
         <CartProvider>
-          <NewsPopup />
           <Navbar />
           <main className="pt-14 flex-1">{children}</main>
           <Footer />

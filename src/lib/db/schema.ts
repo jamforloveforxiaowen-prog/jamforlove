@@ -65,20 +65,6 @@ export const orders = sqliteTable("orders", {
     .default(sql`(datetime('now'))`),
 });
 
-export const news = sqliteTable("news", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  imageUrl: text("image_url").notNull().default(""),
-  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-});
-
 export const banners = sqliteTable("banners", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull().default(""),
