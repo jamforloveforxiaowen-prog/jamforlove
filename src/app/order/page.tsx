@@ -428,13 +428,19 @@ export default function OrderPage() {
   const hasAddonProducts = useMemo(() => addonGroups.some((g) => g.products.length > 0), [addonGroups]);
 
   // 計算步驟
+  const hasBannerImages = useMemo(
+    () => parseBannerUrls(campaign?.bannerUrl ?? "").length > 0,
+    [campaign?.bannerUrl]
+  );
   const wizardSteps = useMemo(() => {
-    const steps = [{ key: "products", label: "選購商品" }];
+    const steps: { key: string; label: string }[] = [];
+    if (hasBannerImages) steps.push({ key: "intro", label: "活動說明" });
+    steps.push({ key: "products", label: "選購商品" });
     if (hasAddonProducts) steps.push({ key: "addons", label: "加購商品" });
     steps.push({ key: "info", label: "收件資料" });
     steps.push({ key: "summary", label: "確認訂單" });
     return steps;
-  }, [hasAddonProducts]);
+  }, [hasBannerImages, hasAddonProducts]);
 
   const currentStepKey = wizardSteps[currentStep]?.key ?? "products";
 
@@ -879,9 +885,12 @@ export default function OrderPage() {
         </div>
       </div>
 
-      {/* 說明圖（多張） */}
-      {bannerImages.length > 0 && currentStep === 0 && (
-        <div className="mb-8 space-y-3 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.05s_both]">
+      {/* 步驟指示器 */}
+      <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />
+
+      {/* ═══ Step: 活動說明 ═══ */}
+      {currentStepKey === "intro" && bannerImages.length > 0 && (
+        <div className="space-y-3 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           {bannerImages.map((url, i) => (
             <div key={i} className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(30,15,8,0.08)", border: "1px solid rgba(235,226,212,0.8)" }}>
               <Image src={url} alt={`活動說明 ${i + 1}`} width={800} height={800} className="w-full h-auto" />
@@ -889,9 +898,6 @@ export default function OrderPage() {
           ))}
         </div>
       )}
-
-      {/* 步驟指示器 */}
-      <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />
 
       {/* ═══ Step: 選購商品 ═══ */}
       {currentStepKey === "products" && (
