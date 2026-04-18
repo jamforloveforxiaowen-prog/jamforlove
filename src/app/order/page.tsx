@@ -146,10 +146,14 @@ function ProductCard({
 }) {
   const isSelected = qty > 0;
   const soldOut = product.remaining !== null && product.remaining <= 0 && qty === 0;
+  const hasLimit = product.limit != null;
+  const remaining = product.remaining;
+  const critical = remaining !== null && remaining > 0 && remaining <= 5;
+  const low = remaining !== null && remaining > 5 && remaining <= 10;
 
   return (
     <div
-      className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"}`}
+      className={`rounded-lg p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"} ${critical ? "ring-2 ring-rose/40" : ""}`}
       style={{ border: isSelected ? `2px dashed ${theme.accent}` : `2px dashed ${theme.border}`, background: isSelected ? `${theme.accent}08` : theme.cardBg }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -157,14 +161,27 @@ function ProductCard({
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-serif font-bold text-espresso text-lg">{product.name}</span>
             <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)" }}>${product.price}</span>
-            {soldOut ? (
-              <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-espresso-light/10 text-espresso-light/50">已售完</span>
-            ) : product.remaining !== null ? (
-              <span className={`text-sm ${product.remaining <= 5 ? "text-rose font-semibold" : "text-espresso-light/30"}`}>
-                剩 {product.remaining} {product.unit}
+            {hasLimit && !soldOut && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-bold bg-honey/15 text-honey ring-1 ring-honey/40">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+                限量 {product.limit}
               </span>
-            ) : product.limit ? (
-              <span className="text-espresso-light/30 text-sm">限 {product.limit} {product.unit}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {soldOut ? (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-espresso-light/10 text-espresso-light/60">已售完</span>
+            ) : critical ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose/10 text-rose ring-1 ring-rose/30 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose" />
+                僅剩 {remaining} {product.unit}！手慢無
+              </span>
+            ) : low ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-honey/10 text-honey ring-1 ring-honey/30">
+                熱銷中 · 剩 {remaining} {product.unit}
+              </span>
+            ) : remaining !== null ? (
+              <span className="text-sm text-espresso-light/50">還剩 {remaining} {product.unit}</span>
             ) : null}
           </div>
           {product.description && <p className="text-espresso-light/50 text-[1.05rem]">{product.description}</p>}

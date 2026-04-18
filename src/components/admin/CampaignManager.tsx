@@ -10,6 +10,7 @@ import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 
 interface ProductEntry {
   name: string;
+  description: string;
   price: number;
   limit: number | null;
 }
@@ -34,7 +35,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { name: string; isRequired: boolean; products: { name: string; price: number; limit: number | null }[] }[];
+  groups: { name: string; description?: string; isRequired: boolean; products: { name: string; description?: string; price: number; limit: number | null }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -105,22 +106,35 @@ function ProductCard({
         />
 
         {isFocused && (
-          <div className="flex items-center gap-4 mt-3 animate-[bakeSwing_0.3s_ease_both]">
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-espresso-light/50">NT$</span>
-              <input type="number" value={product.price || ""} onChange={(e) => onUpdate("price", Number(e.target.value))} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="價格" min="0" />
+          <div className="mt-3 space-y-3 animate-[bakeSwing_0.3s_ease_both]">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-espresso-light/50">NT$</span>
+                <input type="number" value={product.price || ""} onChange={(e) => onUpdate("price", Number(e.target.value))} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="價格" min="0" />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-espresso-light/50">限量</span>
+                <input type="number" value={product.limit ?? ""} onChange={(e) => onUpdate("limit", e.target.value ? Number(e.target.value) : null)} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="不限" min="0" />
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-espresso-light/50">限量</span>
-              <input type="number" value={product.limit ?? ""} onChange={(e) => onUpdate("limit", e.target.value ? Number(e.target.value) : null)} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="不限" min="0" />
-            </div>
+            <textarea
+              value={product.description || ""}
+              onChange={(e) => onUpdate("description", e.target.value)}
+              className="w-full py-2 px-3 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose min-h-[64px] leading-relaxed"
+              placeholder="商品說明（選填，例：香辣香菇醬 + 馬告菜圃醬 + 手工皂）"
+            />
           </div>
         )}
 
         {!isFocused && product.name && (
-          <div className="flex items-center gap-3 mt-1 text-sm text-espresso-light/40">
-            <span>NT$ {product.price}</span>
-            {product.limit != null && <span>· 限量 {product.limit}</span>}
+          <div className="mt-1 space-y-1">
+            <div className="flex items-center gap-3 text-sm text-espresso-light/40">
+              <span>NT$ {product.price}</span>
+              {product.limit != null && <span>· 限量 {product.limit}</span>}
+            </div>
+            {product.description && (
+              <p className="text-sm text-espresso-light/50 line-clamp-2">{product.description}</p>
+            )}
           </div>
         )}
       </div>
@@ -170,8 +184,10 @@ export default function CampaignManager() {
   const [supportOptions, setSupportOptions] = useState<SupportOption[]>([]);
   const [pickupOptions, setPickupOptions] = useState<string[]>([...DEFAULT_PICKUP]);
   const [newPickup, setNewPickup] = useState("");
-  const [products, setProducts] = useState<ProductEntry[]>([{ name: "", price: 0, limit: null }]);
+  const [products, setProducts] = useState<ProductEntry[]>([{ name: "", description: "", price: 0, limit: null }]);
   const [addons, setAddons] = useState<ProductEntry[]>([]);
+  const [mainGroupDesc, setMainGroupDesc] = useState("");
+  const [addonGroupDesc, setAddonGroupDesc] = useState("");
 
   async function loadCampaigns() {
     try {
@@ -191,8 +207,9 @@ export default function CampaignManager() {
   function resetForm() {
     setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]); setDescription("");
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
-    setProducts([{ name: "", price: 0, limit: null }]);
+    setProducts([{ name: "", description: "", price: 0, limit: null }]);
     setAddons([]);
+    setMainGroupDesc(""); setAddonGroupDesc("");
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
   }
 
@@ -214,14 +231,17 @@ export default function CampaignManager() {
       .map((p) => ({ ...p, name: stripAddon(p.name) || p.name }));
 
     setProducts(mainOnly.length > 0
-      ? mainOnly.map((p) => ({ name: p.name, price: p.price, limit: p.limit }))
-      : [{ name: "", price: 0, limit: null }]);
+      ? mainOnly.map((p) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit }))
+      : [{ name: "", description: "", price: 0, limit: null }]);
 
     const mergedAddons = [
       ...movedAddons,
       ...rawAddons.map((p) => ({ ...p, name: isAddon(p.name) ? stripAddon(p.name) || p.name : p.name })),
     ];
-    setAddons(mergedAddons.map((p) => ({ name: p.name, price: p.price, limit: p.limit })));
+    setAddons(mergedAddons.map((p) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit })));
+
+    setMainGroupDesc(mainGroup?.description || "");
+    setAddonGroupDesc(addonGroup?.description || "");
   }
 
   async function startEdit(id: number) {
@@ -250,15 +270,15 @@ export default function CampaignManager() {
 
     const groups = [
       {
-        name: "商品", description: "", sortOrder: 0, isRequired: true,
-        products: validProducts.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        name: "商品", description: mainGroupDesc, sortOrder: 0, isRequired: true,
+        products: validProducts.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       },
     ];
 
     if (validAddons.length > 0) {
       groups.push({
-        name: "加購商品", description: "可自由搭配加購", sortOrder: 1, isRequired: false,
-        products: validAddons.map((p, i) => ({ name: p.name, description: "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        name: "加購商品", description: addonGroupDesc || "可自由搭配加購", sortOrder: 1, isRequired: false,
+        products: validAddons.map((p, i) => ({ name: p.name, description: p.description || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       });
     }
 
@@ -319,7 +339,7 @@ export default function CampaignManager() {
     setter((prev) => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
   }
   function addItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
-    setter((prev) => [...prev, { name: "", price: 0, limit: null }]);
+    setter((prev) => [...prev, { name: "", description: "", price: 0, limit: null }]);
     setTimeout(() => focusSetter(items.length), 50);
   }
   function removeItem(setter: React.Dispatch<React.SetStateAction<ProductEntry[]>>, items: ProductEntry[], i: number, focusSetter: React.Dispatch<React.SetStateAction<number | null>>) {
@@ -468,6 +488,12 @@ export default function CampaignManager() {
           {/* ═══ 商品列表 ═══ */}
           <div className="space-y-3">
             <h4 className="font-serif font-bold text-espresso text-base">商品</h4>
+            <textarea
+              value={mainGroupDesc}
+              onChange={(e) => setMainGroupDesc(e.target.value)}
+              className={`${inputClass} min-h-[56px] leading-relaxed`}
+              placeholder="商品區說明（選填，例：每組 NT$500，可複選多組）"
+            />
             {products.map((p, i) => (
               <ProductCard
                 key={i}
@@ -500,7 +526,7 @@ export default function CampaignManager() {
               {addons.length === 0 && (
                 <button
                   type="button"
-                  onClick={() => { setAddons([{ name: "", price: 0, limit: null }]); setTimeout(() => setFocusedAddon(0), 50); }}
+                  onClick={() => { setAddons([{ name: "", description: "", price: 0, limit: null }]); setTimeout(() => setFocusedAddon(0), 50); }}
                   className="text-xs px-3 py-1 rounded-md bg-honey/10 ring-1 ring-honey/30 text-honey font-medium hover:bg-honey/20 transition-all"
                 >
                   + 新增加購區
@@ -509,6 +535,14 @@ export default function CampaignManager() {
             </div>
             {addons.length === 0 && (
               <p className="text-xs text-espresso-light/40">未設定加購商品 — 消費者只會看到主要商品</p>
+            )}
+            {addons.length > 0 && (
+              <textarea
+                value={addonGroupDesc}
+                onChange={(e) => setAddonGroupDesc(e.target.value)}
+                className={`${inputClass} min-h-[56px] leading-relaxed`}
+                placeholder="加購區說明（選填，例：可自由搭配加購）"
+              />
             )}
             {addons.map((p, i) => (
               <ProductCard
