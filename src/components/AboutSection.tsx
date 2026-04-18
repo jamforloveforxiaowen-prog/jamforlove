@@ -33,11 +33,23 @@ export default function AboutSection() {
           </div>
         </ScrollReveal>
 
-        {/* 左右排版：左一句引言 + 右全部正文 */}
+        {/* 鏡像版：左正文 + 右固定引言 */}
         <ScrollReveal delay={0.1}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
-            {/* 左欄：一句話 */}
-            <div className="md:col-span-4 md:sticky md:top-24">
+            {/* 左欄：全部正文 */}
+            <div className="md:col-span-8 space-y-6 order-2 md:order-1">
+              {paragraphs.map((para, i) => (
+                <p
+                  key={i}
+                  className="text-[1.05rem] leading-[1.9] text-espresso-light/70"
+                >
+                  {para}
+                </p>
+              ))}
+            </div>
+
+            {/* 右欄：一句話 */}
+            <div className="md:col-span-4 order-1 md:order-2 md:sticky md:top-24">
               <p
                 className="font-serif font-bold text-rose leading-snug"
                 style={{ fontSize: "clamp(1.4rem, 3vw, 1.7rem)" }}
@@ -48,15 +60,6 @@ export default function AboutSection() {
                 className="hidden md:block mt-5 w-10"
                 style={{ borderTop: "2px dashed rgba(196,80,106,0.3)" }}
               />
-            </div>
-
-            {/* 右欄：全部正文 */}
-            <div className="md:col-span-8 space-y-6">
-              {paragraphs.map((para, i) => (
-                <p key={i} className="text-[1.05rem] leading-[1.9] text-espresso-light/70">
-                  {para}
-                </p>
-              ))}
             </div>
           </div>
         </ScrollReveal>
