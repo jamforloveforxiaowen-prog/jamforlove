@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { login } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { username, password } = await req.json();
+  const { name } = await req.json();
 
-  if (!username || !password) {
-    return NextResponse.json({ error: "請填寫帳號和密碼" }, { status: 400 });
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return NextResponse.json({ error: "請輸入名稱" }, { status: 400 });
   }
 
-  const result = await login(username, password);
+  const result = await login(name.trim());
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 401 });

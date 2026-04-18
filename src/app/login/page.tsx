@@ -6,9 +6,7 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +19,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ name }),
       });
 
       const data = await res.json();
@@ -175,7 +173,7 @@ export default function LoginPage() {
               歡迎回來
             </h1>
             <p className="text-espresso-light/50 text-[0.8125rem]">
-              登入以查看訂單或訂購果醬
+              輸入名稱即可登入
             </p>
           </div>
 
@@ -183,63 +181,20 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
-                htmlFor="login-username"
+                htmlFor="login-name"
                 className="block text-sm font-medium text-espresso mb-2"
               >
-                帳號
+                名稱
               </label>
               <input
-                id="login-username"
+                id="login-name"
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-lg outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]"
+                autoFocus
                 required
               />
-            </div>
-            <div>
-              <label
-                htmlFor="login-password"
-                className="block text-sm font-medium text-espresso mb-2"
-              >
-                密碼
-              </label>
-              <div className="relative">
-                <input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 pr-12 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-rose focus:bg-white/80 focus:shadow-[0_0_0_3px_var(--color-rose-muted)]"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-espresso-light/40 hover:text-espresso transition-colors"
-                  aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
-                >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <div className="mt-2 text-right">
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-espresso-light/40 hover:text-rose transition-colors"
-                >
-                  忘記密碼？
-                </Link>
-              </div>
             </div>
             {error && (
               <p className="text-rose text-sm font-medium animate-shake" role="alert">

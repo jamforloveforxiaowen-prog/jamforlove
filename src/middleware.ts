@@ -21,7 +21,6 @@ const rateLimitStore = new Map<string, { count: number; windowStart: number }>()
 const RATE_LIMIT_RULES: Record<string, { maxRequests: number; windowMs: number }> = {
   "/api/auth/login": { maxRequests: 5, windowMs: 60_000 },
   "/api/auth/register": { maxRequests: 3, windowMs: 60_000 },
-  "/api/auth/forgot-password": { maxRequests: 3, windowMs: 60_000 },
 };
 
 function checkRateLimit(ip: string, path: string): boolean {
@@ -106,6 +105,5 @@ export const config = {
     "/register",
     "/api/auth/login",
     "/api/auth/register",
-    "/api/auth/forgot-password",
   ],
 };

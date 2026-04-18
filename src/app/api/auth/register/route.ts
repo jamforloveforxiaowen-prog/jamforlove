@@ -2,32 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { register, createToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { username, password, name, email } = await req.json();
+  const { name } = await req.json();
 
-  if (!username || !password || !name || !email) {
-    return NextResponse.json({ error: "請填寫所有必填欄位" }, { status: 400 });
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return NextResponse.json({ error: "請輸入名稱" }, { status: 400 });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return NextResponse.json({ error: "請輸入有效的 Email 地址" }, { status: 400 });
-  }
+  const trimmed = name.trim();
 
-  if (username.length < 3 || username.length > 20) {
+  if (trimmed.length < 1 || trimmed.length > 20) {
     return NextResponse.json(
-      { error: "帳號長度需在 3-20 字之間" },
+      { error: "名稱長度需在 1-20 字之間" },
       { status: 400 }
     );
   }
 
-  if (password.length < 6) {
-    return NextResponse.json(
-      { error: "密碼至少需要 6 個字元" },
-      { status: 400 }
-    );
-  }
-
-  const result = await register(username, password, name, email);
+  const result = await register(trimmed);
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });

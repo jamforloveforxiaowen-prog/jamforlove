@@ -6,11 +6,7 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +19,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, name, email }),
+        body: JSON.stringify({ name }),
       });
 
       const data = await res.json();
@@ -45,7 +41,7 @@ export default function RegisterPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-[0.9375rem] outline-none transition-all placeholder:text-espresso-light/30 focus:border-honey focus:bg-white/80 focus:shadow-[0_0_0_3px_rgba(200,149,48,0.15)]";
+    "w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3.5 text-espresso text-lg outline-none transition-all placeholder:text-espresso-light/30 focus:border-honey focus:bg-white/80 focus:shadow-[0_0_0_3px_rgba(200,149,48,0.15)]";
 
   return (
     <div
@@ -188,103 +184,31 @@ export default function RegisterPage() {
               加入我們
             </h1>
             <p className="text-espresso-light/50 text-[0.8125rem]">
-              註冊帳號，開始享受手工果醬
+              輸入名稱即可註冊
             </p>
           </div>
 
-          {/* 表單 — 兩欄式 */}
+          {/* 表單 */}
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label
-                  htmlFor="reg-username"
-                  className="block text-sm font-medium text-espresso mb-1.5"
-                >
-                  帳號
-                </label>
-                <input
-                  id="reg-username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className={inputClass}
-                  placeholder="3-20 個字元"
-                  minLength={3}
-                  maxLength={20}
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-password"
-                  className="block text-sm font-medium text-espresso mb-1.5"
-                >
-                  密碼
-                </label>
-                <div className="relative">
-                  <input
-                    id="reg-password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={`${inputClass} pr-12`}
-                    placeholder="至少 6 個字元"
-                    minLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-espresso-light/40 hover:text-espresso transition-colors"
-                    aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
-                  >
-                    {showPassword ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-name"
-                  className="block text-sm font-medium text-espresso mb-1.5"
-                >
-                  姓名
-                </label>
-                <input
-                  id="reg-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={inputClass}
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="reg-email"
-                  className="block text-sm font-medium text-espresso mb-1.5"
-                >
-                  Email
-                </label>
-                <input
-                  id="reg-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClass}
-                  placeholder="用於密碼重設"
-                  required
-                />
-              </div>
+            <div className="mb-4">
+              <label
+                htmlFor="reg-name"
+                className="block text-sm font-medium text-espresso mb-1.5"
+              >
+                名稱
+              </label>
+              <input
+                id="reg-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputClass}
+                placeholder="1-20 個字元"
+                minLength={1}
+                maxLength={20}
+                autoFocus
+                required
+              />
             </div>
             {error && (
               <p className="text-rose text-sm font-medium animate-shake" role="alert">

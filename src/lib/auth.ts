@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users } from "./db/schema";
 import { eq } from "drizzle-orm";
@@ -15,14 +14,6 @@ export interface SessionUser {
   username: string;
   role: string;
   name: string;
-}
-
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export async function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
 }
 
 export async function createToken(user: SessionUser) {
@@ -48,46 +39,35 @@ export async function getSession(): Promise<SessionUser | null> {
   return verifyToken(token);
 }
 
-export async function register(
-  username: string,
-  password: string,
-  name: string,
-  email: string
-) {
+export async function register(name: string) {
   const existing = await db
     .select()
     .from(users)
-    .where(eq(users.username, username))
+    .where(eq(users.username, name))
     .get();
 
   if (existing) {
-    return { error: "此帳號已被註冊" };
+    return { error: "此名稱已被使用" };
   }
 
-  const passwordHash = await hashPassword(password);
   const result = await db
     .insert(users)
-    .values({ username, passwordHash, name, email })
+    .values({ username: name, passwordHash: "", name, email: "" })
     .returning()
     .get();
 
   return { user: result };
 }
 
-export async function login(username: string, password: string) {
+export async function login(name: string) {
   const user = await db
     .select()
     .from(users)
-    .where(eq(users.username, username))
+    .where(eq(users.username, name))
     .get();
 
   if (!user) {
-    return { error: "帳號或密碼錯誤" };
-  }
-
-  const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) {
-    return { error: "帳號或密碼錯誤" };
+    return { error: "找不到此名稱，請先註冊" };
   }
 
   const token = await createToken({
