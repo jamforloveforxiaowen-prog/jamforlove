@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <div>
       {/* ── Hero ─────────────────────────── */}
-      <section className="flex items-center">
+      <section className="flex items-center min-h-[calc(100vh-3.5rem)]">
         <div className="max-w-6xl mx-auto px-6 w-full py-10 md:py-16">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-6 items-center">
             {/* 左側文字 */}
