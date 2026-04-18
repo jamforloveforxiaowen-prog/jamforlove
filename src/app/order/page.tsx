@@ -877,9 +877,6 @@ export default function OrderPage() {
         <div className="flex items-center justify-center gap-3 mt-4">
           <span className="w-10 h-px" style={{ background: `${theme.accent}50` }} /><span className="text-sm" style={{ color: theme.accent }}>♥</span><span className="w-10 h-px" style={{ background: `${theme.accent}50` }} />
         </div>
-        <p className="text-espresso-light/50 text-base mt-4 leading-relaxed max-w-md mx-auto">
-          每一瓶果醬、每一塊手工皂，都由學生親手製作。<br />你的支持，是我們最大的動力。
-        </p>
       </div>
 
       {/* 說明圖（多張） */}
