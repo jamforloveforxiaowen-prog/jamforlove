@@ -68,7 +68,7 @@ export async function PUT(
     return NextResponse.json({ success: true });
   }
 
-  const { name, startDate, endDate, bannerUrl, formStyle, pickupOptions, supporterDiscount, supportOptions, groups } = body;
+  const { name, startDate, endDate, bannerUrl, description, formStyle, pickupOptions, supporterDiscount, supportOptions, groups } = body;
 
   await db
     .update(campaigns)
@@ -77,6 +77,7 @@ export async function PUT(
       startDate,
       endDate,
       bannerUrl: bannerUrl || "",
+      description: description || "",
       formStyle: formStyle || "classic",
       supporterDiscount: supporterDiscount ?? 0,
       supportOptions: typeof supportOptions === "string" ? supportOptions : JSON.stringify(supportOptions || []),

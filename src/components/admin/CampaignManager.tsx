@@ -21,6 +21,7 @@ interface Campaign {
   startDate: string;
   endDate: string;
   bannerUrl: string;
+  description: string;
   formStyle: string;
   supporterDiscount: number;
   supportOptions: SupportOption[];
@@ -29,6 +30,7 @@ interface Campaign {
 }
 
 interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" | "supportOptions"> {
+  description: string;
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
@@ -162,6 +164,7 @@ export default function CampaignManager() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [bannerUrls, setBannerUrls] = useState<string[]>([]);
+  const [description, setDescription] = useState("");
   const [formStyle, setFormStyle] = useState("classic");
   const [supporterDiscount, setSupporterDiscount] = useState(0);
   const [supportOptions, setSupportOptions] = useState<SupportOption[]>([]);
@@ -186,7 +189,7 @@ export default function CampaignManager() {
   useEffect(() => { loadCampaigns(); }, []);
 
   function resetForm() {
-    setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]);
+    setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]); setDescription("");
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", price: 0, limit: null }]);
     setAddons([]);
@@ -226,7 +229,7 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
-    setBannerUrls(parseBannerUrls(data.bannerUrl)); setFormStyle(data.formStyle || "classic");
+    setBannerUrls(parseBannerUrls(data.bannerUrl)); setDescription(data.description || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
     setSupportOptions(Array.isArray(sOpts) && sOpts.length > 0 ? sOpts : []);
@@ -262,6 +265,7 @@ export default function CampaignManager() {
     const payload = {
       name, startDate, endDate,
       bannerUrl: serializeBannerUrls(bannerUrls),
+      description,
       formStyle,
       supporterDiscount: supportOptions.length > 0 ? 1 : 0,
       supportOptions: JSON.stringify(supportOptions),
@@ -300,7 +304,7 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${c.id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
-    setBannerUrls(parseBannerUrls(data.bannerUrl)); setFormStyle(data.formStyle || "classic");
+    setBannerUrls(parseBannerUrls(data.bannerUrl)); setDescription(data.description || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
     setSupportOptions(Array.isArray(sOpts) ? sOpts : []);
@@ -449,6 +453,16 @@ export default function CampaignManager() {
               )}
             </div>
             <MultiImageUploader value={bannerUrls} onChange={setBannerUrls} label="活動說明圖（選填，最多 5 張）" maxImages={5} previewWidth={120} previewHeight={80} />
+            <div>
+              <label className="block text-sm font-medium text-espresso mb-1">活動文字說明（選填）</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={`${inputClass} min-h-[120px] leading-relaxed`}
+                placeholder="例：今年是 Jam for Love 十周年，邀請您一起延續愛與甜的故事…（可換行）"
+              />
+              <p className="text-xs text-espresso-light/40 mt-1">會顯示在訂購表單的活動說明圖下方</p>
+            </div>
           </div>
 
           {/* ═══ 商品列表 ═══ */}

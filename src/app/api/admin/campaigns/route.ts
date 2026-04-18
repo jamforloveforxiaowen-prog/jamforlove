@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, startDate, endDate, bannerUrl, formStyle, pickupOptions, supporterDiscount, supportOptions, groups } = body;
+  const { name, startDate, endDate, bannerUrl, description, formStyle, pickupOptions, supporterDiscount, supportOptions, groups } = body;
 
   if (!name || !startDate || !endDate) {
     return NextResponse.json({ error: "請填寫活動名稱和日期" }, { status: 400 });
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       startDate,
       endDate,
       bannerUrl: bannerUrl || "",
+      description: description || "",
       formStyle: formStyle || "classic",
       supporterDiscount: supporterDiscount ?? 0,
       supportOptions: typeof supportOptions === "string" ? supportOptions : JSON.stringify(supportOptions || []),

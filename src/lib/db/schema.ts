@@ -142,6 +142,7 @@ export const campaigns = sqliteTable("campaigns", {
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
   bannerUrl: text("banner_url").notNull().default(""),
+  description: text("description").notNull().default(""),
   formStyle: text("form_style").notNull().default("classic"),
   // 舊客戶折扣（> 0 表示啟用支持者折扣選項）
   supporterDiscount: integer("supporter_discount").notNull().default(0),

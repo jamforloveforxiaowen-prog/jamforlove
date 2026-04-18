@@ -40,6 +40,7 @@ interface ActiveCampaign {
   startDate: string;
   endDate: string;
   bannerUrl: string;
+  description: string;
   formStyle: string;
   supporterDiscount: number;
   supportOptions: SupportOption[];
@@ -87,7 +88,7 @@ function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign
   });
   return {
     id: 0, name: "Jam for Love", status: "active", startDate, endDate,
-    bannerUrl: "", formStyle: "classic", supporterDiscount: 0, supportOptions: [], pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
+    bannerUrl: "", description: "", formStyle: "classic", supporterDiscount: 0, supportOptions: [], pickupOptions: ["小川阿姨", "台大面交", "宜蘭面交"],
     groups: [
       { id: 1, name: "產品組合", description: "每組 NT$500，可複選多組", sortOrder: 0, isRequired: true, products: LEGACY_COMBOS.map(toProduct) },
       { id: 2, name: "加購好物", description: "可自由搭配", sortOrder: 1, isRequired: false, products: LEGACY_ADDONS.map(toProduct) },
@@ -432,15 +433,19 @@ export default function OrderPage() {
     () => parseBannerUrls(campaign?.bannerUrl ?? "").length > 0,
     [campaign?.bannerUrl]
   );
+  const hasIntroContent = useMemo(
+    () => hasBannerImages || Boolean(campaign?.description?.trim()),
+    [hasBannerImages, campaign?.description]
+  );
   const wizardSteps = useMemo(() => {
     const steps: { key: string; label: string }[] = [];
-    if (hasBannerImages) steps.push({ key: "intro", label: "活動說明" });
+    if (hasIntroContent) steps.push({ key: "intro", label: "活動說明" });
     steps.push({ key: "products", label: "選購商品" });
     if (hasAddonProducts) steps.push({ key: "addons", label: "加購商品" });
     steps.push({ key: "info", label: "收件資料" });
     steps.push({ key: "summary", label: "確認訂單" });
     return steps;
-  }, [hasBannerImages, hasAddonProducts]);
+  }, [hasIntroContent, hasAddonProducts]);
 
   const currentStepKey = wizardSteps[currentStep]?.key ?? "products";
 
@@ -889,13 +894,18 @@ export default function OrderPage() {
       <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />
 
       {/* ═══ Step: 活動說明 ═══ */}
-      {currentStepKey === "intro" && bannerImages.length > 0 && (
-        <div className="space-y-3 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+      {currentStepKey === "intro" && (
+        <div className="space-y-4 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           {bannerImages.map((url, i) => (
             <div key={i} className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(30,15,8,0.08)", border: "1px solid rgba(235,226,212,0.8)" }}>
               <Image src={url} alt={`活動說明 ${i + 1}`} width={800} height={800} className="w-full h-auto" />
             </div>
           ))}
+          {campaign.description?.trim() && (
+            <div className="rounded-2xl px-5 py-4" style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}>
+              <p className="text-base md:text-lg leading-relaxed text-espresso whitespace-pre-wrap">{campaign.description}</p>
+            </div>
+          )}
         </div>
       )}
 
