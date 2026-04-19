@@ -56,7 +56,7 @@ export default function Footer() {
                 Facebook 社團
               </a>
               <a
-                href="mailto:jamforloveforxiaowen@gmail.com"
+                href="mailto:jam.for.love.wny@gmail.com"
                 className="flex items-center gap-2 text-sm transition-colors duration-200 hover:text-rose"
                 style={{ color: "rgba(235,226,212,0.7)" }}
               >
@@ -64,7 +64,7 @@ export default function Footer() {
                   <rect x="2" y="4" width="20" height="16" rx="2" />
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
-                jamforloveforxiaowen@gmail.com
+                jam.for.love.wny@gmail.com
               </a>
               <p className="text-xs mt-2" style={{ color: "var(--color-linen-dark)", opacity: 0.4 }}>
                 &copy; {new Date().getFullYear()} Jam for Love

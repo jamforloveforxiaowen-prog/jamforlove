@@ -33,7 +33,7 @@ interface Order {
   createdAt: string;
 }
 
-const CUSTOMER_SERVICE_EMAIL = "jamforloveforxiaowen@gmail.com";
+const CUSTOMER_SERVICE_EMAIL = "jam.for.love.wny@gmail.com";
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);

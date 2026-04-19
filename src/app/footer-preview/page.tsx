@@ -21,7 +21,7 @@ const BRAND = "Jam for Love";
 const SUBTITLE = "用愛手工熬煮 / Handmade with Love";
 const FROM = "國立暨南大學";
 const FB_URL = "https://www.facebook.com/groups/229394627478779/";
-const EMAIL = "jamforloveforxiaowen@gmail.com";
+const EMAIL = "jam.for.love.wny@gmail.com";
 const COPYRIGHT = "\u00a9 2026 Jam for Love";
 
 // ═══════════════════════════════════════════
