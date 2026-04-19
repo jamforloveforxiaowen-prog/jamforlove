@@ -34,9 +34,12 @@ interface Order {
   email: string;
   address: string;
   deliveryMethod: string;
+  paymentMethod?: string;
   items: OrderItem[];
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
+  shippingFee?: number;
+  discountAmount?: number;
   notes: string;
   total: number;
   status: string;
@@ -1112,13 +1115,287 @@ function StoryManager() {
   );
 }
 
+/* ── 訂單編輯表單 ──────────────────── */
+
+function OrderEditForm({
+  order,
+  onSaved,
+  onCancel,
+}: {
+  order: Order;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const initialItems: OrderItem[] = order.items && order.items.length > 0
+    ? order.items
+    : [
+        ...order.combos.map((c) => ({
+          productId: c.id,
+          name: `${c.name}（${c.items.join("、")}）`,
+          group: "",
+          quantity: c.quantity,
+          price: c.price,
+        })),
+        ...order.addons.map((a) => ({
+          productId: a.id,
+          name: a.name,
+          group: "",
+          quantity: a.quantity,
+          price: a.price,
+        })),
+      ];
+
+  const [customerName, setCustomerName] = useState(order.customerName);
+  const [phone, setPhone] = useState(order.phone);
+  const [email, setEmail] = useState(order.email || "");
+  const [address, setAddress] = useState(order.address);
+  const [notes, setNotes] = useState(order.notes || "");
+  const [deliveryMethod, setDeliveryMethod] = useState(order.deliveryMethod || "shipping");
+  const [paymentMethod, setPaymentMethod] = useState(order.paymentMethod || "cash");
+  const [status, setStatus] = useState(order.status || "pending");
+  const [items, setItems] = useState<OrderItem[]>(initialItems);
+  const [shippingFee, setShippingFee] = useState(order.shippingFee ?? 0);
+  const [discountAmount, setDiscountAmount] = useState(order.discountAmount ?? 0);
+  const [totalOverride, setTotalOverride] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const autoTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  const finalTotal = totalOverride.trim() === "" ? autoTotal : Number(totalOverride) || 0;
+
+  function updateQty(idx: number, qty: number) {
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, quantity: Math.max(0, qty) } : it)));
+  }
+
+  function removeItem(idx: number) {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  async function handleSave() {
+    setError("");
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName,
+          phone,
+          email,
+          address,
+          notes,
+          deliveryMethod,
+          paymentMethod,
+          status,
+          items: items.filter((i) => i.quantity > 0),
+          shippingFee,
+          discountAmount,
+          total: finalTotal,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "儲存失敗");
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+      onSaved();
+    } catch {
+      setError("網路連線失敗");
+      setSaving(false);
+    }
+  }
+
+  const labelClass = "block text-xs font-semibold text-espresso-light/60 mb-1";
+  const inputClass =
+    "w-full px-3 py-2 rounded-md text-sm text-espresso bg-linen/60 ring-1 ring-linen-dark/50 focus:ring-rose outline-none";
+
+  return (
+    <div className="space-y-4">
+      {error && <p className="text-rose text-sm font-medium">{error}</p>}
+
+      {/* 聯絡資料 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>姓名</label>
+          <input className={inputClass} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+        </div>
+        <div>
+          <label className={labelClass}>電話</label>
+          <input className={inputClass} value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div className="md:col-span-2">
+          <label className={labelClass}>Email</label>
+          <input className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div className="md:col-span-2">
+          <label className={labelClass}>地址</label>
+          <input className={inputClass} value={address} onChange={(e) => setAddress(e.target.value)} />
+        </div>
+      </div>
+
+      {/* 選項 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div>
+          <label className={labelClass}>取貨方式</label>
+          <select className={inputClass} value={deliveryMethod} onChange={(e) => setDeliveryMethod(e.target.value)}>
+            <option value="shipping">郵寄</option>
+            <option value="pickup">面交</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>付款方式</label>
+          <select className={inputClass} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+            <option value="cash">現金</option>
+            <option value="transfer">匯款</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>狀態</label>
+          <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value)}>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 品項 */}
+      <div>
+        <p className={labelClass}>品項</p>
+        {items.length === 0 ? (
+          <p className="text-xs text-espresso-light/40 py-2">無品項</p>
+        ) : (
+          <div className="space-y-2">
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 bg-linen/40 rounded-md px-3 py-2 ring-1 ring-linen-dark/30">
+                <span className="flex-1 text-sm text-espresso truncate">{item.name}</span>
+                <span className="text-xs text-espresso-light/50 tabular-nums">NT$ {item.price}</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={item.quantity}
+                  onChange={(e) => updateQty(i, Number(e.target.value))}
+                  className="w-16 px-2 py-1 rounded-md text-sm text-espresso bg-white ring-1 ring-linen-dark/50 focus:ring-rose outline-none text-center"
+                />
+                <button
+                  onClick={() => removeItem(i)}
+                  className="text-xs text-rose/60 hover:text-rose px-2 py-1 transition-colors"
+                  title="移除"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 金額 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <label className={labelClass}>折扣金額</label>
+          <input
+            type="number"
+            min={0}
+            className={inputClass}
+            value={discountAmount}
+            onChange={(e) => setDiscountAmount(Number(e.target.value))}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>運費</label>
+          <input
+            type="number"
+            min={0}
+            className={inputClass}
+            value={shippingFee}
+            onChange={(e) => setShippingFee(Number(e.target.value))}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>自動總計</label>
+          <p className="text-sm text-espresso-light/70 py-2 tabular-nums">NT$ {autoTotal}</p>
+        </div>
+        <div>
+          <label className={labelClass}>覆寫總計（選填）</label>
+          <input
+            type="number"
+            min={0}
+            placeholder={String(autoTotal)}
+            className={inputClass}
+            value={totalOverride}
+            onChange={(e) => setTotalOverride(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 備註 */}
+      <div>
+        <label className={labelClass}>備註</label>
+        <textarea
+          className={`${inputClass} resize-none`}
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
+        <div className="text-sm text-espresso">
+          最終總計：<span className="font-bold text-rose">NT$ {finalTotal}</span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="text-xs px-4 py-2 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all disabled:opacity-50"
+          >
+            取消
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="text-xs px-4 py-2 rounded-md bg-espresso text-linen hover:bg-espresso/90 transition-all disabled:opacity-50"
+          >
+            {saving ? "儲存中..." : "儲存"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrderManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [campaignList, setCampaignList] = useState<{ id: number; name: string }[]>([]);
   const [filterCampaignId, setFilterCampaignId] = useState<number | "all">("all");
   const [subTab, setSubTab] = useState<"orders" | "analytics" | "modify-requests">("orders");
+
+  async function reloadOrders() {
+    const res = await fetch("/api/admin/orders");
+    const data = await res.json();
+    setOrders(Array.isArray(data) ? data : []);
+  }
+
+  async function handleDeleteOrder(order: Order) {
+    if (!window.confirm(`確定要刪除訂單 #${order.id}（${order.customerName}）嗎？\n此操作無法復原。`)) return;
+    const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      window.alert("刪除失敗，請重試");
+      return;
+    }
+    if (expandedId === order.id) setExpandedId(null);
+    if (editingId === order.id) setEditingId(null);
+    await reloadOrders();
+  }
 
   // 修改申請
   const [modifyRequests, setModifyRequests] = useState<ModifyRequest[]>([]);
@@ -1407,28 +1684,55 @@ function OrderManager() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-linen-dark/30 pt-3">
-                    {(() => {
-                      const items = getOrderItems(order);
-                      if (items.length > 0) {
-                        return (
-                          <div className="mb-3">
-                            <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">品項</p>
-                            {items.map((item, i) => (
-                              <div key={i} className="flex justify-between text-sm py-0.5">
-                                <span className="text-espresso-light">{item.name} × {item.quantity}</span>
-                                <span className="text-espresso font-medium tabular-nums">NT$ {item.price * item.quantity}</span>
+                    {editingId === order.id ? (
+                      <OrderEditForm
+                        order={order}
+                        onSaved={async () => {
+                          setEditingId(null);
+                          await reloadOrders();
+                        }}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    ) : (
+                      <>
+                        {(() => {
+                          const items = getOrderItems(order);
+                          if (items.length > 0) {
+                            return (
+                              <div className="mb-3">
+                                <p className="text-xs font-bold text-espresso-light/40 tracking-wider uppercase mb-1.5">品項</p>
+                                {items.map((item, i) => (
+                                  <div key={i} className="flex justify-between text-sm py-0.5">
+                                    <span className="text-espresso-light">{item.name} × {item.quantity}</span>
+                                    <span className="text-espresso font-medium tabular-nums">NT$ {item.price * item.quantity}</span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                    <div className="mb-3 text-sm text-espresso-light/60 space-y-0.5">
-                      <p>地址：{order.address}</p>
-                      {order.email && <p>Email：{order.email}</p>}
-                      {order.notes && <p>備註：{order.notes}</p>}
-                    </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <div className="mb-3 text-sm text-espresso-light/60 space-y-0.5">
+                          <p>地址：{order.address}</p>
+                          {order.email && <p>Email：{order.email}</p>}
+                          {order.notes && <p>備註：{order.notes}</p>}
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => setEditingId(order.id)}
+                            className="text-xs px-4 py-2 rounded-md ring-1 ring-linen-dark text-espresso-light hover:text-espresso hover:ring-espresso-light transition-all"
+                          >
+                            編輯
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOrder(order)}
+                            className="text-xs px-4 py-2 rounded-md ring-1 ring-rose/25 text-rose/80 hover:text-rose hover:bg-rose/5 transition-all"
+                          >
+                            刪除
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
