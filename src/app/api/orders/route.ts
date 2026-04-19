@@ -16,6 +16,8 @@ interface OrderItem {
 }
 
 // 伺服器端重新計算 total
+// 優先用 DB 當前價格；若商品已被刪除／重建（例如活動編輯會重插），回退至 client 傳來的歷史價格
+// 避免訂單金額被計算為 0
 async function calculateTotal(campaignId: number, items: OrderItem[]): Promise<number> {
   const products = await db
     .select({ id: campaignProducts.id, price: campaignProducts.price })
@@ -25,7 +27,8 @@ async function calculateTotal(campaignId: number, items: OrderItem[]): Promise<n
   const priceMap = new Map(products.map((p) => [p.id, p.price]));
 
   return items.reduce((sum, item) => {
-    const price = priceMap.get(item.productId) ?? 0;
+    const dbPrice = priceMap.get(item.productId);
+    const price = dbPrice ?? (typeof item.price === "number" && item.price >= 0 ? item.price : 0);
     return sum + price * (item.quantity || 0);
   }, 0);
 }
