@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+function pickSafeNext(): string | null {
+  if (typeof window === "undefined") return null;
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return null;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const [safeNext, setSafeNext] = useState<string | null>(null);
+  useEffect(() => {
+    setSafeNext(pickSafeNext());
+  }, []);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,10 +47,14 @@ export default function LoginPage() {
     }
 
     setLoading(false);
-    // 管理員直接進後台，一般用戶進首頁
+    // 管理員直接進後台；若有 next 則回到原頁面；否則回首頁
     const meRes = await fetch("/api/auth/me");
     const meData = await meRes.json();
-    router.push(meData.user?.role === "admin" ? "/admin" : "/");
+    if (meData.user?.role === "admin") {
+      router.push("/admin");
+    } else {
+      router.push(safeNext ?? "/");
+    }
     router.refresh();
   }
 
@@ -218,7 +233,7 @@ export default function LoginPage() {
           <p className="text-center text-sm text-espresso-light/50 mt-7">
             還沒有帳號？{" "}
             <Link
-              href="/register"
+              href={safeNext ? `/register?next=${encodeURIComponent(safeNext)}` : "/register"}
               className="text-rose font-medium hover:text-rose-dark transition-colors"
             >
               註冊

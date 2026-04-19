@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+function pickSafeNext(): string | null {
+  if (typeof window === "undefined") return null;
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return null;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
+  const [safeNext, setSafeNext] = useState<string | null>(null);
+  useEffect(() => {
+    setSafeNext(pickSafeNext());
+  }, []);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -38,7 +49,7 @@ export default function RegisterPage() {
     }
 
     setLoading(false);
-    router.push("/");
+    router.push(safeNext ?? "/");
     router.refresh();
   }
 
@@ -282,7 +293,7 @@ export default function RegisterPage() {
           <p className="text-center text-sm text-espresso-light/50 mt-6">
             已有帳號？{" "}
             <Link
-              href="/login"
+              href={safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login"}
               className="font-medium transition-colors"
               style={{ color: "var(--color-honey)" }}
             >

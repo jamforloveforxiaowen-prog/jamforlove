@@ -98,6 +98,71 @@ function buildLegacyCampaign(startDate: string, endDate: string): ActiveCampaign
   };
 }
 
+/* ─── 分享連結按鈕 ─────────────────────────────── */
+
+function ShareButton({ theme }: { theme: FormTheme }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const url = `${window.location.origin}/order`;
+    // 優先使用原生分享 API（手機常見）
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await (navigator as Navigator & {
+          share: (data: { title?: string; text?: string; url?: string }) => Promise<void>;
+        }).share({
+          title: "Jam for Love 預購",
+          text: "來訂一罐手作果醬，支持助人工作者 ♥",
+          url,
+        });
+        return;
+      } catch {
+        // 使用者取消或不支援，改走複製
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("複製以下連結分享：", url);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleShare}
+      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all hover:scale-105 active:scale-95"
+      style={{
+        color: theme.accent,
+        background: `${theme.accent}12`,
+        border: `1px ${theme.borderStyle === "double" ? "solid" : theme.borderStyle} ${theme.accent}40`,
+      }}
+    >
+      {copied ? (
+        <>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          已複製連結
+        </>
+      ) : (
+        <>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="11.49" />
+          </svg>
+          分享預購連結
+        </>
+      )}
+    </button>
+  );
+}
+
 /* ─── 匯款資訊元件 ─────────────────────────────── */
 
 function BankTransferInfo() {
@@ -394,6 +459,7 @@ export default function OrderPage() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">("cash");
   const [notes, setNotes] = useState("");
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -458,14 +524,17 @@ export default function OrderPage() {
   function loadProfile() {
     fetch("/api/auth/me").then((r) => r.json()).then((data) => {
       if (data.user) {
+        setIsLoggedIn(true);
         if (data.user.name) setCustomerName(data.user.name);
         if (data.user.phone) setPhone(data.user.phone);
         if (data.user.email) setEmail(data.user.email);
         if (data.user.address) parseAndFillAddress(data.user.address);
         setProfileLoaded(true);
         setTimeout(() => setProfileLoaded(false), 2000);
+      } else {
+        setIsLoggedIn(false);
       }
-    }).catch(() => {});
+    }).catch(() => setIsLoggedIn(false));
   }
 
   // 預覽模式
@@ -709,6 +778,22 @@ export default function OrderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      // 未登入：保留表單與選項，導向註冊頁
+      if (res.status === 401) {
+        sessionStorage.setItem(
+          "order_selections",
+          JSON.stringify({ selections, deliveryMethod, paymentMethod, notes, supportIdx })
+        );
+        sessionStorage.setItem(
+          "order_pending_payload",
+          JSON.stringify({ customerName, phone, email, address: pendingOrder.address, deliveryMethod, paymentMethod, notes })
+        );
+        setLoading(false);
+        router.push("/register?next=/order");
+        return;
+      }
+
       const data = await res.json();
       if (!res.ok) { setError(data.error); setLoading(false); return; }
 
@@ -1023,7 +1108,42 @@ export default function OrderPage() {
           <span className="text-base" style={{ color: theme.accent }}>{theme.decoSymbol}</span>
           <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
         </div>
+        <div className="mt-4">
+          <ShareButton theme={theme} />
+        </div>
       </div>
+
+      {/* 未登入訪客提示 */}
+      {isLoggedIn === false && (
+        <div
+          className="mb-6 rounded-xl p-4 flex items-start gap-3 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]"
+          style={{
+            background: `${theme.accent}0c`,
+            border: `1px dashed ${theme.accent}40`,
+          }}
+        >
+          <span style={{ color: theme.accent, fontSize: 18 }} aria-hidden="true">♥</span>
+          <div className="flex-1 text-sm text-espresso-light/80 leading-relaxed">
+            歡迎您！可以先瀏覽和填寫訂單，
+            <Link
+              href="/register?next=/order"
+              className="font-bold underline underline-offset-2"
+              style={{ color: theme.accent }}
+            >
+              註冊帳號
+            </Link>
+            後就能送出訂單（已有帳號？
+            <Link
+              href="/login?next=/order"
+              className="font-bold underline underline-offset-2"
+              style={{ color: theme.accent }}
+            >
+              登入
+            </Link>
+            ）。
+          </div>
+        </div>
+      )}
 
       {/* 步驟指示器 */}
       <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />

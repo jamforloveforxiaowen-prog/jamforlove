@@ -10,7 +10,7 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-const protectedPaths = ["/order", "/my-orders"];
+const protectedPaths = ["/my-orders"];
 const adminPaths = ["/admin"];
 const adminPublicPaths = ["/admin/login"];
 const authPaths = ["/login", "/register"];
@@ -107,7 +107,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/order/:path*",
     "/my-orders/:path*",
     "/admin/:path*",
     "/login",
