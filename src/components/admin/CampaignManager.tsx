@@ -10,6 +10,7 @@ import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 /* ─── 型別 ─── */
 
 interface ProductEntry {
+  id?: number;
   name: string;
   description: string;
   imageUrl: string;
@@ -37,7 +38,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { name: string; description?: string; isRequired: boolean; products: { name: string; description?: string; imageUrl?: string; price: number; limit: number | null }[] }[];
+  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -249,14 +250,14 @@ export default function CampaignManager() {
       .map((p) => ({ ...p, name: stripAddon(p.name) || p.name }));
 
     setProducts(mainOnly.length > 0
-      ? mainOnly.map((p) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit }))
+      ? mainOnly.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit }))
       : [{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
 
     const mergedAddons = [
       ...movedAddons,
       ...rawAddons.map((p) => ({ ...p, name: isAddon(p.name) ? stripAddon(p.name) || p.name : p.name })),
     ];
-    setAddons(mergedAddons.map((p) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit })));
+    setAddons(mergedAddons.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit })));
   }
 
   async function startEdit(id: number) {
@@ -282,17 +283,20 @@ export default function CampaignManager() {
 
     const validAddons = addons.filter((p) => p.name.trim());
 
-    const groups = [
+    const groups: Array<{
+      name: string; description: string; sortOrder: number; isRequired: boolean;
+      products: Array<{ id?: number; name: string; description: string; imageUrl: string; price: number; limit: number | null; unit: string; sortOrder: number; note: string; isActive: boolean }>;
+    }> = [
       {
         name: "商品", description: "", sortOrder: 0, isRequired: true,
-        products: validProducts.map((p, i) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        products: validProducts.map((p, i) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       },
     ];
 
     if (validAddons.length > 0) {
       groups.push({
         name: "加購商品", description: "", sortOrder: 1, isRequired: false,
-        products: validAddons.map((p, i) => ({ name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
+        products: validAddons.map((p, i) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, unit: "份", sortOrder: i, note: "", isActive: true })),
       });
     }
 
