@@ -1378,6 +1378,8 @@ function OrderManager() {
   const [campaignList, setCampaignList] = useState<{ id: number; name: string }[]>([]);
   const [filterCampaignId, setFilterCampaignId] = useState<number | "all">("all");
   const [subTab, setSubTab] = useState<"orders" | "analytics" | "modify-requests">("orders");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   async function reloadOrders() {
     const res = await fetch("/api/admin/orders");
@@ -1394,7 +1396,42 @@ function OrderManager() {
     }
     if (expandedId === order.id) setExpandedId(null);
     if (editingId === order.id) setEditingId(null);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(order.id);
+      return next;
+    });
     await reloadOrders();
+  }
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleBulkDelete(ids: number[]) {
+    if (ids.length === 0) return;
+    if (!window.confirm(`確定要刪除勾選的 ${ids.length} 筆訂單嗎？\n此操作無法復原。`)) return;
+    setBulkDeleting(true);
+    try {
+      const results = await Promise.all(
+        ids.map((id) => fetch(`/api/admin/orders/${id}`, { method: "DELETE" }))
+      );
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) {
+        window.alert(`已刪除 ${ids.length - failed} 筆，有 ${failed} 筆刪除失敗`);
+      }
+      setSelectedIds(new Set());
+      if (expandedId !== null && ids.includes(expandedId)) setExpandedId(null);
+      if (editingId !== null && ids.includes(editingId)) setEditingId(null);
+      await reloadOrders();
+    } finally {
+      setBulkDeleting(false);
+    }
   }
 
   // 修改申請
@@ -1613,17 +1650,59 @@ function OrderManager() {
 
       {/* ─── 訂單列表 ─── */}
       {subTab === "orders" && (<>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-lg font-bold text-espresso">
-          訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({filteredOrders.length} 筆)</span>
-        </h2>
-        <button
-          onClick={exportToExcel}
-          className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
-        >
-          匯出 Excel
-        </button>
-      </div>
+      {(() => {
+        const visibleIds = filteredOrders.map((o) => o.id);
+        const visibleSelectedCount = visibleIds.filter((id) => selectedIds.has(id)).length;
+        const allSelected = visibleIds.length > 0 && visibleSelectedCount === visibleIds.length;
+        const someSelected = visibleSelectedCount > 0 && !allSelected;
+
+        return (
+          <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+            <h2 className="font-serif text-lg font-bold text-espresso">
+              訂單列表 <span className="text-espresso-light/40 font-normal text-sm">({filteredOrders.length} 筆)</span>
+            </h2>
+            <div className="flex items-center gap-3">
+              {filteredOrders.length > 0 && (
+                <label className="flex items-center gap-2 text-sm text-espresso-light cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => { if (el) el.indeterminate = someSelected; }}
+                    onChange={() => {
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (allSelected) {
+                          visibleIds.forEach((id) => next.delete(id));
+                        } else {
+                          visibleIds.forEach((id) => next.add(id));
+                        }
+                        return next;
+                      });
+                    }}
+                    className="w-4 h-4 accent-rose cursor-pointer"
+                  />
+                  全選
+                </label>
+              )}
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={() => handleBulkDelete([...selectedIds])}
+                  disabled={bulkDeleting}
+                  className="px-4 py-2 rounded-md text-sm font-medium transition-all bg-rose text-white hover:bg-rose-dark disabled:opacity-50"
+                >
+                  {bulkDeleting ? "刪除中..." : `刪除選取（${selectedIds.size}）`}
+                </button>
+              )}
+              <button
+                onClick={exportToExcel}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-all text-espresso-light ring-1 ring-linen-dark hover:ring-espresso-light hover:text-espresso"
+              >
+                匯出 Excel
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 統計面板 */}
       {filteredOrders.length > 0 && (
@@ -1653,12 +1732,26 @@ function OrderManager() {
         <div className="space-y-3">
           {[...filteredOrders].reverse().map((order) => {
             const isExpanded = expandedId === order.id;
+            const isSelected = selectedIds.has(order.id);
             return (
-              <div key={order.id} className="bg-white rounded-lg ring-1 ring-linen-dark/60 overflow-hidden">
+              <div
+                key={order.id}
+                className={`bg-white rounded-lg ring-1 overflow-hidden transition-all ${
+                  isSelected ? "ring-rose/50 bg-rose/[0.02]" : "ring-linen-dark/60"
+                }`}
+              >
                 <div
                   className="p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-linen/30 transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                 >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => toggleSelected(order.id)}
+                    className="w-4 h-4 accent-rose cursor-pointer shrink-0"
+                    aria-label={`選取訂單 #${order.id}`}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-espresso text-sm">#{order.id}</span>
