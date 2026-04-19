@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { dayKeyTW } from "@/lib/datetime";
 
 /* ─── 型別（跟 admin/page.tsx 一致）─── */
 
@@ -84,7 +85,7 @@ export default function OrderAnalytics({
     const dailyOrders: Record<string, number> = {};
     const dailyRevenue: Record<string, number> = {};
     orders.forEach((o) => {
-      const day = o.createdAt.slice(0, 10);
+      const day = dayKeyTW(o.createdAt) || o.createdAt.slice(0, 10);
       dailyOrders[day] = (dailyOrders[day] || 0) + 1;
       dailyRevenue[day] = (dailyRevenue[day] || 0) + o.total;
     });

@@ -5,6 +5,7 @@ import Image from "next/image";
 import ImageUploader from "@/components/ImageUploader";
 import CampaignManager from "@/components/admin/CampaignManager";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
+import { formatDateTimeTW } from "@/lib/datetime";
 
 interface Product {
   id: number;
@@ -1496,7 +1497,7 @@ function OrderManager() {
         items.map((i) => `${i.name} ×${i.quantity} $${i.price}`).join("; "),
         items.reduce((s, i) => s + i.quantity, 0),
         o.notes, o.total,
-        new Date(o.createdAt).toLocaleString("zh-TW"),
+        formatDateTimeTW(o.createdAt),
       ];
     });
 
@@ -1602,7 +1603,7 @@ function OrderManager() {
                         <span className="text-sm text-espresso-light/50">{r.customerName} / {r.phone}{r.orderEmail ? ` / ${r.orderEmail}` : ""}</span>
                         {r.campaignName && <span className="text-xs text-espresso-light/40">({r.campaignName})</span>}
                       </div>
-                      <p className="text-xs text-espresso-light/40 mt-0.5">{new Date(r.createdAt).toLocaleString("zh-TW")}</p>
+                      <p className="text-xs text-espresso-light/40 mt-0.5">{formatDateTimeTW(r.createdAt)}</p>
                     </div>
                     <span className={`px-2.5 py-1 rounded-md text-xs font-semibold shrink-0 ${r.handled ? "bg-sage/15 text-sage" : "bg-rose/10 text-rose"}`}>
                       {r.handled ? "已處理" : "未處理"}
@@ -1764,7 +1765,7 @@ function OrderManager() {
                       </span>
                     </div>
                     <p className="text-espresso-light/40 text-xs mt-0.5">
-                      {new Date(order.createdAt).toLocaleString("zh-TW")} · {order.phone}
+                      {formatDateTimeTW(order.createdAt)} · {order.phone}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">

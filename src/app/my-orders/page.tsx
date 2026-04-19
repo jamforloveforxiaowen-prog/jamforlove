@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ScrollReveal from "@/components/ScrollReveal";
 import LottieAnimation, { LOTTIE_URLS } from "@/components/LottieAnimation";
+import { formatDateTimeTW } from "@/lib/datetime";
 
 interface OrderItem {
   productId: number;
@@ -235,7 +236,7 @@ export default function MyOrdersPage() {
                     #{order.id}
                   </span>
                   <span className="text-xs text-espresso-light/40">
-                    {new Date(order.createdAt).toLocaleString("zh-TW")}
+                    {formatDateTimeTW(order.createdAt)}
                   </span>
                   <span className="text-xs text-espresso-light/30">
                     {order.deliveryMethod === "pickup" ? "面交" : "郵寄"} · {order.paymentMethod === "transfer" ? "匯款" : "現金"}
