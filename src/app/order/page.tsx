@@ -299,11 +299,13 @@ function ProductCard({
   qty,
   theme,
   onUpdate,
+  onZoom,
 }: {
   product: CampaignProduct;
   qty: number;
   theme: typeof FORM_STYLE_THEMES.classic;
   onUpdate: (delta: number) => void;
+  onZoom: (src: string, alt: string) => void;
 }) {
   const isSelected = qty > 0;
   const soldOut = product.remaining !== null && product.remaining <= 0 && qty === 0;
@@ -314,32 +316,42 @@ function ProductCard({
 
   return (
     <div
-      className={`${theme.radiusCard} p-4 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"} ${critical ? "ring-2 ring-rose/40" : ""}`}
+      className={`${theme.radiusCard} p-5 transition-all duration-300 ${soldOut ? "opacity-50" : ""} ${isSelected ? "" : "hover:translate-y-[-2px]"} ${critical ? "ring-2 ring-rose/40" : ""}`}
       style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${isSelected ? theme.accent : theme.border}`, background: isSelected ? `${theme.accent}10` : theme.cardBg, boxShadow: isSelected ? theme.cardShadow : "none" }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-4">
         {product.imageUrl && (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            width={84}
-            height={84}
-            className={`${theme.radiusButton} object-cover shrink-0`}
-            style={{ width: 84, height: 84, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
-          />
+          <button
+            type="button"
+            onClick={() => onZoom(product.imageUrl, product.name)}
+            aria-label={`放大查看 ${product.name}`}
+            className={`${theme.radiusCard} overflow-hidden shrink-0 relative group cursor-zoom-in`}
+            style={{ width: 140, height: 140, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}
+          >
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              width={280}
+              height={280}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <span className="absolute bottom-1.5 right-1.5 w-6 h-6 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35M11 8v6M8 11h6" /></svg>
+            </span>
+          </button>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-serif font-bold text-espresso text-lg">{product.name}</span>
-            <span className="text-lg font-bold tabular-nums" style={{ color: "var(--color-honey)" }}>${product.price}</span>
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-serif font-bold text-espresso text-xl md:text-2xl leading-tight">{product.name}</span>
+            <span className="text-xl font-bold tabular-nums" style={{ color: "var(--color-honey)" }}>${product.price}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             {hasLimit && !soldOut && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] font-bold bg-honey/15 text-honey ring-1 ring-honey/40">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
                 限量 {product.limit}
               </span>
             )}
-          </div>
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
             {soldOut ? (
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-espresso-light/10 text-espresso-light/60">已售完</span>
             ) : critical ? (
@@ -355,29 +367,59 @@ function ProductCard({
               <span className="text-sm text-espresso-light/50">還剩 {remaining} {product.unit}</span>
             ) : null}
           </div>
-          {product.description && <p className="text-espresso-light/50 text-[1.05rem]">{product.description}</p>}
-          {product.note && <p className="text-rose/60 text-sm mt-0.5">{product.note}</p>}
-        </div>
-        <div className="shrink-0">
-          {soldOut ? (
-            <span className={`px-4 py-2 ${theme.radiusButton} text-base font-medium text-espresso-light/30`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} rgba(30,15,8,0.08)` }}>售完</span>
-          ) : isSelected ? (
-            <div className="flex items-center gap-1.5">
-              <button type="button" onClick={() => onUpdate(-1)} className={`w-9 h-9 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>−</button>
-              <span key={qty} className="w-7 text-center font-bold text-espresso tabular-nums text-base animate-[number-pop_0.3s_ease]">{qty}</span>
-              <button type="button" onClick={() => onUpdate(1)} className={`w-9 h-9 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-lg`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>+</button>
-            </div>
-          ) : (
-            <button type="button" onClick={() => onUpdate(1)} className={`px-4 py-2 ${theme.radiusButton} text-base font-medium hover:text-white active:scale-95 transition-all`} style={{ color: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
-          )}
+          {product.description && <p className="text-espresso-light/70 text-base leading-relaxed">{product.description}</p>}
+          {product.note && <p className="text-rose/70 text-sm">{product.note}</p>}
+          <div className="mt-2 flex items-center justify-end">
+            {soldOut ? (
+              <span className={`px-5 py-2 ${theme.radiusButton} text-base font-medium text-espresso-light/30`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} rgba(30,15,8,0.08)` }}>售完</span>
+            ) : isSelected ? (
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => onUpdate(-1)} className={`w-10 h-10 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-xl`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>−</button>
+                <span key={qty} className="w-8 text-center font-bold text-espresso tabular-nums text-lg animate-[number-pop_0.3s_ease]">{qty}</span>
+                <button type="button" onClick={() => onUpdate(1)} className={`w-10 h-10 ${theme.radiusButton} text-espresso-light hover:text-rose transition-all flex items-center justify-center text-xl`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>+</button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => onUpdate(1)} className={`px-5 py-2 ${theme.radiusButton} text-base font-semibold hover:text-white active:scale-95 transition-all`} style={{ color: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60` }} onMouseEnter={(e) => { e.currentTarget.style.background = theme.accent; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = ""; e.currentTarget.style.color = theme.accent; }}>選擇</button>
+            )}
+          </div>
         </div>
       </div>
       {isSelected && (
-        <div className="mt-2 pt-2 flex justify-between items-center" style={{ borderTop: `1px ${theme.borderStyle} ${theme.border}` }}>
+        <div className="mt-3 pt-3 flex justify-between items-center" style={{ borderTop: `1px ${theme.borderStyle} ${theme.border}` }}>
           <span className="text-espresso-light/40 text-base">{qty} {product.unit} × NT${product.price}</span>
           <span className="font-bold text-base" style={{ color: theme.accent, fontFamily: theme.fontHeading }}>NT$ {qty * product.price}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-[bakeSwing_0.25s_ease_both]"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="關閉"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white text-xl transition-colors"
+      >
+        ✕
+      </button>
+      <Image
+        src={src}
+        alt={alt}
+        width={1200}
+        height={1200}
+        className="max-w-[95vw] max-h-[85vh] w-auto h-auto object-contain rounded-xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-black/40 px-4 py-1.5 rounded-full">{alt}</p>
     </div>
   );
 }
@@ -437,6 +479,7 @@ export default function OrderPage() {
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
   const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "active">("loading");
   const [outOfRangeInfo, setOutOfRangeInfo] = useState<{ startDate: string; endDate: string; name: string } | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ src: string; alt: string } | null>(null);
 
   // 支持類型選擇（存選項 index）
   const [supportIdx, setSupportIdx] = useState<number | null>(null);
@@ -1223,6 +1266,7 @@ export default function OrderPage() {
                     qty={selections[product.id] || 0}
                     theme={theme}
                     onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                    onZoom={(src, alt) => setZoomImage({ src, alt })}
                   />
                 ))}
               </div>
@@ -1242,6 +1286,7 @@ export default function OrderPage() {
                     qty={selections[product.id] || 0}
                     theme={theme}
                     onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                    onZoom={(src, alt) => setZoomImage({ src, alt })}
                   />
                 ))}
               </div>
@@ -1276,6 +1321,7 @@ export default function OrderPage() {
                     qty={selections[product.id] || 0}
                     theme={theme}
                     onUpdate={(delta) => updateSelection(product.id, delta, product.remaining)}
+                    onZoom={(src, alt) => setZoomImage({ src, alt })}
                   />
                 ))}
               </div>
@@ -1489,6 +1535,10 @@ export default function OrderPage() {
       <p className="text-center text-espresso-light/30 text-sm mt-4">
         {currentStepKey === "summary" ? "確認後將進入最終確認頁面" : "送出後我們會以電話或 Email 確認訂單 ♥"}
       </p>
+
+      {zoomImage && (
+        <ImageLightbox src={zoomImage.src} alt={zoomImage.alt} onClose={() => setZoomImage(null)} />
+      )}
     </div>
   );
 }
