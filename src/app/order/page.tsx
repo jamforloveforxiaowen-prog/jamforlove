@@ -736,10 +736,11 @@ export default function OrderPage() {
         setError("請選擇您曾經以何種方式支持 Jam for Love");
         return;
       }
-      if (!hasAnySelection) {
-        setError("請至少選擇一項商品");
-        return;
-      }
+    }
+    const nextKey = wizardSteps[currentStep + 1]?.key;
+    if (nextKey === "info" && !hasAnySelection) {
+      setError("請至少選擇一項商品");
+      return;
     }
     if (currentStepKey === "info") {
       setTouched({ customerName: true, phone: true, email: true, addressDetail: true });
@@ -1513,11 +1514,10 @@ export default function OrderPage() {
           <button
             type="button"
             onClick={goNext}
-            disabled={currentStepKey === "products" && !hasAnySelection}
             className={`flex-1 py-4 text-white font-bold text-lg ${theme.radiusButton} transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none`}
             style={{ background: theme.accent, border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60`, boxShadow: theme.cardShadow, fontFamily: theme.fontHeading, letterSpacing: theme.headingTracking }}
           >
-            {currentStepKey === "products" && !hasAnySelection ? "請先選擇商品" : "下一步"}
+            {"下一步"}
           </button>
         ) : (
           <button
