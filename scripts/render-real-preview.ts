@@ -150,7 +150,6 @@ async function main() {
   if (order.paymentMethod === "transfer" && bankTransferInfo) {
     console.log("\n── 匯款資訊 ─────────────────────");
     console.log(bankTransferInfo);
-    console.log("(匯款完成後,請來信告知或在訂單備註補上「匯款後五碼」,方便我們對帳。)");
   }
   console.log("\n我們會用心為你準備每一份商品,");
   console.log("有任何問題都歡迎隨時聯繫我們!");
