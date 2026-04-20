@@ -80,6 +80,10 @@ export async function PUT(
     update.paymentMethod = body.paymentMethod as PaymentMethod;
   }
 
+  if (typeof body.transferLast5 === "string") {
+    update.transferLast5 = body.transferLast5.trim().slice(0, 5);
+  }
+
   if (body.status !== undefined) {
     if (!VALID_STATUSES.includes(body.status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });

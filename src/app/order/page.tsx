@@ -500,6 +500,7 @@ export default function OrderPage() {
   const [addressDetail, setAddressDetail] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<string>("shipping");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">("cash");
+  const [transferLast5, setTransferLast5] = useState("");
   const [notes, setNotes] = useState("");
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -523,6 +524,7 @@ export default function OrderPage() {
     address: string;
     deliveryMethod: string;
     paymentMethod: string;
+    transferLast5: string;
     notes: string;
     isSupporter: boolean;
     supportType: string;
@@ -786,7 +788,9 @@ export default function OrderPage() {
 
     setPendingOrder({
       items, total: grandTotal, discountAmount, shippingFee,
-      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod, notes,
+      customerName, phone, email, address: finalAddress, deliveryMethod, paymentMethod,
+      transferLast5: paymentMethod === "transfer" ? transferLast5.trim() : "",
+      notes,
       supportType: selectedOption?.label || "", supportDiscount: selectedOption?.discount || 0,
       isSupporter: !!selectedOption && selectedOption.discount > 0,
     });
@@ -808,6 +812,7 @@ export default function OrderPage() {
         address: pendingOrder.address,
         deliveryMethod: isShipping ? "shipping" : "pickup",
         paymentMethod: pendingOrder.paymentMethod,
+        transferLast5: pendingOrder.transferLast5,
         items: pendingOrder.items,
         notes: pendingOrder.notes,
         total: pendingOrder.total,
@@ -1418,6 +1423,20 @@ export default function OrderPage() {
                 ))}
               </div>
               {paymentMethod === "transfer" && <BankTransferInfo />}
+              {paymentMethod === "transfer" && (
+                <div className={`${inputBorderFocus} mt-3`} style={inputBorder}>
+                  <label className="block text-sm font-semibold text-espresso-light/50 pt-2">匯款後五碼</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={transferLast5}
+                    onChange={(e) => setTransferLast5(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                    className={inputClass}
+                    placeholder="匯款後填寫（若尚未匯款可先留空）"
+                  />
+                </div>
+              )}
             </div>
 
             <div className={inputBorderFocus} style={inputBorder}>
@@ -1489,6 +1508,9 @@ export default function OrderPage() {
                 <span className="text-espresso">{deliveryMethod === "shipping" ? `郵寄 — ${zipcode} ${city}${district}${addressDetail}` : deliveryMethod.replace("pickup:", "")}</span>
               </div>
               <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款</span><span className="text-espresso">{paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
+              {paymentMethod === "transfer" && transferLast5 && (
+                <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">匯款後五碼</span><span className="text-espresso">{transferLast5}</span></div>
+              )}
               {notes && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">備註</span><span className="text-espresso">{notes}</span></div>}
             </div>
           </div>

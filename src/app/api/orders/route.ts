@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType, supportDiscount } = body;
+  const { campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, transferLast5, items, notes, isSupporter, supportType, supportDiscount } = body;
 
   // 新格式（有 campaignId）
   if (campaignId) {
@@ -141,6 +141,7 @@ export async function POST(req: NextRequest) {
         address,
         deliveryMethod: deliveryMethod || "shipping",
         paymentMethod: paymentMethod || "cash",
+        transferLast5: (paymentMethod === "transfer" && typeof transferLast5 === "string") ? transferLast5.trim().slice(0, 5) : "",
         items: JSON.stringify(items),
         combos: "[]",
         addons: "[]",
@@ -231,7 +232,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, items, notes, isSupporter, supportType, supportDiscount } = body;
+  const { orderId, campaignId, customerName, phone, email, address, deliveryMethod, paymentMethod, transferLast5, items, notes, isSupporter, supportType, supportDiscount } = body;
 
   if (!orderId) {
     return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
@@ -286,6 +287,8 @@ export async function PUT(req: NextRequest) {
         email: email || "",
         address,
         deliveryMethod: deliveryMethod || "shipping",
+        paymentMethod: paymentMethod || "cash",
+        transferLast5: (paymentMethod === "transfer" && typeof transferLast5 === "string") ? transferLast5.trim().slice(0, 5) : "",
         items: JSON.stringify(items || []),
         isSupporter: !!supportType && supportType !== "first_time",
         supportType: supportType || "",

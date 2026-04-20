@@ -36,6 +36,7 @@ interface Order {
   address: string;
   deliveryMethod: string;
   paymentMethod?: string;
+  transferLast5?: string;
   items: OrderItem[];
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
@@ -1153,6 +1154,7 @@ function OrderEditForm({
   const [notes, setNotes] = useState(order.notes || "");
   const [deliveryMethod, setDeliveryMethod] = useState(order.deliveryMethod || "shipping");
   const [paymentMethod, setPaymentMethod] = useState(order.paymentMethod || "cash");
+  const [transferLast5, setTransferLast5] = useState(order.transferLast5 || "");
   const [status, setStatus] = useState(order.status || "pending");
   const [items, setItems] = useState<OrderItem[]>(initialItems);
   const [shippingFee, setShippingFee] = useState(order.shippingFee ?? 0);
@@ -1188,6 +1190,7 @@ function OrderEditForm({
           notes,
           deliveryMethod,
           paymentMethod,
+          transferLast5,
           status,
           items: items.filter((i) => i.quantity > 0),
           shippingFee,
@@ -1253,6 +1256,19 @@ function OrderEditForm({
             <option value="transfer">匯款</option>
           </select>
         </div>
+        {paymentMethod === "transfer" && (
+          <div>
+            <label className={labelClass}>匯款後五碼</label>
+            <input
+              className={inputClass}
+              inputMode="numeric"
+              maxLength={5}
+              value={transferLast5}
+              onChange={(e) => setTransferLast5(e.target.value.replace(/\D/g, "").slice(0, 5))}
+              placeholder="匯款帳號後五碼"
+            />
+          </div>
+        )}
         <div>
           <label className={labelClass}>狀態</label>
           <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -1809,6 +1825,9 @@ function OrderManager() {
                         <div className="mb-3 text-sm text-espresso-light/60 space-y-0.5">
                           <p>地址：{order.address}</p>
                           {order.email && <p>Email：{order.email}</p>}
+                          {order.paymentMethod === "transfer" && (
+                            <p>匯款後五碼：{order.transferLast5 || <span className="text-rose/70">尚未填寫</span>}</p>
+                          )}
                           {order.notes && <p>備註：{order.notes}</p>}
                         </div>
                         <div className="flex gap-2 pt-2">

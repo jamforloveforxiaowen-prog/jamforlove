@@ -24,6 +24,7 @@ interface Order {
   combos: { id: number; name: string; items: string[]; quantity: number; price: number }[];
   addons: { id: number; name: string; quantity: number; price: number }[];
   paymentMethod: string;
+  transferLast5?: string;
   isSupporter: boolean;
   discountAmount: number;
   shippingFee: number;
@@ -240,6 +241,7 @@ export default function MyOrdersPage() {
                   </span>
                   <span className="text-xs text-espresso-light/30">
                     {order.deliveryMethod === "pickup" ? "面交" : "郵寄"} · {order.paymentMethod === "transfer" ? "匯款" : "現金"}
+                    {order.paymentMethod === "transfer" && order.transferLast5 && ` · 後五碼 ${order.transferLast5}`}
                   </span>
                 </div>
                 <span className="px-3 py-1 rounded-md text-xs font-semibold bg-sage/15 text-sage">

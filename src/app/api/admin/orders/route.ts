@@ -21,6 +21,7 @@ export async function GET() {
       address: fundraiseOrders.address,
       deliveryMethod: fundraiseOrders.deliveryMethod,
       paymentMethod: fundraiseOrders.paymentMethod,
+      transferLast5: fundraiseOrders.transferLast5,
       items: fundraiseOrders.items,
       combos: fundraiseOrders.combos,
       addons: fundraiseOrders.addons,

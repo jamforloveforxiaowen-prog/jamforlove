@@ -201,6 +201,8 @@ export const fundraiseOrders = sqliteTable("fundraise_orders", {
   paymentMethod: text("payment_method", {
     enum: ["cash", "transfer"],
   }).notNull().default("cash"),
+  // 匯款後五碼（匯款付款時用於對帳）
+  transferLast5: text("transfer_last5").notNull().default(""),
   isSupporter: integer("is_supporter", { mode: "boolean" }).notNull().default(false),
   supportType: text("support_type").notNull().default(""),
   discountAmount: integer("discount_amount").notNull().default(0),
