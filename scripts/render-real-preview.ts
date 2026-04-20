@@ -27,6 +27,11 @@ interface OrderItemRow {
   description?: string;
   quantity: number;
   price: number;
+  group?: string;
+}
+
+function cleanName(s: string) {
+  return s.replace(/^【】\s*/, "").trim();
 }
 
 async function main() {
@@ -59,9 +64,16 @@ async function main() {
   }
 
   const items = JSON.parse(order.items || "[]") as OrderItemRow[];
-  const combos = items.map((i) => ({
+  const mainItems = items.filter((i) => i.group !== "加購商品");
+  const addonItems = items.filter((i) => i.group === "加購商品");
+  const combos = mainItems.map((i) => ({
     name: i.name,
     items: [i.description || ""],
+    quantity: i.quantity,
+    price: i.price,
+  }));
+  const addons = addonItems.map((i) => ({
+    name: i.name,
     quantity: i.quantity,
     price: i.price,
   }));
@@ -71,7 +83,7 @@ async function main() {
       customerName: order.customerName,
       email: order.email,
       combos,
-      addons: [],
+      addons,
       total: order.total,
       discountAmount: order.discountAmount,
       shippingFee: order.shippingFee,
@@ -114,11 +126,23 @@ async function main() {
   console.log("你的每一份溫暖,都是我們繼續手作的最大動力。\n");
   console.log("── 訂單明細 ─────────────────────\n");
   console.log("品項                               數量    小計");
-  for (const i of items) {
-    const line = `${i.name}${i.description ? ` (${i.description})` : ""}`;
-    const qty = `×${i.quantity}`;
-    const sub = `NT$ ${i.price * i.quantity}`;
-    console.log(`${line.padEnd(35)} ${qty.padEnd(7)} ${sub}`);
+  if (mainItems.length > 0) {
+    console.log("【商品】");
+    for (const i of mainItems) {
+      const line = `${cleanName(i.name)}${i.description ? ` (${i.description})` : ""}`;
+      const qty = `×${i.quantity}`;
+      const sub = `NT$ ${i.price * i.quantity}`;
+      console.log(`${line.padEnd(35)} ${qty.padEnd(7)} ${sub}`);
+    }
+  }
+  if (addonItems.length > 0) {
+    console.log("【加購】");
+    for (const i of addonItems) {
+      const line = cleanName(i.name);
+      const qty = `×${i.quantity}`;
+      const sub = `NT$ ${i.price * i.quantity}`;
+      console.log(`${line.padEnd(35)} ${qty.padEnd(7)} ${sub}`);
+    }
   }
   console.log("─────────────────────────────");
   const subtotal = order.total - (order.shippingFee || 0) + (order.discountAmount || 0);

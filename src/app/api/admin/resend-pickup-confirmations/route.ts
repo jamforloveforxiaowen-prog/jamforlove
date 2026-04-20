@@ -13,6 +13,7 @@ interface OrderItemRow {
   description?: string;
   quantity: number;
   price: number;
+  group?: string;
 }
 
 interface RawOrder {
@@ -34,13 +35,22 @@ interface RawOrder {
 
 function parseItems(order: RawOrder) {
   const items = JSON.parse(order.items || "[]") as OrderItemRow[];
-  const combos = items.map((i) => ({
-    name: i.name,
-    items: [i.description || ""],
-    quantity: i.quantity,
-    price: i.price,
-  }));
-  return { combos, addons: [] as typeof combos };
+  const combos = items
+    .filter((i) => i.group !== "加購商品")
+    .map((i) => ({
+      name: i.name,
+      items: [i.description || ""],
+      quantity: i.quantity,
+      price: i.price,
+    }));
+  const addons = items
+    .filter((i) => i.group === "加購商品")
+    .map((i) => ({
+      name: i.name,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+  return { combos, addons };
 }
 
 function buildEmailData(order: RawOrder, bankTransferInfo: string) {

@@ -235,11 +235,13 @@ export async function POST(req: NextRequest) {
             .get();
           bankTransferInfo = row?.value || "";
         }
+        const mainItems = (items as OrderItem[]).filter((i) => i.group !== "加購商品");
+        const addonItems = (items as OrderItem[]).filter((i) => i.group === "加購商品");
         await sendOrderConfirmationEmail({
           customerName,
           email,
-          combos: items.map((i: OrderItem) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
-          addons: [],
+          combos: mainItems.map((i) => ({ name: i.name, items: [i.description || ""], quantity: i.quantity, price: i.price })),
+          addons: addonItems.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
           total: computedTotal,
           discountAmount,
           shippingFee: shippingFeeAmount,

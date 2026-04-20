@@ -33,6 +33,7 @@ interface OrderItemRow {
   description?: string;
   quantity: number;
   price: number;
+  group?: string;
 }
 
 async function main() {
@@ -119,18 +120,23 @@ async function main() {
     }
     try {
       const items = JSON.parse(o.items || "[]") as OrderItemRow[];
-      const combos = items.map((i) => ({
-        name: i.name,
-        items: [i.description || ""],
-        quantity: i.quantity,
-        price: i.price,
-      }));
+      const combos = items
+        .filter((i) => i.group !== "加購商品")
+        .map((i) => ({
+          name: i.name,
+          items: [i.description || ""],
+          quantity: i.quantity,
+          price: i.price,
+        }));
+      const addons = items
+        .filter((i) => i.group === "加購商品")
+        .map((i) => ({ name: i.name, quantity: i.quantity, price: i.price }));
       await sendOrderConfirmationEmail(
         {
           customerName: o.customerName,
           email: o.email,
           combos,
-          addons: [],
+          addons,
           total: o.total,
           discountAmount: o.discountAmount,
           shippingFee: o.shippingFee,

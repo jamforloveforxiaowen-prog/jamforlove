@@ -90,32 +90,42 @@ function esc(str: string) {
     .replace(/"/g, "&quot;");
 }
 
+// 去掉商品名稱前綴殘留的空括號【】(歷史資料)
+function cleanName(s: string) {
+  return s.replace(/^【】\s*/, "").trim();
+}
+
+function sectionHeaderRow(label: string) {
+  return `
+      <tr>
+        <td colspan="3" style="padding: 14px 0 6px; color: #c4506a; font-size: 13px; font-weight: 700; letter-spacing: 0.1em;">
+          ${esc(label)}
+        </td>
+      </tr>`;
+}
+
+function itemRow(it: OrderItem, showItemsList: boolean) {
+  const itemsText = showItemsList && it.items ? it.items.join("、") : "";
+  return `
+      <tr>
+        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; font-size: 15px;">
+          ${esc(cleanName(it.name))}${itemsText ? `<br><span style="color: #5c3d2e80; font-size: 13px;">${esc(itemsText)}</span>` : ""}
+        </td>
+        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; text-align: center; font-size: 15px;">×${it.quantity}</td>
+        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #1e0f08; text-align: right; font-weight: 600; font-size: 15px;">NT$ ${it.price * it.quantity}</td>
+      </tr>`;
+}
+
 function buildOrderRows(combos: OrderItem[], addons: OrderItem[]) {
   let rows = "";
-
-  for (const c of combos) {
-    const itemsText = c.items ? c.items.join("、") : "";
-    rows += `
-      <tr>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; font-size: 15px;">
-          ${esc(c.name)}${itemsText ? `<br><span style="color: #5c3d2e80; font-size: 13px;">${esc(itemsText)}</span>` : ""}
-        </td>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; text-align: center; font-size: 15px;">×${c.quantity}</td>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #1e0f08; text-align: right; font-weight: 600; font-size: 15px;">NT$ ${c.price * c.quantity}</td>
-      </tr>`;
+  if (combos.length > 0) {
+    rows += sectionHeaderRow("商品");
+    for (const c of combos) rows += itemRow(c, true);
   }
-
-  for (const a of addons) {
-    rows += `
-      <tr>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; font-size: 15px;">
-          ${esc(a.name)}
-        </td>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #5c3d2e; text-align: center; font-size: 15px;">×${a.quantity}</td>
-        <td style="padding: 10px 0; border-bottom: 1px dashed #ebe2d4; color: #1e0f08; text-align: right; font-weight: 600; font-size: 15px;">NT$ ${a.price * a.quantity}</td>
-      </tr>`;
+  if (addons.length > 0) {
+    rows += sectionHeaderRow("加購");
+    for (const a of addons) rows += itemRow(a, false);
   }
-
   return rows;
 }
 
