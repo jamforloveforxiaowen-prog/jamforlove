@@ -736,8 +736,8 @@ export default function OrderPage() {
         setError("請選擇您曾經以何種方式支持 Jam for Love");
         return;
       }
-      if (!hasRequiredSelection) {
-        setError("請至少從必填分組中選擇一項");
+      if (!hasAnySelection) {
+        setError("請至少選擇一項商品");
         return;
       }
     }
