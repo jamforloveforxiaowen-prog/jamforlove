@@ -225,6 +225,16 @@ export async function POST(req: NextRequest) {
     // 寄確認信（必須 await，否則 Vercel Serverless 會在回傳後中斷寄信）
     if (email) {
       try {
+        // 匯款訂單附上匯款資訊
+        let bankTransferInfo = "";
+        if (paymentMethod === "transfer") {
+          const row = await db
+            .select({ value: siteSettings.value })
+            .from(siteSettings)
+            .where(eq(siteSettings.key, "bank_transfer_info"))
+            .get();
+          bankTransferInfo = row?.value || "";
+        }
         await sendOrderConfirmationEmail({
           customerName,
           email,
@@ -238,6 +248,7 @@ export async function POST(req: NextRequest) {
           address,
           notes: notes || "",
           orderId: order.id,
+          bankTransferInfo,
         });
       } catch (err) {
         console.error("Failed to send order confirmation email:", err);

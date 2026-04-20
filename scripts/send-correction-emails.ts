@@ -38,9 +38,17 @@ interface OrderItemRow {
 async function main() {
   // 動態 import,確保在 loadEnvOverride 之後才載入(否則 db/email 模組會先讀到舊的 env)
   const { db } = await import("../src/lib/db");
-  const { fundraiseOrders } = await import("../src/lib/db/schema");
+  const { fundraiseOrders, siteSettings } = await import("../src/lib/db/schema");
   const { eq } = await import("drizzle-orm");
   const { sendOrderConfirmationEmail } = await import("../src/lib/email");
+
+  // 讀匯款資訊(匯款訂單信中會顯示)
+  const bankRow = await db
+    .select({ value: siteSettings.value })
+    .from(siteSettings)
+    .where(eq(siteSettings.key, "bank_transfer_info"))
+    .get();
+  const bankTransferInfo = bankRow?.value || "";
 
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
@@ -131,6 +139,7 @@ async function main() {
           address: o.address,
           notes: o.notes,
           orderId: o.id,
+          bankTransferInfo,
         },
         { isCorrection: true, bypassRateLimit: true }
       );

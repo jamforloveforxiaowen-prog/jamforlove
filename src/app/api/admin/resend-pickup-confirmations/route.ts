@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fundraiseOrders } from "@/lib/db/schema";
+import { fundraiseOrders, siteSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import {
@@ -43,7 +43,7 @@ function parseItems(order: RawOrder) {
   return { combos, addons: [] as typeof combos };
 }
 
-function buildEmailData(order: RawOrder) {
+function buildEmailData(order: RawOrder, bankTransferInfo: string) {
   const { combos, addons } = parseItems(order);
   return {
     customerName: order.customerName,
@@ -58,7 +58,17 @@ function buildEmailData(order: RawOrder) {
     address: order.address,
     notes: order.notes,
     orderId: order.id,
+    bankTransferInfo,
   };
+}
+
+async function fetchBankTransferInfo(): Promise<string> {
+  const row = await db
+    .select({ value: siteSettings.value })
+    .from(siteSettings)
+    .where(eq(siteSettings.key, "bank_transfer_info"))
+    .get();
+  return row?.value || "";
 }
 
 async function fetchPickupOrders(): Promise<RawOrder[]> {
@@ -111,7 +121,8 @@ export async function GET(req: NextRequest) {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
     }
-    const html = renderOrderConfirmationHtml(buildEmailData(target), {
+    const bankTransferInfo = await fetchBankTransferInfo();
+    const html = renderOrderConfirmationHtml(buildEmailData(target, bankTransferInfo), {
       isCorrection: true,
     });
     return new NextResponse(html, {
@@ -155,6 +166,7 @@ export async function POST(req: NextRequest) {
   }
 
   const orders = await fetchPickupOrders();
+  const bankTransferInfo = await fetchBankTransferInfo();
   const results: Array<{
     orderId: number;
     email: string;
@@ -168,7 +180,7 @@ export async function POST(req: NextRequest) {
       continue;
     }
     try {
-      await sendOrderConfirmationEmail(buildEmailData(o), {
+      await sendOrderConfirmationEmail(buildEmailData(o, bankTransferInfo), {
         isCorrection: true,
         bypassRateLimit: true,
       });

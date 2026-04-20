@@ -31,9 +31,16 @@ interface OrderItemRow {
 
 async function main() {
   const { db } = await import("../src/lib/db");
-  const { fundraiseOrders } = await import("../src/lib/db/schema");
+  const { fundraiseOrders, siteSettings } = await import("../src/lib/db/schema");
   const { eq } = await import("drizzle-orm");
   const { renderOrderConfirmationHtml } = await import("../src/lib/email");
+
+  const bankRow = await db
+    .select({ value: siteSettings.value })
+    .from(siteSettings)
+    .where(eq(siteSettings.key, "bank_transfer_info"))
+    .get();
+  const bankTransferInfo = bankRow?.value || "";
   const orderId = Number(process.argv[2]);
   if (!orderId) {
     console.error("請指定 orderId");
@@ -73,6 +80,7 @@ async function main() {
       address: order.address,
       notes: order.notes,
       orderId: order.id,
+      bankTransferInfo,
     },
     { isCorrection: true }
   );
@@ -138,6 +146,11 @@ async function main() {
   }
   if (order.notes) {
     console.log(`備註         ${order.notes}`);
+  }
+  if (order.paymentMethod === "transfer" && bankTransferInfo) {
+    console.log("\n── 匯款資訊 ─────────────────────");
+    console.log(bankTransferInfo);
+    console.log("(匯款完成後,請來信告知或在訂單備註補上「匯款後五碼」,方便我們對帳。)");
   }
   console.log("\n我們會用心為你準備每一份商品,");
   console.log("有任何問題都歡迎隨時聯繫我們!");

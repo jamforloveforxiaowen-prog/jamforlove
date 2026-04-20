@@ -78,6 +78,7 @@ interface OrderEmailData {
   address: string;
   notes: string;
   orderId: number;
+  bankTransferInfo?: string;
 }
 
 // HTML escape 防止 XSS
@@ -126,12 +127,14 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
   const {
     customerName, combos, addons,
     total, discountAmount, shippingFee, deliveryMethod, paymentMethod, address, notes, orderId,
+    bankTransferInfo,
   } = data;
 
   const isShipping = deliveryMethod === "shipping";
   const pickupLocation = address ? esc(address) : "面交";
   const deliveryText = isShipping ? "郵寄" : `面交 — ${pickupLocation}`;
   const safeNotes = notes ? esc(notes) : "";
+  const showBankInfo = paymentMethod === "transfer" && !!bankTransferInfo;
 
   const correctionNotice = opts.isCorrection ? `
     <div style="background: #fff5f5; border: 2px solid #c4506a; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
@@ -246,6 +249,16 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
         </tr>` : ""}
       </table>
     </div>
+
+    ${showBankInfo ? `
+    <!-- 匯款資訊 -->
+    <div style="margin-top: 20px; background: #fff9ed; border-radius: 12px; padding: 24px; border: 2px dashed #d4b88a;">
+      <h2 style="font-size: 18px; color: #1e0f08; margin: 0 0 12px; font-style: italic;">匯款資訊</h2>
+      <p style="color: #5c3d2e; font-size: 15px; line-height: 1.8; margin: 0 0 12px; white-space: pre-wrap;">${esc(bankTransferInfo!)}</p>
+      <p style="color: #a0672f; font-size: 13px; line-height: 1.6; margin: 0;">
+        匯款完成後，請來信告知或在訂單備註補上「匯款後五碼」，方便我們對帳。謝謝！
+      </p>
+    </div>` : ""}
 
     <!-- 結尾 -->
     <div style="text-align: center; margin-top: 28px; padding: 24px;">
