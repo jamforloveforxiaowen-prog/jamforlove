@@ -579,7 +579,7 @@ export default function CampaignManager() {
 
           {/* 面交選項 */}
           <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-5">
-            <p className="text-sm font-medium text-espresso mb-3">面交取貨選項（消費者下拉選擇）</p>
+            <p className="text-sm font-medium text-espresso mb-3">取貨選項（消費者下拉選擇）</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {pickupOptions.map((opt, i) => (
                 <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-linen ring-1 ring-linen-dark/40 text-espresso">
