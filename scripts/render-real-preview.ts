@@ -91,7 +91,7 @@ async function main() {
 
   console.log("─".repeat(60));
   console.log("【信件標題】");
-  console.log(`【更正版】收到你的心意了！— 訂單 #${order.id} 確認`);
+  console.log(`【更正版】收到你的心意了！— 訂單確認`);
   console.log("─".repeat(60));
   console.log("【信件內容（純文字版）】\n");
 
@@ -112,8 +112,7 @@ async function main() {
   console.log(`${order.customerName},你好!`);
   console.log("收到你的心意了!謝謝你支持 Jam for Love,");
   console.log("你的每一份溫暖,都是學生們繼續手作的最大動力。\n");
-  console.log("── 訂單明細 ─────────────────────");
-  console.log(`訂單編號 #${order.id}\n`);
+  console.log("── 訂單明細 ─────────────────────\n");
   console.log("品項                               數量    小計");
   for (const i of items) {
     const line = `${i.name}${i.description ? ` (${i.description})` : ""}`;

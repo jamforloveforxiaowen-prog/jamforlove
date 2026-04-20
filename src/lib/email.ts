@@ -126,7 +126,7 @@ interface RenderOptions {
 export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOptions = {}): string {
   const {
     customerName, combos, addons,
-    total, discountAmount, shippingFee, deliveryMethod, paymentMethod, address, notes, orderId,
+    total, discountAmount, shippingFee, deliveryMethod, paymentMethod, address, notes,
     bankTransferInfo,
   } = data;
 
@@ -178,8 +178,7 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
 
     <!-- 訂單明細 -->
     <div style="margin-top: 20px; background: white; border-radius: 12px; padding: 24px; border: 2px dashed #ebe2d4;">
-      <h2 style="font-size: 18px; color: #1e0f08; margin: 0 0 4px; font-style: italic;">訂單明細</h2>
-      <p style="color: #5c3d2e80; font-size: 13px; margin: 0 0 16px;">訂單編號 #${orderId}</p>
+      <h2 style="font-size: 18px; color: #1e0f08; margin: 0 0 16px; font-style: italic;">訂單明細</h2>
 
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
@@ -287,7 +286,7 @@ interface SendOptions extends RenderOptions {
 }
 
 export async function sendOrderConfirmationEmail(data: OrderEmailData, opts: SendOptions = {}) {
-  const { email, orderId } = data;
+  const { email } = data;
 
   if (!email) return;
 
@@ -310,7 +309,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData, opts: Sen
   await transporter.sendMail({
     from: `"Jam for Love" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: `${subjectPrefix}收到你的心意了！— 訂單 #${orderId} 確認`,
+    subject: `${subjectPrefix}收到你的心意了！— 訂單確認`,
     html,
   });
 }
