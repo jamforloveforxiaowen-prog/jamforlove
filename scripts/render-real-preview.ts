@@ -153,6 +153,7 @@ async function main() {
   }
   console.log("\n我們會用心為你準備每一份商品,");
   console.log("有任何問題都歡迎隨時聯繫我們!");
+  console.log("聯絡信箱:jam.for.love.wny@gmail.com");
   console.log("                  ♥\n");
   console.log("─────────────────────────────");
   console.log("Jam for Love — 用愛手工熬煮");

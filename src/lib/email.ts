@@ -263,6 +263,9 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
         我們會用心為你準備每一份商品，<br>
         有任何問題都歡迎隨時聯繫我們！
       </p>
+      <p style="color: #5c3d2e; font-size: 14px; line-height: 1.6; margin: 0;">
+        聯絡信箱：<a href="mailto:jam.for.love.wny@gmail.com" style="color: #c4506a; text-decoration: none;">jam.for.love.wny@gmail.com</a>
+      </p>
       <p style="color: #c4506a; font-size: 20px; margin: 16px 0 0;">♥</p>
     </div>
 
