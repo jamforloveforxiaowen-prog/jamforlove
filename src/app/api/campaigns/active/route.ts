@@ -54,17 +54,19 @@ export async function GET() {
     .where(and(eq(campaignProducts.campaignId, campaign.id), eq(campaignProducts.isActive, true)))
     .orderBy(asc(campaignProducts.sortOrder));
 
-  // 統計已售數量
+  // 統計已售數量（依商品名稱彙總，避免歷史 productId 分裂造成的誤算）
   const allOrders = await db
     .select({ items: fundraiseOrders.items })
     .from(fundraiseOrders)
     .where(eq(fundraiseOrders.campaignId, campaign.id));
 
-  const soldMap: Record<number, number> = {};
+  const soldByName: Record<string, number> = {};
   for (const order of allOrders) {
-    const items = JSON.parse(order.items || "[]") as { productId: number; quantity: number }[];
+    const items = JSON.parse(order.items || "[]") as { productId: number; name?: string; quantity: number }[];
     for (const item of items) {
-      soldMap[item.productId] = (soldMap[item.productId] || 0) + item.quantity;
+      const key = (item.name || "").trim();
+      if (!key) continue;
+      soldByName[key] = (soldByName[key] || 0) + item.quantity;
     }
   }
 
@@ -74,11 +76,14 @@ export async function GET() {
     ...g,
     products: products
       .filter((p) => p.groupId === g.id)
-      .map((p) => ({
-        ...p,
-        sold: soldMap[p.id] || 0,
-        remaining: p.limit != null ? p.limit - (soldMap[p.id] || 0) : null,
-      })),
+      .map((p) => {
+        const sold = soldByName[p.name.trim()] || 0;
+        return {
+          ...p,
+          sold,
+          remaining: p.limit != null ? Math.max(0, p.limit - sold) : null,
+        };
+      }),
   }));
 
   return NextResponse.json({

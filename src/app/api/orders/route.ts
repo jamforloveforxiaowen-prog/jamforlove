@@ -33,40 +33,100 @@ async function calculateTotal(campaignId: number, items: OrderItem[]): Promise<n
   }, 0);
 }
 
-// 統計已售數量
+// 統計已售數量（以商品名稱彙總，避免 productId 重建造成的錯算）
 async function getSoldQuantities(campaignId: number, excludeOrderId?: number) {
   const allOrders = await db
     .select({ id: fundraiseOrders.id, items: fundraiseOrders.items })
     .from(fundraiseOrders)
     .where(eq(fundraiseOrders.campaignId, campaignId));
 
-  const soldMap: Record<number, number> = {};
+  const soldByName: Record<string, number> = {};
   for (const order of allOrders) {
     if (excludeOrderId && order.id === excludeOrderId) continue;
-    const items = JSON.parse(order.items || "[]") as { productId: number; quantity: number }[];
+    const items = JSON.parse(order.items || "[]") as { productId: number; name?: string; quantity: number }[];
     for (const item of items) {
-      soldMap[item.productId] = (soldMap[item.productId] || 0) + item.quantity;
+      const key = (item.name || "").trim();
+      if (!key) continue;
+      soldByName[key] = (soldByName[key] || 0) + item.quantity;
     }
   }
-  return { soldMap, totalOrders: allOrders.length };
+  return { soldByName, totalOrders: allOrders.length };
 }
 
-// 檢查庫存
-async function checkStock(campaignId: number, items: OrderItem[], soldMap: Record<number, number>): Promise<string | null> {
+// 檢查庫存（依名稱比對 limit）
+async function checkStock(
+  campaignId: number,
+  items: OrderItem[],
+  soldByName: Record<string, number>
+): Promise<string | null> {
   const products = await db
     .select({ id: campaignProducts.id, name: campaignProducts.name, limit: campaignProducts.limit })
     .from(campaignProducts)
     .where(eq(campaignProducts.campaignId, campaignId));
 
-  const limitMap = new Map(products.map((p) => [p.id, { limit: p.limit, name: p.name }]));
+  // 同名商品保留最大 limit（通常活動內只會有一筆，保險起見）
+  const limitByName = new Map<string, number>();
+  for (const p of products) {
+    if (p.limit == null) continue;
+    const key = p.name.trim();
+    const prev = limitByName.get(key);
+    if (prev === undefined || p.limit > prev) limitByName.set(key, p.limit);
+  }
 
-  for (const item of items) {
-    const info = limitMap.get(item.productId);
-    if (!info || info.limit == null) continue;
-    const sold = soldMap[item.productId] || 0;
-    const remaining = info.limit - sold;
-    if (item.quantity > remaining) {
-      return `「${info.name}」剩餘 ${remaining} 份，無法購買 ${item.quantity} 份`;
+  // 聚合本次下單裡同名商品的總數
+  const requestedByName: Record<string, number> = {};
+  for (const it of items) {
+    const key = (it.name || "").trim();
+    if (!key) continue;
+    requestedByName[key] = (requestedByName[key] || 0) + it.quantity;
+  }
+
+  for (const [name, want] of Object.entries(requestedByName)) {
+    const limit = limitByName.get(name);
+    if (limit === undefined) continue;
+    const sold = soldByName[name] || 0;
+    const remaining = Math.max(0, limit - sold);
+    if (want > remaining) {
+      return `「${name}」剩餘 ${remaining} 份，無法購買 ${want} 份`;
+    }
+  }
+  return null;
+}
+
+// 以「先下單先得」方式累算，判斷指定訂單是否把任何商品推過 limit
+async function findOverflowForOrder(campaignId: number, orderId: number): Promise<string | null> {
+  const products = await db
+    .select({ name: campaignProducts.name, limit: campaignProducts.limit })
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaignId));
+  const limitByName = new Map<string, number>();
+  for (const p of products) {
+    if (p.limit == null) continue;
+    const key = p.name.trim();
+    const prev = limitByName.get(key);
+    if (prev === undefined || p.limit > prev) limitByName.set(key, p.limit);
+  }
+  if (limitByName.size === 0) return null;
+
+  const rows = await db
+    .select({ id: fundraiseOrders.id, items: fundraiseOrders.items, createdAt: fundraiseOrders.createdAt })
+    .from(fundraiseOrders)
+    .where(eq(fundraiseOrders.campaignId, campaignId));
+  rows.sort((a, b) => {
+    const t = (a.createdAt || "").localeCompare(b.createdAt || "");
+    return t !== 0 ? t : a.id - b.id;
+  });
+
+  const cum: Record<string, number> = {};
+  for (const r of rows) {
+    const items = JSON.parse(r.items || "[]") as { name?: string; quantity: number }[];
+    for (const it of items) {
+      const key = (it.name || "").trim();
+      if (!key || !limitByName.has(key)) continue;
+      cum[key] = (cum[key] || 0) + it.quantity;
+      if (r.id === orderId && cum[key] > (limitByName.get(key) as number)) {
+        return key;
+      }
     }
   }
   return null;
@@ -108,10 +168,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "請至少選擇一項商品" }, { status: 400 });
     }
 
-    const { soldMap } = await getSoldQuantities(campaignId);
+    const { soldByName } = await getSoldQuantities(campaignId);
 
     // 庫存檢查
-    const stockError = await checkStock(campaignId, items, soldMap);
+    const stockError = await checkStock(campaignId, items, soldByName);
     if (stockError) {
       return NextResponse.json({ error: stockError }, { status: 400 });
     }
@@ -154,6 +214,13 @@ export async function POST(req: NextRequest) {
       })
       .returning()
       .get();
+
+    // 下單後再以「時間先後」重算一次，若本筆訂單把某商品推過 limit 則 rollback
+    const overflowName = await findOverflowForOrder(campaignId, order.id);
+    if (overflowName) {
+      await db.delete(fundraiseOrders).where(eq(fundraiseOrders.id, order.id));
+      return NextResponse.json({ error: `「${overflowName}」剛好被其他顧客搶先下單售完，訂單無法成立` }, { status: 409 });
+    }
 
     // 寄確認信（必須 await，否則 Vercel Serverless 會在回傳後中斷寄信）
     if (email) {
@@ -259,8 +326,8 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "請填寫姓名、電話和地址" }, { status: 400 });
     }
 
-    const { soldMap } = await getSoldQuantities(cId, orderId);
-    const stockError = await checkStock(cId, items || [], soldMap);
+    const { soldByName } = await getSoldQuantities(cId, orderId);
+    const stockError = await checkStock(cId, items || [], soldByName);
     if (stockError) {
       return NextResponse.json({ error: stockError }, { status: 400 });
     }

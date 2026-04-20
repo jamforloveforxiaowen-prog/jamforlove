@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { fundraiseOrders, orderModifyRequests } from "@/lib/db/schema";
+import { fundraiseOrders, orderModifyRequests, campaignProducts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 
@@ -17,6 +17,57 @@ async function requireAdmin() {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+  return null;
+}
+
+// 後台編輯訂單時以「商品名稱」彙總的庫存檢查（排除自己）
+async function checkAdminStock(
+  campaignId: number,
+  items: Array<{ name?: string; quantity: number }>,
+  excludeOrderId: number,
+): Promise<string | null> {
+  const products = await db
+    .select({ name: campaignProducts.name, limit: campaignProducts.limit })
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaignId));
+  const limitByName = new Map<string, number>();
+  for (const p of products) {
+    if (p.limit == null) continue;
+    const key = p.name.trim();
+    const prev = limitByName.get(key);
+    if (prev === undefined || p.limit > prev) limitByName.set(key, p.limit);
+  }
+
+  const allOrders = await db
+    .select({ id: fundraiseOrders.id, items: fundraiseOrders.items })
+    .from(fundraiseOrders)
+    .where(eq(fundraiseOrders.campaignId, campaignId));
+  const soldByName: Record<string, number> = {};
+  for (const o of allOrders) {
+    if (o.id === excludeOrderId) continue;
+    const arr = JSON.parse(o.items || "[]") as Array<{ name?: string; quantity: number }>;
+    for (const it of arr) {
+      const key = (it.name || "").trim();
+      if (!key) continue;
+      soldByName[key] = (soldByName[key] || 0) + it.quantity;
+    }
+  }
+
+  const requested: Record<string, number> = {};
+  for (const it of items) {
+    const key = (it.name || "").trim();
+    if (!key) continue;
+    requested[key] = (requested[key] || 0) + it.quantity;
+  }
+  for (const [name, want] of Object.entries(requested)) {
+    const limit = limitByName.get(name);
+    if (limit === undefined) continue;
+    const sold = soldByName[name] || 0;
+    if (sold + want > limit) {
+      const remaining = Math.max(0, limit - sold);
+      return `「${name}」剩餘 ${remaining} 份，無法改為 ${want} 份`;
+    }
   }
   return null;
 }
@@ -92,6 +143,19 @@ export async function PUT(
   }
 
   if (Array.isArray(body.items)) {
+    // 若修改了 items，須重新檢查庫存（依商品名稱彙總）
+    const orderId = Number(id);
+    const existing = await db
+      .select({ campaignId: fundraiseOrders.campaignId })
+      .from(fundraiseOrders)
+      .where(eq(fundraiseOrders.id, orderId))
+      .get();
+    if (existing?.campaignId) {
+      const stockError = await checkAdminStock(existing.campaignId, body.items, orderId);
+      if (stockError) {
+        return NextResponse.json({ error: stockError }, { status: 400 });
+      }
+    }
     update.items = JSON.stringify(body.items);
   }
 
