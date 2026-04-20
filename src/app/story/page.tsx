@@ -106,7 +106,7 @@ export default function StoryPage() {
                         <span className="w-8 h-px bg-rose/30" />
                       </div>
                       <p className="text-espresso-light/60 text-sm leading-relaxed font-serif">
-                        用愛手工熬煮的十年旅程
+                        為愛而捐的十年旅程
                       </p>
                     </div>
 

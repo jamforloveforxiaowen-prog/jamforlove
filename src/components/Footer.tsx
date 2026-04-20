@@ -37,7 +37,7 @@ export default function Footer() {
                 Jam for Love
               </h3>
               <p className="text-sm mt-1.5" style={{ color: "var(--color-linen-dark)", opacity: 0.6 }}>
-                用愛手工熬煮
+                為愛而捐
               </p>
             </div>
 

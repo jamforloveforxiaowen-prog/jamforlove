@@ -35,7 +35,7 @@ test.describe("登入頁細節", () => {
   test("桌面版登入頁顯示左側品牌文案", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/login");
-    await expect(page.getByText(/用愛手工熬煮/)).toBeVisible();
+    await expect(page.getByText(/為愛而捐/)).toBeVisible();
     await expect(page.getByText(/每一瓶果醬/)).toBeVisible();
   });
 

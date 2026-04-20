@@ -18,7 +18,7 @@ const EmailIcon = ({ size = 16, className = "" }: { size?: number; className?: s
 
 // ── 共用常數 ─────────────────────────
 const BRAND = "Jam for Love";
-const SUBTITLE = "用愛手工熬煮 / Handmade with Love";
+const SUBTITLE = "為愛而捐 / Handmade with Love";
 const FROM = "國立暨南大學";
 const FB_URL = "https://www.facebook.com/groups/229394627478779/";
 const EMAIL = "jam.for.love.wny@gmail.com";

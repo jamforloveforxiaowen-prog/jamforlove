@@ -132,7 +132,7 @@ export default function LoginPage() {
             className="font-serif text-espresso leading-[1.15] mb-6"
             style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
           >
-            用<span className="text-rose-dark">愛</span>手工熬煮
+            為<span className="text-rose-dark">愛</span>而捐
             <br />
             每一瓶果醬
           </h2>

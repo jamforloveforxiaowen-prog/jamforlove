@@ -249,7 +249,7 @@ function Design4() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="font-serif text-3xl font-bold text-espresso" style={{ fontStyle: "italic" }}>Jam for Love</h2>
-          <p className="text-espresso-light/40 text-sm mt-1">~ 用愛手工熬煮 ~</p>
+          <p className="text-espresso-light/40 text-sm mt-1">~ 為愛而捐 ~</p>
           <div className="flex items-center justify-center gap-3 mt-3">
             <span className="w-8 h-px bg-rose/30" /><span className="text-rose text-xs">♥</span><span className="w-8 h-px bg-rose/30" />
           </div>
