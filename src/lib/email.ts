@@ -118,33 +118,31 @@ function buildOrderRows(combos: OrderItem[], addons: OrderItem[]) {
   return rows;
 }
 
-export async function sendOrderConfirmationEmail(data: OrderEmailData) {
+interface RenderOptions {
+  isCorrection?: boolean;
+}
+
+export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOptions = {}): string {
   const {
-    customerName, email, combos, addons,
+    customerName, combos, addons,
     total, discountAmount, shippingFee, deliveryMethod, paymentMethod, address, notes, orderId,
   } = data;
-
-  if (!email) return;
-
-  // 驗證 email 格式
-  if (!isValidEmail(email)) {
-    console.error("Invalid email format, skipping:", email);
-    return;
-  }
-
-  // 檢查寄信頻率限制
-  const rateCheck = checkEmailRateLimit(email);
-  if (!rateCheck.allowed) {
-    console.error("Email rate limit hit:", rateCheck.reason);
-    return;
-  }
 
   const isShipping = deliveryMethod === "shipping";
   const pickupLocation = address ? esc(address) : "面交";
   const deliveryText = isShipping ? "郵寄" : `面交 — ${pickupLocation}`;
   const safeNotes = notes ? esc(notes) : "";
 
-  const html = `
+  const correctionNotice = opts.isCorrection ? `
+    <div style="background: #fff5f5; border: 2px solid #c4506a; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
+      <p style="color: #c4506a; font-size: 15px; font-weight: 700; margin: 0 0 8px;">訂單資訊更正通知</p>
+      <p style="color: #5c3d2e; font-size: 14px; line-height: 1.7; margin: 0;">
+        先前寄出的訂單確認信，「取貨方式」欄位固定顯示為「面交 / 暨大取貨」，未呈現您實際選擇的地點。在此為您補上完整、正確的訂單資訊。造成困擾，非常抱歉！
+      </p>
+    </div>
+  ` : "";
+
+  return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -159,6 +157,8 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
         <span style="color: #c4506a;">— ♥ —</span>
       </div>
     </div>
+
+    ${correctionNotice}
 
     <!-- 問候 -->
     <div style="background: white; border-radius: 12px; padding: 28px 24px; border: 2px dashed #ebe2d4;">
@@ -264,11 +264,37 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   </div>
 </body>
 </html>`;
+}
+
+interface SendOptions extends RenderOptions {
+  bypassRateLimit?: boolean;
+}
+
+export async function sendOrderConfirmationEmail(data: OrderEmailData, opts: SendOptions = {}) {
+  const { email, orderId } = data;
+
+  if (!email) return;
+
+  if (!isValidEmail(email)) {
+    console.error("Invalid email format, skipping:", email);
+    return;
+  }
+
+  if (!opts.bypassRateLimit) {
+    const rateCheck = checkEmailRateLimit(email);
+    if (!rateCheck.allowed) {
+      console.error("Email rate limit hit:", rateCheck.reason);
+      return;
+    }
+  }
+
+  const html = renderOrderConfirmationHtml(data, opts);
+  const subjectPrefix = opts.isCorrection ? "【更正版】" : "";
 
   await transporter.sendMail({
     from: `"Jam for Love" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: `收到你的心意了！— 訂單 #${orderId} 確認`,
+    subject: `${subjectPrefix}收到你的心意了！— 訂單 #${orderId} 確認`,
     html,
   });
 }
