@@ -136,8 +136,11 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
   const correctionNotice = opts.isCorrection ? `
     <div style="background: #fff5f5; border: 2px solid #c4506a; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px;">
       <p style="color: #c4506a; font-size: 15px; font-weight: 700; margin: 0 0 8px;">訂單資訊更正通知</p>
-      <p style="color: #5c3d2e; font-size: 14px; line-height: 1.7; margin: 0;">
+      <p style="color: #5c3d2e; font-size: 14px; line-height: 1.7; margin: 0 0 10px;">
         先前寄出的訂單確認信，「取貨方式」欄位固定顯示為「面交 / 暨大取貨」，未呈現您實際選擇的地點。在此為您補上完整、正確的訂單資訊。造成困擾，非常抱歉！
+      </p>
+      <p style="color: #5c3d2e80; font-size: 12px; line-height: 1.6; margin: 0;">
+        此信為系統自動寄送，請勿直接回覆本信件。如需聯繫，請來信 jam.for.love.wny@gmail.com。
       </p>
     </div>
   ` : "";
