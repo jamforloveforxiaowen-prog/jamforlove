@@ -139,7 +139,9 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     return;
   }
 
-  const deliveryText = deliveryMethod === "shipping" ? "郵寄" : "面交 / 暨大取貨";
+  const isShipping = deliveryMethod === "shipping";
+  const pickupLocation = address ? esc(address) : "面交";
+  const deliveryText = isShipping ? "郵寄" : `面交 — ${pickupLocation}`;
   const safeNotes = notes ? esc(notes) : "";
 
   const html = `
@@ -229,7 +231,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
           <td style="padding: 6px 0; color: #5c3d2e80; font-size: 14px;">付款方式</td>
           <td style="padding: 6px 0; color: #1e0f08; font-size: 15px;">${paymentMethod === "transfer" ? "匯款" : "現金"}</td>
         </tr>
-        ${deliveryMethod === "shipping" ? `
+        ${isShipping ? `
         <tr>
           <td style="padding: 6px 0; color: #5c3d2e80; font-size: 14px;">寄送地址</td>
           <td style="padding: 6px 0; color: #1e0f08; font-size: 15px;">${esc(address)}</td>
