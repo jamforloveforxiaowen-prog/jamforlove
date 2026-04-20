@@ -96,7 +96,7 @@ async function main() {
   console.log("【信件內容（純文字版）】\n");
 
   console.log("                  Jam for Love");
-  console.log("                ~ 用愛手工熬煮 ~");
+  console.log("                ~ 為愛而捐 ~");
   console.log("                    — ♥ —\n");
   console.log("┌────────────────────────────────────────────────┐");
   console.log("│ 訂單資訊更正通知                                 │");
@@ -111,7 +111,7 @@ async function main() {
   console.log("└────────────────────────────────────────────────┘\n");
   console.log(`${order.customerName},你好!`);
   console.log("收到你的心意了!謝謝你支持 Jam for Love,");
-  console.log("你的每一份溫暖,都是學生們繼續手作的最大動力。\n");
+  console.log("你的每一份溫暖,都是我們繼續手作的最大動力。\n");
   console.log("── 訂單明細 ─────────────────────\n");
   console.log("品項                               數量    小計");
   for (const i of items) {
@@ -155,7 +155,7 @@ async function main() {
   console.log("聯絡信箱:jam.for.love.wny@gmail.com");
   console.log("                  ♥\n");
   console.log("─────────────────────────────");
-  console.log("Jam for Love — 用愛手工熬煮");
+  console.log("Jam for Love — 為愛而捐");
   console.log("此為系統自動發送的訂單確認信,請勿直接回覆");
   console.log("─".repeat(60));
 }

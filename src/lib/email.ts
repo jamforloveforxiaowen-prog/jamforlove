@@ -158,7 +158,7 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
     <!-- 標頭 -->
     <div style="text-align: center; margin-bottom: 32px;">
       <h1 style="font-size: 26px; color: #1e0f08; margin: 0 0 4px; font-style: italic;">Jam for Love</h1>
-      <p style="color: #5c3d2e80; font-size: 14px; margin: 0;">~ 用愛手工熬煮 ~</p>
+      <p style="color: #5c3d2e80; font-size: 14px; margin: 0;">~ 為愛而捐 ~</p>
       <div style="margin-top: 16px;">
         <span style="color: #c4506a;">— ♥ —</span>
       </div>
@@ -172,7 +172,7 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
         ${esc(customerName)}，你好！
       </p>
       <p style="color: #5c3d2e; font-size: 15px; line-height: 1.7; margin: 0;">
-        收到你的心意了！謝謝你支持 Jam for Love，你的每一份溫暖，都是學生們繼續手作的最大動力。
+        收到你的心意了！謝謝你支持 Jam for Love，你的每一份溫暖，都是我們繼續手作的最大動力。
       </p>
     </div>
 
@@ -271,7 +271,7 @@ export function renderOrderConfirmationHtml(data: OrderEmailData, opts: RenderOp
     <!-- 頁尾 -->
     <div style="border-top: 1px solid #ebe2d4; margin-top: 24px; padding-top: 20px; text-align: center;">
       <p style="color: #5c3d2e60; font-size: 12px; margin: 0; line-height: 1.6;">
-        Jam for Love — 用愛手工熬煮<br>
+        Jam for Love — 為愛而捐<br>
         此為系統自動發送的訂單確認信，請勿直接回覆
       </p>
     </div>
