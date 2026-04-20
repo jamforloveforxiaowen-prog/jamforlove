@@ -1433,7 +1433,6 @@ export default function OrderPage() {
                     value={transferLast5}
                     onChange={(e) => setTransferLast5(e.target.value.replace(/\D/g, "").slice(0, 5))}
                     className={inputClass}
-                    placeholder="匯款後填寫"
                   />
                 </div>
               )}
