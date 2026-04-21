@@ -1143,12 +1143,12 @@ export default function OrderPage() {
       {/* 標頭 */}
       <div className="text-center mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
         <h1
-          className="font-bold text-espresso whitespace-nowrap overflow-x-auto"
+          className="font-bold text-espresso whitespace-nowrap"
           style={{
             fontFamily: theme.fontHeading,
             fontStyle: theme.headingItalic ? "italic" : "normal",
             letterSpacing: theme.headingTracking,
-            fontSize: "clamp(1.1rem, 4.2vw, 3rem)",
+            fontSize: "clamp(0.95rem, 3.4vw, 2.5rem)",
           }}
         >
           {campaign.name}
