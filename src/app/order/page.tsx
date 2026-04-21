@@ -984,65 +984,108 @@ export default function OrderPage() {
   const inputBorder = { borderBottom: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` };
   const inputBorderFocus = `focus-within:[border-bottom-color:${theme.accent}]`;
 
+  const pageHeader = (
+    <div className="text-center mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+      <h1
+        className="font-bold text-espresso whitespace-nowrap"
+        style={{
+          fontFamily: theme.fontHeading,
+          fontStyle: theme.headingItalic ? "italic" : "normal",
+          letterSpacing: theme.headingTracking,
+          fontSize: "clamp(0.95rem, 3.4vw, 2.5rem)",
+        }}
+      >
+        {campaign.name}
+      </h1>
+      <div className="flex items-center justify-center gap-3 mt-4">
+        <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
+        <span className="text-base" style={{ color: theme.accent }}>{theme.decoSymbol}</span>
+        <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
+      </div>
+      <div className="mt-4">
+        <ShareButton theme={theme} />
+      </div>
+    </div>
+  );
+
+  /* ─── 登入狀態尚未確認：先顯示載入，避免訪客閃見 wizard ─── */
+  if (isLoggedIn === null && !previewCampaignId) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+          <div className="w-8 h-8 border-2 border-rose/30 border-t-rose rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-espresso-light/40 text-sm">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── 未註冊/未登入：擋下訂單流程，引導先註冊 ─── */
+  if (isLoggedIn === false && !previewCampaignId) {
+    return (
+      <div
+        className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative"
+        style={{ background: theme.bg, backgroundImage: theme.bgPattern }}
+      >
+        {pageHeader}
+
+        <div
+          className={`${theme.radiusCard} p-8 text-center animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]`}
+          style={{
+            background: theme.cardBg,
+            border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`,
+            boxShadow: theme.cardShadow,
+          }}
+        >
+          <div className="text-5xl mb-4" aria-hidden="true">🍯</div>
+          <h2
+            className="font-bold text-espresso text-xl md:text-2xl mb-3"
+            style={{ fontFamily: theme.fontHeading, letterSpacing: theme.headingTracking }}
+          >
+            請先註冊帳號再訂購
+          </h2>
+          <p className="text-espresso-light/70 text-base leading-relaxed mb-6">
+            為了保留您的訂單紀錄、方便後續查詢與聯繫，<br />
+            請先註冊會員後再開始訂購流程。
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/register?next=/order"
+              className={`w-full py-4 text-white font-bold text-lg ${theme.radiusButton} transition-all hover:scale-[1.01] hover:shadow-lg active:scale-[0.97]`}
+              style={{
+                background: theme.accent,
+                border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.accent}60`,
+                boxShadow: theme.cardShadow,
+                fontFamily: theme.fontHeading,
+                letterSpacing: theme.headingTracking,
+              }}
+            >
+              立即註冊（30 秒完成）
+            </Link>
+            <Link
+              href="/login?next=/order"
+              className={`w-full py-4 font-bold text-base text-espresso-light hover:text-espresso ${theme.radiusButton} transition-all active:scale-[0.97]`}
+              style={{
+                border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`,
+                fontFamily: theme.fontHeading,
+                letterSpacing: theme.headingTracking,
+              }}
+            >
+              已有帳號？登入
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative"
       style={{ background: theme.bg, backgroundImage: theme.bgPattern }}
     >
-      {/* 標頭 */}
-      <div className="text-center mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-        <h1
-          className="font-bold text-espresso whitespace-nowrap"
-          style={{
-            fontFamily: theme.fontHeading,
-            fontStyle: theme.headingItalic ? "italic" : "normal",
-            letterSpacing: theme.headingTracking,
-            fontSize: "clamp(0.95rem, 3.4vw, 2.5rem)",
-          }}
-        >
-          {campaign.name}
-        </h1>
-        <div className="flex items-center justify-center gap-3 mt-4">
-          <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
-          <span className="text-base" style={{ color: theme.accent }}>{theme.decoSymbol}</span>
-          <span className="w-12 h-px" style={{ background: `${theme.accent}60` }} />
-        </div>
-        <div className="mt-4">
-          <ShareButton theme={theme} />
-        </div>
-      </div>
-
-      {/* 未登入訪客提示 */}
-      {isLoggedIn === false && (
-        <div
-          className="mb-6 rounded-xl p-4 flex items-start gap-3 animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]"
-          style={{
-            background: `${theme.accent}0c`,
-            border: `1px dashed ${theme.accent}40`,
-          }}
-        >
-          <span style={{ color: theme.accent, fontSize: 18 }} aria-hidden="true">♥</span>
-          <div className="flex-1 text-sm text-espresso-light/80 leading-relaxed">
-            歡迎您！可以先瀏覽和填寫訂單，
-            <Link
-              href="/register?next=/order"
-              className="font-bold underline underline-offset-2"
-              style={{ color: theme.accent }}
-            >
-              註冊帳號
-            </Link>
-            後就能送出訂單（已有帳號？
-            <Link
-              href="/login?next=/order"
-              className="font-bold underline underline-offset-2"
-              style={{ color: theme.accent }}
-            >
-              登入
-            </Link>
-            ）。
-          </div>
-        </div>
-      )}
+      {pageHeader}
 
       {/* 步驟指示器 */}
       <StepIndicator steps={wizardSteps} currentStep={currentStep} theme={theme} />
