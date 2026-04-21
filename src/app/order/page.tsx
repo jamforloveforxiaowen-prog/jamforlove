@@ -1449,64 +1449,93 @@ export default function OrderPage() {
       {/* ═══ Step: 確認訂單 ═══ */}
       {currentStepKey === "summary" && (
         <div className="animate-[bakeSwing_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-          <div className={`${theme.radiusCard} p-5 mb-6`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, background: theme.cardBg, boxShadow: theme.cardShadow }}>
-            <h3 className="text-2xl font-bold text-espresso mb-3" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>訂單摘要</h3>
-            <div className="space-y-1.5">
-              {Object.entries(selections).filter(([, qty]) => qty > 0).map(([id, qty]) => {
-                const p = allProducts.find((p) => p.id === Number(id));
-                if (!p) return null;
-                return (
-                  <div key={id} className="flex justify-between text-base">
-                    <span className="text-espresso-light">{p.name} × {qty}</span>
-                    <span className="text-espresso font-medium tabular-nums">NT$ {p.price * qty}</span>
-                  </div>
-                );
-              })}
+          {/* 標頭 */}
+          <div className="text-center mb-8 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ background: "linear-gradient(135deg, var(--color-honey), var(--color-honey-light))" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
-            {(discountAmount > 0 || shippingFee > 0) && (
-              <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "2px dashed rgba(30,15,8,0.08)" }}>
-                <div className="flex justify-between text-base">
-                  <span className="text-espresso-light">小計</span>
-                  <span className="text-espresso tabular-nums">NT$ {subtotal}</span>
+            <h2 className="font-serif text-3xl font-bold text-espresso mb-2" style={{ fontStyle: "italic" }}>請確認訂單內容</h2>
+            <p className="text-espresso-light/50 text-sm">確認無誤後，請點擊下方按鈕送出訂單</p>
+          </div>
+
+          {/* 訂單明細 */}
+          <div className="rounded-2xl p-6 mb-6" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>
+            <h3 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2"><span className="text-rose">♥</span> 訂單明細</h3>
+            {campaign.groups.map((group) => {
+              const groupSelections = group.products.filter((p) => (selections[p.id] || 0) > 0);
+              if (groupSelections.length === 0) return null;
+              return (
+                <div key={group.id} className="mb-4">
+                  <p className="text-xs font-semibold text-espresso-light/40 tracking-wider uppercase mb-2">{group.name}</p>
+                  <div className="space-y-2">
+                    {groupSelections.map((p) => {
+                      const qty = selections[p.id] || 0;
+                      return (
+                        <div key={p.id} className="flex items-start justify-between gap-3 py-2" style={{ borderBottom: "1px dashed rgba(30,15,8,0.06)" }}>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-espresso font-medium">{p.name}</p>
+                            {p.description && <p className="text-espresso-light/50 text-xs mt-0.5">{p.description}</p>}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-espresso text-sm">x{qty}</p>
+                            <p className="text-espresso-light/60 text-xs">NT$ {p.price * qty}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            {(discountAmount > 0 || shippingFee > 0 || (shippingFee === 0 && deliveryMethod === "shipping")) ? (
+              <div className="pt-3 mt-2 space-y-1" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+                <div className="flex justify-between text-sm">
+                  <span className="text-espresso-light/60">小計</span>
+                  <span className="text-espresso">NT$ {subtotal}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-base">
-                    <span style={{ color: theme.accent }}>{theme.decoSymbol} 支持者折扣（{selectedOption?.discount}%）</span>
-                    <span className="font-medium tabular-nums" style={{ color: theme.accent }}>-NT$ {discountAmount}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-rose/70">♥ 支持者折扣（{selectedOption?.discount}%）</span>
+                    <span className="text-rose">-NT$ {discountAmount}</span>
                   </div>
                 )}
                 {shippingFee > 0 && (
-                  <div className="flex justify-between text-base">
-                    <span className="text-espresso-light">運費</span>
-                    <span className="text-espresso tabular-nums">NT$ {shippingFee}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-espresso-light/60">運費</span>
+                    <span className="text-espresso">NT$ {shippingFee}</span>
                   </div>
                 )}
                 {shippingFee === 0 && deliveryMethod === "shipping" && (
-                  <div className="flex justify-between text-base">
-                    <span className="text-espresso-light">運費</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-espresso-light/60">運費</span>
                     <span className="text-sage font-medium">免運費</span>
                   </div>
                 )}
+                <div className="flex items-center justify-between pt-1">
+                  <p className="font-serif font-bold text-espresso">合計</p>
+                  <p className="font-serif font-bold text-xl text-rose">NT$ {grandTotal}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between pt-3 mt-2" style={{ borderTop: "2px dashed rgba(30,15,8,0.1)" }}>
+                <p className="font-serif font-bold text-espresso">合計</p>
+                <p className="font-serif font-bold text-xl text-rose">NT$ {grandTotal}</p>
               </div>
             )}
-            <div className="mt-3 pt-3 flex justify-between items-baseline" style={{ borderTop: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}` }}>
-              <span className="font-bold text-espresso" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal" }}>合計</span>
-              <span className="font-bold text-2xl" style={{ color: theme.accent, fontFamily: theme.fontHeading }}>NT$ {grandTotal}</span>
-            </div>
           </div>
 
-          {/* 收件摘要 */}
-          <div className={`${theme.radiusCard} p-5 mb-6`} style={{ border: `${theme.borderWidth}px ${theme.borderStyle} ${theme.border}`, background: theme.cardBg, boxShadow: theme.cardShadow }}>
-            <h3 className="text-lg font-bold text-espresso mb-3" style={{ fontFamily: theme.fontHeading, fontStyle: theme.headingItalic ? "italic" : "normal", letterSpacing: theme.headingTracking }}>收件資訊</h3>
-            <div className="space-y-1.5 text-base">
+          {/* 收件資訊 */}
+          <div className="rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>
+            <h3 className="font-serif text-lg font-bold text-espresso mb-4 flex items-center gap-2"><span className="text-rose">♥</span> 收件資訊</h3>
+            <div className="space-y-2 text-sm">
               <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">收件人</span><span className="text-espresso">{customerName}</span></div>
               <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">電話</span><span className="text-espresso">{phone}</span></div>
               {email && <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">Email</span><span className="text-espresso">{email}</span></div>}
               <div className="flex gap-3">
-                <span className="text-espresso-light/40 shrink-0 w-16">取貨</span>
+                <span className="text-espresso-light/40 shrink-0 w-16">取貨方式</span>
                 <span className="text-espresso">{deliveryMethod === "shipping" ? `郵寄 — ${zipcode} ${city}${district}${addressDetail}` : deliveryMethod.replace("pickup:", "")}</span>
               </div>
-              <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款</span><span className="text-espresso">{paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
+              <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">付款方式</span><span className="text-espresso">{paymentMethod === "transfer" ? "匯款" : "現金"}</span></div>
               {paymentMethod === "transfer" && transferLast5 && (
                 <div className="flex gap-3"><span className="text-espresso-light/40 shrink-0 w-16">匯款後五碼</span><span className="text-espresso">{transferLast5}</span></div>
               )}
