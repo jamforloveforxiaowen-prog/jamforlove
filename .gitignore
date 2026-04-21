@@ -60,3 +60,8 @@ next-env.d.ts
 # misc data files
 歷年的銷售記錄/
 .env*.local
+
+# 工作資料夾（不放進 repo）
+/video10th/
+*.pptx
+jamforlove-換伺服器開發SOP.txt
