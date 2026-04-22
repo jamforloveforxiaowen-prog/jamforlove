@@ -35,6 +35,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const phoneRegex = /^0\d{8,9}$/;
+  if (!phoneRegex.test(trimmedPhone)) {
+    return NextResponse.json(
+      { error: "電話格式不正確（請輸入 0 開頭的 9-10 碼數字）" },
+      { status: 400 }
+    );
+  }
+
   const result = await register(trimmedName, trimmedEmail, trimmedPhone);
 
   if (result.error) {

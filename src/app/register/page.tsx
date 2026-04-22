@@ -23,9 +23,20 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const phoneError =
+    phone.trim() && !/^0\d{8,9}$/.test(phone.trim())
+      ? "電話格式不正確（請輸入 0 開頭的 9-10 碼數字）"
+      : "";
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (phoneError) {
+      setError(phoneError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -251,12 +262,21 @@ export default function RegisterPage() {
                 <input
                   id="reg-phone"
                   type="tel"
+                  inputMode="numeric"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                   className={inputClass}
                   placeholder="例：0912345678"
+                  pattern="0\d{8,9}"
+                  maxLength={10}
                   required
+                  aria-invalid={phoneError ? true : undefined}
                 />
+                {phoneError && (
+                  <p className="text-rose text-xs mt-1.5" role="alert">
+                    {phoneError}
+                  </p>
+                )}
               </div>
             </div>
             {error && (
