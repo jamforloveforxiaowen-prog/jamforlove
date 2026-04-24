@@ -27,6 +27,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  displayNumber: number;
   campaignId: number | null;
   userId: number;
   username: string | null;
@@ -51,6 +52,7 @@ interface Order {
 interface ModifyRequest {
   id: number;
   orderId: number;
+  orderDisplayNumber: number;
   customerName: string;
   phone: string;
   message: string;
@@ -1405,7 +1407,7 @@ function OrderManager() {
   }
 
   async function handleDeleteOrder(order: Order) {
-    if (!window.confirm(`確定要刪除訂單 #${order.id}（${order.customerName}）嗎？\n此操作無法復原。`)) return;
+    if (!window.confirm(`確定要刪除訂單 #${order.displayNumber}（${order.customerName}）嗎？\n此操作無法復原。`)) return;
     const res = await fetch(`/api/admin/orders/${order.id}`, { method: "DELETE" });
     if (!res.ok) {
       window.alert("刪除失敗，請重試");
@@ -1615,7 +1617,7 @@ function OrderManager() {
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-espresso" style={{ fontFamily: "var(--font-display)" }}>訂單 #{r.orderId}</span>
+                        <span className="font-bold text-espresso" style={{ fontFamily: "var(--font-display)" }}>訂單 #{r.orderDisplayNumber}</span>
                         <span className="text-sm text-espresso-light/50">{r.customerName} / {r.phone}{r.orderEmail ? ` / ${r.orderEmail}` : ""}</span>
                         {r.campaignName && <span className="text-xs text-espresso-light/40">({r.campaignName})</span>}
                       </div>
@@ -1767,11 +1769,11 @@ function OrderManager() {
                     onClick={(e) => e.stopPropagation()}
                     onChange={() => toggleSelected(order.id)}
                     className="w-4 h-4 accent-rose cursor-pointer shrink-0"
-                    aria-label={`選取訂單 #${order.id}`}
+                    aria-label={`選取訂單 #${order.displayNumber}`}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-espresso text-sm">#{order.id}</span>
+                      <span className="font-bold text-espresso text-sm">#{order.displayNumber}</span>
                       <span className="text-espresso text-sm">{order.customerName}</span>
                       <span className="px-2 py-0.5 rounded-full text-[0.65rem] font-bold bg-sage/15 text-sage">
                         已下單

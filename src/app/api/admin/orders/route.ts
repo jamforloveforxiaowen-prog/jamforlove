@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { fundraiseOrders, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+import { getAllOrderDisplayNumbers } from "@/lib/db/order-display-number";
 
 export async function GET() {
   const session = await getSession();
@@ -39,8 +40,10 @@ export async function GET() {
     .leftJoin(users, eq(fundraiseOrders.userId, users.id))
     .orderBy(fundraiseOrders.createdAt);
 
+  const displayMap = await getAllOrderDisplayNumbers();
   const result = rows.map((r) => ({
     ...r,
+    displayNumber: displayMap.get(r.id) ?? r.id,
     items: JSON.parse(r.items || "[]"),
     combos: JSON.parse(r.combos),
     addons: JSON.parse(r.addons),

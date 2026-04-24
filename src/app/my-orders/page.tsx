@@ -14,6 +14,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  displayNumber: number;
   campaignName: string;
   customerName: string;
   phone: string;
@@ -104,7 +105,7 @@ export default function MyOrdersPage() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4" onClick={closeModifyModal}>
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-linen-dark/30 px-6 py-4 rounded-t-2xl">
-              <h2 className="font-serif text-lg font-bold text-espresso">修改訂單 #{modifyOrder.id}</h2>
+              <h2 className="font-serif text-lg font-bold text-espresso">修改訂單 #{modifyOrder.displayNumber}</h2>
               {modifyOrder.campaignName && <p className="text-espresso-light/50 text-sm">{modifyOrder.campaignName}</p>}
             </div>
 
@@ -234,7 +235,7 @@ export default function MyOrdersPage() {
                     className="font-bold text-espresso"
                     style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem" }}
                   >
-                    #{order.id}
+                    #{order.displayNumber}
                   </span>
                   <span className="text-xs text-espresso-light/40">
                     {formatDateTimeTW(order.createdAt)}

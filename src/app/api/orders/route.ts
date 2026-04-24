@@ -5,6 +5,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { eq, and, sql } from "drizzle-orm";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { getAllOrderDisplayNumbers, getOrderDisplayNumber } from "@/lib/db/order-display-number";
 
 interface OrderItem {
   productId: number;
@@ -257,7 +258,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, orderId: order.id });
+    const displayNumber = await getOrderDisplayNumber(order.id);
+    return NextResponse.json({ success: true, orderId: order.id, displayNumber });
   }
 
   // Legacy 格式（無 campaignId，保持向後相容）
@@ -302,7 +304,8 @@ export async function POST(req: NextRequest) {
     .returning()
     .get();
 
-  return NextResponse.json({ success: true, orderId: order.id });
+  const legacyDisplayNumber = await getOrderDisplayNumber(order.id);
+  return NextResponse.json({ success: true, orderId: order.id, displayNumber: legacyDisplayNumber });
 }
 
 export async function PUT(req: NextRequest) {
@@ -379,7 +382,8 @@ export async function PUT(req: NextRequest) {
       })
       .where(eq(fundraiseOrders.id, orderId));
 
-    return NextResponse.json({ success: true, orderId });
+    const displayNumber = await getOrderDisplayNumber(orderId);
+    return NextResponse.json({ success: true, orderId, displayNumber });
   }
 
   return NextResponse.json({ error: "無法修改此訂單" }, { status: 400 });
@@ -401,8 +405,10 @@ export async function GET() {
     .where(eq(fundraiseOrders.userId, session.id))
     .orderBy(fundraiseOrders.createdAt);
 
+  const displayMap = await getAllOrderDisplayNumbers();
   const result = rows.map((r) => ({
     ...r.order,
+    displayNumber: displayMap.get(r.order.id) ?? r.order.id,
     campaignName: r.campaignName || "",
     items: JSON.parse(r.order.items || "[]"),
     combos: JSON.parse(r.order.combos),

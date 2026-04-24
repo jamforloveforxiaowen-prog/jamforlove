@@ -515,6 +515,7 @@ export default function OrderPage() {
   // 送出成功
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: number;
+    displayNumber: number;
     items: OrderItem[];
     total: number;
     discountAmount: number;
@@ -814,6 +815,7 @@ export default function OrderPage() {
 
       setConfirmedOrder({
         orderId: data.orderId,
+        displayNumber: data.displayNumber ?? data.orderId,
         items,
         total: grandTotal,
         discountAmount,
@@ -893,7 +895,7 @@ export default function OrderPage() {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <h1 className="font-serif text-3xl font-bold text-espresso mb-2" style={{ fontStyle: "italic" }}>收到你的心意了！</h1>
-          <p className="text-espresso-light/50 text-sm">訂單編號 <span className="font-medium text-espresso">#{order.orderId}</span></p>
+          <p className="text-espresso-light/50 text-sm">訂單編號 <span className="font-medium text-espresso">#{order.displayNumber}</span></p>
         </div>
 
         <div className="rounded-2xl p-6 mb-6 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.2s_both]" style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(235,226,212,0.8)", boxShadow: "0 4px 24px rgba(30,15,8,0.06)" }}>

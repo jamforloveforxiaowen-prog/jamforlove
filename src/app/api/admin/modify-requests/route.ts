@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { orderModifyRequests, fundraiseOrders, campaigns } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, desc } from "drizzle-orm";
+import { getAllOrderDisplayNumbers } from "@/lib/db/order-display-number";
 
 export async function GET() {
   const session = await getSession();
@@ -23,8 +24,10 @@ export async function GET() {
     .leftJoin(campaigns, eq(fundraiseOrders.campaignId, campaigns.id))
     .orderBy(desc(orderModifyRequests.createdAt));
 
+  const displayMap = await getAllOrderDisplayNumbers();
   const result = rows.map((r) => ({
     ...r.request,
+    orderDisplayNumber: displayMap.get(r.request.orderId) ?? r.request.orderId,
     campaignName: r.campaignName || "",
     orderEmail: r.orderEmail || "",
     orderTotal: r.orderTotal || 0,
