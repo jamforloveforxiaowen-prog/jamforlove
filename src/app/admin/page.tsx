@@ -1161,11 +1161,24 @@ function OrderEditForm({
   const [items, setItems] = useState<OrderItem[]>(initialItems);
   const [shippingFee, setShippingFee] = useState(order.shippingFee ?? 0);
   const [discountAmount, setDiscountAmount] = useState(order.discountAmount ?? 0);
+  const [discountManual, setDiscountManual] = useState(false);
   const [totalOverride, setTotalOverride] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // 原始小計與折扣百分比（用於 items 變動時自動重算折扣）
+  const initialSubtotal = initialItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const discountPct = initialSubtotal > 0 ? (order.discountAmount ?? 0) / initialSubtotal : 0;
+
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  // 未手動調整折扣時，隨小計變動按原百分比自動重算
+  useEffect(() => {
+    if (!discountManual && discountPct > 0) {
+      setDiscountAmount(Math.round(subtotal * discountPct));
+    }
+  }, [subtotal, discountPct, discountManual]);
+
   const autoTotal = Math.max(0, subtotal - discountAmount + shippingFee);
   const finalTotal = totalOverride.trim() === "" ? autoTotal : Number(totalOverride) || 0;
 
@@ -1323,7 +1336,7 @@ function OrderEditForm({
             min={0}
             className={inputClass}
             value={discountAmount}
-            onChange={(e) => setDiscountAmount(Number(e.target.value))}
+            onChange={(e) => { setDiscountAmount(Number(e.target.value)); setDiscountManual(true); }}
           />
         </div>
         <div>
