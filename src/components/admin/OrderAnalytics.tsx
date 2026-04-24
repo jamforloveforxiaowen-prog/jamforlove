@@ -238,24 +238,26 @@ export default function OrderAnalytics({
         <div className={cardClass}>
           <h4 className={titleClass}>每日訂單趨勢</h4>
           {sortedDays.length > 0 ? (
-            <div className="flex items-end gap-1" style={{ height: 120 }}>
-              {sortedDays.map((day) => {
-                const count = dailyOrders[day] || 0;
-                const height = Math.max((count / maxDailyOrders) * 100, 4);
-                return (
-                  <div key={day} className="flex-1 flex flex-col items-center gap-1" title={`${day}: ${count} 筆`}>
-                    <span className="text-[0.6rem] text-espresso-light/40 tabular-nums">{count}</span>
-                    <div
-                      className="w-full rounded-t-sm"
-                      style={{ height: `${height}%`, background: "#c4506a", minWidth: 8 }}
-                    />
-                    <span className="text-[0.55rem] text-espresso-light/30 tabular-nums">{day.slice(5)}</span>
-                  </div>
-                );
-              })}
+            <div className="overflow-x-auto">
+              <div className="flex items-end gap-2" style={{ height: 220, minWidth: Math.max(sortedDays.length * 36, 280) }}>
+                {sortedDays.map((day) => {
+                  const count = dailyOrders[day] || 0;
+                  const height = Math.max((count / maxDailyOrders) * 100, 4);
+                  return (
+                    <div key={day} className="flex-1 flex flex-col items-center gap-1.5 min-w-[32px]" title={`${day}: ${count} 筆`}>
+                      <span className="text-sm font-bold text-espresso tabular-nums">{count}</span>
+                      <div
+                        className="w-full rounded-t-md"
+                        style={{ height: `${height}%`, background: "#c4506a", minWidth: 16 }}
+                      />
+                      <span className="text-xs text-espresso-light/70 tabular-nums">{day.slice(5)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            <p className="text-sm text-espresso-light/40">資料不足</p>
+            <p className="text-sm text-espresso-light/60">資料不足</p>
           )}
         </div>
 
