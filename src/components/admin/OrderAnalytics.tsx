@@ -77,8 +77,7 @@ export default function OrderAnalytics({
       })
     );
     const topItems = Object.entries(itemSales)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
+      .sort((a, b) => b[1] - a[1]);
     const maxItemQty = Math.max(...topItems.map(([, q]) => q), 1);
 
     // 每日訂單趨勢
@@ -351,7 +350,6 @@ export default function OrderAnalytics({
           <div className="space-y-2">
             {Object.entries(itemRevenue)
               .sort((a, b) => b[1] - a[1])
-              .slice(0, 8)
               .map(([name, revenue], i) => {
                 const maxRev = Math.max(...Object.values(itemRevenue), 1);
                 return (
