@@ -43,6 +43,8 @@ interface Order {
   addons: { id: number; name: string; quantity: number; price: number }[];
   shippingFee?: number;
   discountAmount?: number;
+  isSupporter?: boolean;
+  supportType?: string;
   notes: string;
   total: number;
   status: string;
@@ -1613,6 +1615,8 @@ function OrderManager() {
         qtyByCol[k] = (qtyByCol[k] || 0) + it.quantity;
       }
       const totalQty = Object.values(qtyByCol).reduce((s, n) => s + n, 0);
+      const subtotal = getOrderItems(o).reduce((s, i) => s + i.price * i.quantity, 0);
+      const supporter = o.isSupporter && o.supportType ? o.supportType : "";
       const row: (string | number)[] = [
         o.displayNumber || o.id,
         o.customerName,
@@ -1621,8 +1625,9 @@ function OrderManager() {
       ];
       if (includeMethod) row.push(o.deliveryMethod === "pickup" ? "面交" : "郵寄");
       if (includeAddress) row.push(o.address);
+      row.push(supporter);
       for (const c of cols) row.push(qtyByCol[c.key] || "");
-      row.push(totalQty, o.total, o.notes);
+      row.push(totalQty, subtotal, o.discountAmount ?? 0, o.shippingFee ?? 0, o.total, o.notes);
       return row;
     }
 
@@ -1630,8 +1635,9 @@ function OrderManager() {
       const h: string[] = ["訂單編號", "姓名", "電話", "Email"];
       if (includeMethod) h.push("取貨方式");
       if (includeAddress) h.push("地址");
+      h.push("支持者折扣");
       for (const c of cols) h.push(c.name);
-      h.push("總件數", "總金額", "備註");
+      h.push("總件數", "品項小計", "折扣", "運費", "實收金額", "備註");
       return h;
     }
 
