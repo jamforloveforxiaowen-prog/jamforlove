@@ -1641,6 +1641,65 @@ function OrderManager() {
       return h;
     }
 
+    // ─── 把組合品項拆解成單品（出貨用）───
+    // 例：「組合一：香辣香菇醬＋馬告菜脯醬＋甜甜圈手工皂（數量皆為1，限量25組）」
+    //     拆成 [香辣香菇醬, 馬告菜脯醬, 甜甜圈手工皂] 各 1
+    // 例：「組合七：花朵手工皂（一組3個，限量20組）」拆成 [花朵手工皂] × 3
+    function parseCombo(name: string): { name: string; qty: number }[] | null {
+      if (!name.includes("：")) return null;
+      const afterColon = name.split("：").slice(1).join("：");
+      const beforeParen = afterColon.split(/[（(]/)[0].trim();
+      const parts = beforeParen.split(/[＋+]/).map((s) => s.trim()).filter(Boolean);
+      let perItemQty = 1;
+      const m =
+        afterColon.match(/[一壹]組(\d+)個/) ||
+        afterColon.match(/數量皆為(\d+)/) ||
+        afterColon.match(/(\d+)個一組/);
+      if (m) perItemQty = Number(m[1]) || 1;
+      // 「燈籠果果醬：150元」這種單品+價格後綴，不算組合
+      if (parts.length <= 1 && perItemQty === 1) return null;
+      return parts.map((p) => ({ name: p, qty: perItemQty }));
+    }
+
+    // 把品名標準化：去掉冒號後的價格後綴，讓組合裡的「覆盆子果醬」跟單品的「覆盆子果醬:150元」合併
+    function normalizeItemName(name: string): string {
+      return name.replace(/[:：].*$/, "").trim() || name.trim();
+    }
+
+    // 把訂單的 items 拆成單品（組合 → 多個單品）
+    function buildBrokenDownStats(orders: Order[]) {
+      const acc: Record<string, number> = {};
+      for (const o of orders) {
+        for (const it of getOrderItems(o)) {
+          const breakdown = parseCombo(it.name);
+          if (breakdown) {
+            for (const part of breakdown) {
+              const key = normalizeItemName(part.name);
+              acc[key] = (acc[key] || 0) + part.qty * it.quantity;
+            }
+          } else {
+            // 非組合（單品 + 可能有價格後綴），同樣用標準化名稱當 key
+            const key = normalizeItemName(it.name);
+            acc[key] = (acc[key] || 0) + it.quantity;
+          }
+        }
+      }
+      // 排序：表單裡的單品依表單順序在前；組合拆出來的單品（不在表單裡）按字典序排在後面
+      const formNorm = productOrder.map((m) => normalizeItemName(m.name));
+      const formNormSet = new Set(formNorm);
+      const ordered: { name: string; qty: number }[] = [];
+      for (const norm of formNorm) {
+        if (acc[norm] && !ordered.some((x) => x.name === norm)) {
+          ordered.push({ name: norm, qty: acc[norm] });
+        }
+      }
+      const extras = Object.entries(acc)
+        .filter(([n]) => !formNormSet.has(n))
+        .sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"))
+        .map(([name, qty]) => ({ name, qty }));
+      return [...ordered, ...extras];
+    }
+
     // ─── 各品項銷量（按表單順序）───
     type ItemAgg = { qty: number; revenue: number; nameCounts: Record<string, number> };
     function buildItemStats(orders: Order[]) {
@@ -1716,7 +1775,20 @@ function OrderManager() {
     const itemSheet = XLSX.utils.aoa_to_sheet(itemSheetRows);
     XLSX.utils.book_append_sheet(wb, itemSheet, "各品項銷量");
 
-    // ─── 工作表 3+：每個出貨選項一張獨立工作表 ───
+    // ─── 工作表 3：出貨單品項（組合拆解後的單品數量，方便備貨）───
+    const brokenDown = buildBrokenDownStats(data);
+    const brokenDownRows: (string | number)[][] = [
+      ["（組合商品已拆成單品計算，例如「組合一：A＋B＋C」一組會拆成 A×1、B×1、C×1）"],
+      [],
+      ["單品名稱", "出貨總數"],
+      ...brokenDown.map((s) => [s.name, s.qty]),
+      [],
+      ["合計", brokenDown.reduce((sum, s) => sum + s.qty, 0)],
+    ];
+    const brokenDownSheet = XLSX.utils.aoa_to_sheet(brokenDownRows);
+    XLSX.utils.book_append_sheet(wb, brokenDownSheet, "出貨單品項");
+
+    // ─── 工作表 4+：每個出貨選項一張獨立工作表 ───
     const ordersByGroup = new Map<string, Order[]>();
     for (const o of data) {
       const key = sheetForOrder(o);
@@ -1732,6 +1804,7 @@ function OrderManager() {
       const groupOrders = ordersByGroup.get(groupName)!;
       const groupCols = buildColumnsForOrders(groupOrders);
       const groupItemStats = buildItemStats(groupOrders);
+      const groupBrokenDown = buildBrokenDownStats(groupOrders);
       const groupTotal = groupOrders.reduce((s, o) => s + o.total, 0);
       const groupDiscount = groupOrders.reduce((s, o) => s + (o.discountAmount ?? 0), 0);
       const groupShipping = groupOrders.reduce((s, o) => s + (o.shippingFee ?? 0), 0);
@@ -1748,9 +1821,13 @@ function OrderManager() {
         ["運費合計", `+ NT$ ${groupShipping}`],
         ["實收金額", `NT$ ${groupTotal}`],
         [],
-        ["─── 品項彙總（按表單順序）───"],
+        ["─── 品項彙總（按表單順序、組合視為一品）───"],
         ["品項名稱", "數量"],
         ...groupItemStats.map((s) => [s.name, s.qty]),
+        [],
+        ["─── 出貨單品項（組合已拆成單品，備貨用）───"],
+        ["單品名稱", "出貨總數"],
+        ...groupBrokenDown.map((s) => [s.name, s.qty]),
         [],
         ["─── 訂單明細（每位客戶各品項數量）───"],
         buildHeader(groupCols, false, includeAddress),
