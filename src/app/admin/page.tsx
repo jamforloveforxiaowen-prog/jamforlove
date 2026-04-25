@@ -1935,26 +1935,50 @@ function OrderManager() {
       })()}
 
       {/* 統計面板 */}
-      {filteredOrders.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-espresso">{filteredOrders.length}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">總訂單數</p>
+      {filteredOrders.length > 0 && (() => {
+        const total = filteredOrders.reduce((s, o) => s + o.total, 0);
+        const discount = filteredOrders.reduce((s, o) => s + (o.discountAmount ?? 0), 0);
+        const shipping = filteredOrders.reduce((s, o) => s + (o.shippingFee ?? 0), 0);
+        const subtotal = total + discount - shipping;
+        const itemCount = filteredOrders.reduce((s, o) => s + getOrderItems(o).reduce((is, i) => is + i.quantity, 0), 0);
+        const shippingCount = filteredOrders.filter((o) => o.deliveryMethod === "shipping").length;
+        const pickupCount = filteredOrders.filter((o) => o.deliveryMethod === "pickup").length;
+        return (
+          <div className="mb-6 space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+                <p className="text-2xl font-bold text-espresso">{filteredOrders.length}</p>
+                <p className="text-xs text-espresso-light/50 mt-1">總訂單數</p>
+              </div>
+              <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+                <p className="text-2xl font-bold text-rose">NT$ {total.toLocaleString()}</p>
+                <p className="text-xs text-espresso-light/50 mt-1">實收金額</p>
+              </div>
+              <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+                <p className="text-2xl font-bold text-honey">{itemCount}</p>
+                <p className="text-xs text-espresso-light/50 mt-1">品項總數</p>
+              </div>
+              <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
+                <p className="text-2xl font-bold text-sage">{shippingCount} / {pickupCount}</p>
+                <p className="text-xs text-espresso-light/50 mt-1">郵寄 / 面交</p>
+              </div>
+            </div>
+            {/* 金額拆解列 */}
+            <div className="bg-linen/50 rounded-lg ring-1 ring-linen-dark/40 px-4 py-3">
+              <p className="text-xs text-espresso-light/60 mb-1.5">金額拆解</p>
+              <div className="flex items-center gap-x-3 gap-y-1 flex-wrap text-sm tabular-nums">
+                <span className="text-espresso-light/70">品項小計 <span className="font-semibold text-espresso">NT$ {subtotal.toLocaleString()}</span></span>
+                <span className="text-espresso-light/40">−</span>
+                <span className="text-espresso-light/70">折扣 <span className="font-semibold text-espresso">NT$ {discount.toLocaleString()}</span></span>
+                <span className="text-espresso-light/40">+</span>
+                <span className="text-espresso-light/70">運費 <span className="font-semibold text-espresso">NT$ {shipping.toLocaleString()}</span></span>
+                <span className="text-espresso-light/40">=</span>
+                <span className="text-espresso-light/70">實收 <span className="font-bold text-rose">NT$ {total.toLocaleString()}</span></span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-rose">NT$ {filteredOrders.reduce((s, o) => s + o.total, 0).toLocaleString()}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">總金額</p>
-          </div>
-          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-honey">{filteredOrders.reduce((s, o) => s + getOrderItems(o).reduce((is, i) => is + i.quantity, 0), 0)}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">品項總數</p>
-          </div>
-          <div className="bg-white rounded-lg ring-1 ring-linen-dark/60 p-4 text-center">
-            <p className="text-2xl font-bold text-sage">{filteredOrders.filter((o) => o.deliveryMethod === "shipping").length} / {filteredOrders.filter((o) => o.deliveryMethod === "pickup").length}</p>
-            <p className="text-xs text-espresso-light/50 mt-1">郵寄 / 面交</p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {filteredOrders.length === 0 ? (
         <p className="text-espresso-light/40 text-sm py-8 text-center">目前共 0 筆訂單</p>
