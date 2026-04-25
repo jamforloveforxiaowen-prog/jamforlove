@@ -1617,8 +1617,19 @@ function OrderManager() {
       const subtotal = getOrderItems(o).reduce((s, i) => s + i.price * i.quantity, 0);
       const supporter = o.isSupporter && o.supportType ? o.supportType : "";
       const singleQty = buildSingleItemQty(o);
-      // 總件數依照拆解後的單品加總（組合會展開計算）
-      const totalQty = Object.values(singleQty).reduce((s, n) => s + n, 0);
+      // 總件數 = 原始品項數 + 組合內含單品數
+      // 例：組合一×1 (內含 3 個) → 1 (組合本身) + 3 (內容) = 4 件
+      //     草莓×2 → 2 件
+      let totalQty = 0;
+      for (const it of getOrderItems(o)) {
+        const breakdown = parseCombo(it.name);
+        if (breakdown) {
+          const internalSum = breakdown.reduce((s, p) => s + p.qty, 0);
+          totalQty += it.quantity * (1 + internalSum);
+        } else {
+          totalQty += it.quantity;
+        }
+      }
       const row: (string | number)[] = [
         o.displayNumber || o.id,
         o.customerName,
