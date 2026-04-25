@@ -92,6 +92,63 @@ const FORM_STYLES = [
 
 const DEFAULT_PICKUP = ["小川阿姨", "台大面交", "宜蘭面交"];
 
+/* ─── 24 小時時間選擇器（避免瀏覽器跑出 AM/PM）─── */
+
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
+const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
+
+function TimePicker24({
+  value,
+  onChange,
+  className = "",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  const safe = (value || "00:00").slice(0, 5);
+  const [hh = "00", mm = "00"] = safe.split(":");
+  const hour = HOUR_OPTIONS.includes(hh) ? hh : "00";
+  const minute = MINUTE_OPTIONS.includes(mm) ? mm : "00";
+
+  const baseSelect =
+    "py-2 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose";
+
+  return (
+    <div className={`flex items-center gap-1 ${className}`}>
+      <select
+        value={hour}
+        onChange={(e) => onChange(`${e.target.value}:${minute}`)}
+        className={baseSelect}
+        aria-label="時"
+      >
+        {HOUR_OPTIONS.map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
+      </select>
+      <span className="text-espresso-light/50 font-medium">:</span>
+      <select
+        value={minute}
+        onChange={(e) => onChange(`${hour}:${e.target.value}`)}
+        className={baseSelect}
+        aria-label="分"
+      >
+        {MINUTE_OPTIONS.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 /* ─── 商品卡片元件 ─── */
 
 function ProductCard({
@@ -669,37 +726,21 @@ export default function CampaignManager() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-espresso mb-1">開始日期 / 時間 *</label>
-                <div className="flex gap-2">
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={`${inputClass} flex-1`} required />
-                  <input
-                    type="time"
-                    lang="en-GB"
-                    step={60}
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className={`${inputClass} w-32`}
-                    required
-                  />
+                <div className="flex flex-wrap gap-2 items-center">
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={`${inputClass} flex-1 min-w-[140px]`} required />
+                  <TimePicker24 value={startTime} onChange={setStartTime} />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-espresso mb-1">結束日期 / 時間 *</label>
-                <div className="flex gap-2">
-                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={`${inputClass} flex-1`} required />
-                  <input
-                    type="time"
-                    lang="en-GB"
-                    step={60}
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className={`${inputClass} w-32`}
-                    required
-                  />
+                <div className="flex flex-wrap gap-2 items-center">
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={`${inputClass} flex-1 min-w-[140px]`} required />
+                  <TimePicker24 value={endTime} onChange={setEndTime} />
                 </div>
               </div>
             </div>
             <p className="text-xs text-espresso-light/50 -mt-2">
-              使用 24 小時制。預設整天開放（00:00 ～ 23:59）。表單只在「開放時間 ～ 結束時間」之間會顯示在網站上。
+              24 小時制。預設整天開放（00:00 ～ 23:59）。表單只在開放時間內會顯示在網站上。
             </p>
             {/* 支持者折扣選項 */}
             <div>

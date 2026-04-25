@@ -573,10 +573,3 @@ h1, h2, h3, h4 {
   }
 }
 
-/* ── 時間 input 強制 24 小時制（隱藏 AM/PM 欄位）──── */
-input[type="time"]::-webkit-datetime-edit-ampm-field {
-  display: none;
-}
-input[type="time"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-}
