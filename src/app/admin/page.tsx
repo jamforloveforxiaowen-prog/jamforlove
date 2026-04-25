@@ -1607,8 +1607,8 @@ function OrderManager() {
     const sheetForOrder = (o: Order) =>
       o.deliveryMethod === "shipping" ? "郵寄訂單" : `面交-${(o.address || "").trim() || "未指定"}`;
 
-    // 把訂單轉成 pivot 列：每個商品一欄，內容為該訂購數量
-    function buildOrderRow(o: Order, cols: ColMeta[], includeMethod: boolean, includeAddress: boolean): (string | number)[] {
+    // 把訂單轉成 pivot 列：原商品欄(可能含組合) + 拆解後的單品欄(出貨用)
+    function buildOrderRow(o: Order, cols: ColMeta[], singleCols: { name: string }[], includeMethod: boolean, includeAddress: boolean): (string | number)[] {
       const qtyByCol: Record<string, number> = {};
       for (const it of getOrderItems(o)) {
         const k = colKeyForItem(it);
@@ -1617,6 +1617,7 @@ function OrderManager() {
       const totalQty = Object.values(qtyByCol).reduce((s, n) => s + n, 0);
       const subtotal = getOrderItems(o).reduce((s, i) => s + i.price * i.quantity, 0);
       const supporter = o.isSupporter && o.supportType ? o.supportType : "";
+      const singleQty = buildSingleItemQty(o);
       const row: (string | number)[] = [
         o.displayNumber || o.id,
         o.customerName,
@@ -1627,16 +1628,19 @@ function OrderManager() {
       if (includeAddress) row.push(o.address);
       row.push(supporter);
       for (const c of cols) row.push(qtyByCol[c.key] || "");
+      for (const c of singleCols) row.push(singleQty[c.name] || "");
       row.push(totalQty, subtotal, o.discountAmount ?? 0, o.shippingFee ?? 0, o.total, o.notes);
       return row;
     }
 
-    function buildHeader(cols: ColMeta[], includeMethod: boolean, includeAddress: boolean): string[] {
+    function buildHeader(cols: ColMeta[], singleCols: { name: string }[], includeMethod: boolean, includeAddress: boolean): string[] {
       const h: string[] = ["訂單編號", "姓名", "電話", "Email"];
       if (includeMethod) h.push("取貨方式");
       if (includeAddress) h.push("地址");
       h.push("支持者折扣");
       for (const c of cols) h.push(c.name);
+      // 拆解後的單品欄位：標題加 [單品] 前綴
+      for (const c of singleCols) h.push(`[單品] ${c.name}`);
       h.push("總件數", "品項小計", "折扣", "運費", "實收金額", "備註");
       return h;
     }
@@ -1666,6 +1670,15 @@ function OrderManager() {
       return name.replace(/[:：].*$/, "").trim() || name.trim();
     }
 
+    // 取得單品的 canonical key：非組合品項優先用 productId 對應的 campaign 名稱
+    // 這樣「草莓果醬」「草莓果醬（限量）」「草莓果醬（50）」(都是 pid=902) 統一歸到「草莓果醬」
+    function singleItemKey(it: { productId: number | null; name: string }): string {
+      if (it.productId != null && productMetaById.has(it.productId)) {
+        return normalizeItemName(productMetaById.get(it.productId)!.name);
+      }
+      return normalizeItemName(it.name);
+    }
+
     // 把訂單的 items 拆成單品（組合 → 多個單品）
     function buildBrokenDownStats(orders: Order[]) {
       const acc: Record<string, number> = {};
@@ -1678,8 +1691,7 @@ function OrderManager() {
               acc[key] = (acc[key] || 0) + part.qty * it.quantity;
             }
           } else {
-            // 非組合（單品 + 可能有價格後綴），同樣用標準化名稱當 key
-            const key = normalizeItemName(it.name);
+            const key = singleItemKey(it);
             acc[key] = (acc[key] || 0) + it.quantity;
           }
         }
@@ -1697,6 +1709,45 @@ function OrderManager() {
         .filter(([n]) => !formNormSet.has(n))
         .sort((a, b) => a[0].localeCompare(b[0], "zh-Hant"))
         .map(([name, qty]) => ({ name, qty }));
+      return [...ordered, ...extras];
+    }
+
+    // 計算單一訂單拆解後每個單品的數量
+    function buildSingleItemQty(o: Order): Record<string, number> {
+      const qty: Record<string, number> = {};
+      for (const it of getOrderItems(o)) {
+        const breakdown = parseCombo(it.name);
+        if (breakdown) {
+          for (const part of breakdown) {
+            const k = normalizeItemName(part.name);
+            qty[k] = (qty[k] || 0) + part.qty * it.quantity;
+          }
+        } else {
+          const k = singleItemKey(it);
+          qty[k] = (qty[k] || 0) + it.quantity;
+        }
+      }
+      return qty;
+    }
+
+    // 取得這批訂單會用到的單品欄位（拆解後）
+    function buildSingleColumnsForOrders(orders: Order[]): { name: string }[] {
+      const seen = new Set<string>();
+      for (const o of orders) {
+        for (const k of Object.keys(buildSingleItemQty(o))) seen.add(k);
+      }
+      const formNorm = productOrder.map((m) => normalizeItemName(m.name));
+      const formSet = new Set(formNorm);
+      const ordered: { name: string }[] = [];
+      for (const norm of formNorm) {
+        if (seen.has(norm) && !ordered.some((x) => x.name === norm)) {
+          ordered.push({ name: norm });
+        }
+      }
+      const extras = Array.from(seen)
+        .filter((n) => !formSet.has(n))
+        .sort((a, b) => a.localeCompare(b, "zh-Hant"))
+        .map((name) => ({ name }));
       return [...ordered, ...extras];
     }
 
@@ -1745,6 +1796,7 @@ function OrderManager() {
 
     // ─── 工作表 1：訂單總覽（含 取貨方式 + 地址） ───
     const overviewCols = buildColumnsForOrders(data);
+    const overviewSingleCols = buildSingleColumnsForOrders(data);
     const overviewRows: (string | number)[][] = [
       ["═══ 統計摘要 ═══"],
       ["總訂單數", data.length],
@@ -1754,8 +1806,8 @@ function OrderManager() {
       ["實收金額（=後台總金額）", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
       [],
-      buildHeader(overviewCols, true, true),
-      ...data.map((o) => buildOrderRow(o, overviewCols, true, true)),
+      buildHeader(overviewCols, overviewSingleCols, true, true),
+      ...data.map((o) => buildOrderRow(o, overviewCols, overviewSingleCols, true, true)),
     ];
     const overviewSheet = XLSX.utils.aoa_to_sheet(overviewRows);
     XLSX.utils.book_append_sheet(wb, overviewSheet, "訂單總覽");
@@ -1803,6 +1855,7 @@ function OrderManager() {
     for (const groupName of sortedGroups) {
       const groupOrders = ordersByGroup.get(groupName)!;
       const groupCols = buildColumnsForOrders(groupOrders);
+      const groupSingleCols = buildSingleColumnsForOrders(groupOrders);
       const groupItemStats = buildItemStats(groupOrders);
       const groupBrokenDown = buildBrokenDownStats(groupOrders);
       const groupTotal = groupOrders.reduce((s, o) => s + o.total, 0);
@@ -1830,8 +1883,8 @@ function OrderManager() {
         ...groupBrokenDown.map((s) => [s.name, s.qty]),
         [],
         ["─── 訂單明細（每位客戶各品項數量）───"],
-        buildHeader(groupCols, false, includeAddress),
-        ...groupOrders.map((o) => buildOrderRow(o, groupCols, false, includeAddress)),
+        buildHeader(groupCols, groupSingleCols, false, includeAddress),
+        ...groupOrders.map((o) => buildOrderRow(o, groupCols, groupSingleCols, false, includeAddress)),
       ];
       const groupSheet = XLSX.utils.aoa_to_sheet(groupRows);
       const safeName = groupName.replace(/[:\\/?*[\]]/g, "_").slice(0, 31);
