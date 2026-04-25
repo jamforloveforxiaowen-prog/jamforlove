@@ -349,6 +349,7 @@ export default function CampaignManager() {
   const [publishedAt, setPublishedAt] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [copyHint, setCopyHint] = useState(false);
+  const [editingStatus, setEditingStatus] = useState<string>("draft");
 
   async function loadCampaigns() {
     try {
@@ -371,7 +372,7 @@ export default function CampaignManager() {
     setProducts([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
     setAddons([]);
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
-    setHasDraft(false); setDiff([]); setPreviewToken(null); setPublishedAt(null);
+    setHasDraft(false); setDiff([]); setPreviewToken(null); setPublishedAt(null); setEditingStatus("draft");
   }
 
   async function refreshEditDetail(id: number) {
@@ -381,17 +382,54 @@ export default function CampaignManager() {
     setDiff(data.diff || []);
     setPreviewToken(data.previewToken || null);
     setPublishedAt(data.publishedAt || null);
+    setEditingStatus(data.status || "draft");
     return data;
   }
 
   async function publishDraft() {
     if (!editingId) return;
-    if (!window.confirm("確定要發佈嗎？發佈後消費者看到的就是現在的草稿內容，且無法回復。")) return;
+    const msg = hasDraft
+      ? "確定要發佈嗎？發佈後消費者看到的就是目前的草稿內容，並會把表單上線到網站。"
+      : editingStatus === "active"
+        ? "目前已發佈中且沒有草稿變更，不需要重新發佈。"
+        : "確定要把此表單發佈到網站嗎？消費者就會在 /order 看到。";
+    if (editingStatus === "active" && !hasDraft) {
+      window.alert(msg);
+      return;
+    }
+    if (!window.confirm(msg)) return;
     setPublishing(true);
     try {
-      const res = await fetch(`/api/admin/campaigns/${editingId}/publish`, { method: "POST" });
-      const result = await res.json();
-      if (!res.ok) { setError(result.error || "發佈失敗"); return; }
+      // 1) 套用草稿（如果有）
+      if (hasDraft) {
+        const res = await fetch(`/api/admin/campaigns/${editingId}/publish`, { method: "POST" });
+        const result = await res.json();
+        if (!res.ok) { setError(result.error || "發佈失敗"); return; }
+      }
+      // 2) 設 status=active 上架到網站
+      if (editingStatus !== "active") {
+        await fetch(`/api/admin/campaigns/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "active" }),
+        });
+      }
+      await refreshEditDetail(editingId);
+      loadCampaigns();
+    } catch { setError("網路連線失敗"); }
+    finally { setPublishing(false); }
+  }
+
+  async function pausePublish() {
+    if (!editingId) return;
+    if (!window.confirm("暫停發佈後，此表單會從網站撤下，消費者就看不到了。\n\n之後仍可從後台再次發佈。確定要暫停嗎？")) return;
+    setPublishing(true);
+    try {
+      await fetch(`/api/admin/campaigns/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "draft" }),
+      });
       await refreshEditDetail(editingId);
       loadCampaigns();
     } catch { setError("網路連線失敗"); }
@@ -451,6 +489,7 @@ export default function CampaignManager() {
     setDiff(data.diff || []);
     setPreviewToken(data.previewToken || null);
     setPublishedAt(data.publishedAt || null);
+    setEditingStatus(data.status || "draft");
     setEditingId(id); setShowForm(true);
   }
 
@@ -863,21 +902,52 @@ export default function CampaignManager() {
 
           {/* 送出 */}
           <div className="flex gap-3 flex-wrap items-center">
+            {editingId && (
+              <button type="button" disabled={submitting || publishing} onClick={() => saveCampaign(true)} className="btn-primary-sm">
+                預覽
+              </button>
+            )}
             <button type="submit" disabled={submitting || publishing} className="btn-primary-sm">
               {submitting ? "儲存中..." : editingId ? "儲存草稿" : "儲存"}
             </button>
+            <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
             {editingId && (
               <>
-                <button type="button" disabled={submitting || publishing} onClick={() => saveCampaign(true)} className="btn-primary-sm">
-                  儲存並預覽
-                </button>
+                <div className="w-px h-7 bg-linen-dark/40 mx-1" />
+                {editingStatus === "active" && (
+                  <button
+                    type="button"
+                    onClick={pausePublish}
+                    disabled={submitting || publishing}
+                    className="px-4 py-2 rounded-md text-sm font-bold bg-honey/15 text-espresso ring-1 ring-honey/40 hover:bg-honey/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {publishing ? "處理中..." : "⏸ 暫停表單發佈"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={publishDraft}
-                  disabled={!hasDraft || submitting || publishing}
+                  disabled={
+                    submitting ||
+                    publishing ||
+                    (editingStatus === "active" && !hasDraft)
+                  }
                   className="px-4 py-2 rounded-md text-sm font-bold bg-rose text-white hover:bg-rose/80 transition-colors disabled:bg-espresso-light/20 disabled:text-espresso-light/40 disabled:cursor-not-allowed"
+                  title={
+                    editingStatus === "active" && !hasDraft
+                      ? "目前已發佈且沒有草稿變更"
+                      : hasDraft
+                        ? "套用草稿並發佈到網站"
+                        : "把表單發佈到網站"
+                  }
                 >
-                  {publishing ? "發佈中..." : hasDraft ? "🚀 發佈草稿" : "已是最新發佈版"}
+                  {publishing
+                    ? "發佈中..."
+                    : editingStatus === "active" && !hasDraft
+                      ? "已發佈"
+                      : hasDraft
+                        ? "🚀 發佈"
+                        : "🚀 發佈"}
                 </button>
                 {hasDraft && (
                   <button type="button" onClick={discardDraft} disabled={submitting || publishing} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/80 hover:text-rose hover:ring-rose transition-all">
@@ -891,7 +961,6 @@ export default function CampaignManager() {
                 預覽
               </button>
             )}
-            <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
           </div>
         </form>
       )}
