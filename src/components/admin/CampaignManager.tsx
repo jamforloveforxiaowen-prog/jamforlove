@@ -671,19 +671,35 @@ export default function CampaignManager() {
                 <label className="block text-sm font-medium text-espresso mb-1">開始日期 / 時間 *</label>
                 <div className="flex gap-2">
                   <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={`${inputClass} flex-1`} required />
-                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className={`${inputClass} w-28`} required />
+                  <input
+                    type="time"
+                    lang="en-GB"
+                    step={60}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className={`${inputClass} w-32`}
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-espresso mb-1">結束日期 / 時間 *</label>
                 <div className="flex gap-2">
                   <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={`${inputClass} flex-1`} required />
-                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className={`${inputClass} w-28`} required />
+                  <input
+                    type="time"
+                    lang="en-GB"
+                    step={60}
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className={`${inputClass} w-32`}
+                    required
+                  />
                 </div>
               </div>
             </div>
             <p className="text-xs text-espresso-light/50 -mt-2">
-              預設整天開放（00:00 ～ 23:59）。表單只在「開放時間 ～ 結束時間」之間會顯示在網站上。
+              使用 24 小時制。預設整天開放（00:00 ～ 23:59）。表單只在「開放時間 ～ 結束時間」之間會顯示在網站上。
             </p>
             {/* 支持者折扣選項 */}
             <div>
