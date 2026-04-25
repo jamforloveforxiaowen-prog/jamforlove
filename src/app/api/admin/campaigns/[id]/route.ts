@@ -4,10 +4,11 @@ import {
   campaigns,
   campaignGroups,
   campaignProducts,
+  campaignProductLimitLogs,
   fundraiseOrders,
 } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, asc, sql, and, inArray } from "drizzle-orm";
+import { eq, asc, desc, sql, and, inArray } from "drizzle-orm";
 
 // 取得單一活動完整資料（含分組和品項）
 export async function GET(
@@ -86,11 +87,27 @@ export async function GET(
     }
   }
 
+  // 載入 limit 變動歷史（按時間倒序）
+  const allLogs = await db
+    .select()
+    .from(campaignProductLimitLogs)
+    .where(eq(campaignProductLimitLogs.campaignId, campaign.id))
+    .orderBy(desc(campaignProductLimitLogs.createdAt));
+  const logsByProduct: Record<number, typeof allLogs> = {};
+  for (const log of allLogs) {
+    if (!logsByProduct[log.productId]) logsByProduct[log.productId] = [];
+    logsByProduct[log.productId].push(log);
+  }
+
   const groupsWithProducts = groups.map((g) => ({
     ...g,
     products: products
       .filter((p) => p.groupId === g.id)
-      .map((p) => ({ ...p, sold: soldById[p.id] || 0 })),
+      .map((p) => ({
+        ...p,
+        sold: soldById[p.id] || 0,
+        limitHistory: logsByProduct[p.id] || [],
+      })),
   }));
 
   return NextResponse.json({ ...campaign, groups: groupsWithProducts });
@@ -212,8 +229,39 @@ export async function PUT(
             .set(productPayload)
             .where(eq(campaignProducts.id, existingProduct.id));
           keptProductIds.add(existingProduct.id);
+
+          // 記錄 limit 變動
+          const oldLimit = existingProduct.limit;
+          const newLimit = productPayload.limit;
+          if (oldLimit !== newLimit) {
+            const oldVal = oldLimit ?? 0;
+            const newVal = newLimit ?? 0;
+            await db.insert(campaignProductLimitLogs).values({
+              campaignId,
+              productId: existingProduct.id,
+              delta: newVal - oldVal,
+              prevLimit: oldLimit,
+              newLimit: newLimit,
+              note: "",
+            });
+          }
         } else {
-          await db.insert(campaignProducts).values(productPayload);
+          const inserted = await db
+            .insert(campaignProducts)
+            .values(productPayload)
+            .returning()
+            .get();
+          // 新建商品也記一筆（從 0 → limit）
+          if (inserted.limit != null) {
+            await db.insert(campaignProductLimitLogs).values({
+              campaignId,
+              productId: inserted.id,
+              delta: inserted.limit,
+              prevLimit: null,
+              newLimit: inserted.limit,
+              note: "新增商品",
+            });
+          }
         }
       }
     }

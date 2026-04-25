@@ -43,6 +43,13 @@
       "when": 1775633635097,
       "tag": "0005_narrow_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777723200000,
+      "tag": "0006_limit_logs",
+      "breakpoints": true
     }
   ]
 }

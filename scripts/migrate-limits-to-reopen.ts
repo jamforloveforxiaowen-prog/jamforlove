@@ -33,7 +33,7 @@ async function main() {
   const { campaigns, campaignProducts, fundraiseOrders } = await import(
     "../src/lib/db/schema"
   );
-  const { eq, and, desc, lte, gte, sql } = await import("drizzle-orm");
+  const { eq, and, desc, lte, gte } = await import("drizzle-orm");
 
   const now = new Date().toISOString().slice(0, 10);
   let campaign = await db
@@ -147,7 +147,7 @@ async function main() {
     for (const u of toUpdate) {
       await db
         .update(campaignProducts)
-        .set({ limit: u.newLimit, updatedAt: sql`(datetime('now'))` })
+        .set({ limit: u.newLimit })
         .where(eq(campaignProducts.id, u.id));
     }
     console.log(`\n[APPLIED] 已更新 ${toUpdate.length} 個商品的 limit。`);

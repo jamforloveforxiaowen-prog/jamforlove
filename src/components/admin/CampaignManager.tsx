@@ -9,6 +9,15 @@ import { parseBannerUrls, serializeBannerUrls } from "@/lib/bannerUrls";
 
 /* ─── 型別 ─── */
 
+interface LimitLog {
+  id: number;
+  delta: number;
+  prevLimit: number | null;
+  newLimit: number | null;
+  note: string;
+  createdAt: string;
+}
+
 interface ProductEntry {
   id?: number;
   name: string;
@@ -17,6 +26,7 @@ interface ProductEntry {
   price: number;
   limit: number | null;
   sold?: number;
+  limitHistory?: LimitLog[];
 }
 
 interface Campaign {
@@ -39,7 +49,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null; sold?: number }[] }[];
+  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null; sold?: number; limitHistory?: LimitLog[] }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -191,6 +201,46 @@ function ProductCard({
                 ⚠ 總數 {product.limit} 比已售 {product.sold} 還少，前端會顯示「已售完」。建議用「再開放」追加，或直接調高總數（≥ {product.sold}）。
               </div>
             )}
+            {(product.limitHistory?.length ?? 0) > 0 && (
+              <details className="rounded-md bg-linen/40 ring-1 ring-linen-dark/30">
+                <summary className="cursor-pointer px-3 py-2 text-xs text-espresso-light/60 hover:text-espresso select-none">
+                  編輯記錄（{product.limitHistory!.length} 筆）
+                </summary>
+                <ul className="px-3 pb-2 space-y-1 text-xs text-espresso-light/70">
+                  {product.limitHistory!.map((log) => {
+                    const sign = log.delta > 0 ? "+" : "";
+                    const date = log.createdAt.replace("T", " ").slice(0, 16);
+                    return (
+                      <li key={log.id} className="flex items-baseline gap-2">
+                        <span className="text-espresso-light/40 text-[11px] tabular-nums">
+                          {date}
+                        </span>
+                        <span
+                          className={
+                            log.delta > 0
+                              ? "font-semibold text-sage"
+                              : log.delta < 0
+                              ? "font-semibold text-rose"
+                              : "font-semibold"
+                          }
+                        >
+                          {sign}
+                          {log.delta}
+                        </span>
+                        <span className="text-espresso-light/50">
+                          （{log.prevLimit ?? "不限"} → {log.newLimit ?? "不限"}）
+                        </span>
+                        {log.note && (
+                          <span className="text-espresso-light/40">
+                            · {log.note}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
+            )}
             <textarea
               value={product.description || ""}
               onChange={(e) => onUpdate("description", e.target.value)}
@@ -308,10 +358,10 @@ export default function CampaignManager() {
     const rawAddons = addonGroup?.products || [];
 
     setProducts(rawMain.length > 0
-      ? rawMain.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0 }))
+      ? rawMain.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0, limitHistory: p.limitHistory || [] }))
       : [{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
 
-    setAddons(rawAddons.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0 })));
+    setAddons(rawAddons.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0, limitHistory: p.limitHistory || [] })));
   }
 
   async function startEdit(id: number) {

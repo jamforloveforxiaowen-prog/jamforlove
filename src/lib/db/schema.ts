@@ -180,6 +180,26 @@ export const campaignProducts = sqliteTable("campaign_products", {
     .default(sql`(datetime('now'))`),
 });
 
+export const campaignProductLimitLogs = sqliteTable(
+  "campaign_product_limit_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    campaignId: integer("campaign_id")
+      .notNull()
+      .references(() => campaigns.id),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => campaignProducts.id),
+    delta: integer("delta").notNull(),
+    prevLimit: integer("prev_limit"),
+    newLimit: integer("new_limit"),
+    note: text("note").notNull().default(""),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  }
+);
+
 /* ─── 訂單 ──────────────────────────────────────── */
 
 export const fundraiseOrders = sqliteTable("fundraise_orders", {
