@@ -89,6 +89,16 @@ function ProductCard({
   onMove: (to: number) => void;
   inputClass: string;
 }) {
+  const [addAmount, setAddAmount] = useState<string>("");
+
+  function handleAdd() {
+    const n = Number(addAmount);
+    if (!Number.isFinite(n) || n <= 0) return;
+    const base = product.limit ?? (product.sold ?? 0);
+    onUpdate("limit", base + n);
+    setAddAmount("");
+  }
+
   return (
     <div
       className={`bg-white rounded-lg ring-1 transition-all duration-200 ${isFocused ? "ring-rose ring-2 shadow-md" : "ring-linen-dark/60"}`}
@@ -146,9 +156,39 @@ function ProductCard({
                 </div>
               )}
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-espresso-light/50">再開放</span>
+              <input
+                type="number"
+                value={addAmount}
+                onChange={(e) => setAddAmount(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAdd();
+                  }
+                }}
+                className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose"
+                placeholder="N"
+                min="1"
+              />
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={!addAmount || Number(addAmount) <= 0}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-rose text-white hover:bg-rose/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                追加
+              </button>
+              {addAmount && Number(addAmount) > 0 && (
+                <span className="text-xs text-espresso-light/50">
+                  → 總數會變成 {(product.limit ?? (product.sold ?? 0)) + Number(addAmount)}
+                </span>
+              )}
+            </div>
             {product.limit != null && (product.sold ?? 0) > product.limit && (
               <div className="text-xs text-rose bg-rose/5 border border-rose/20 rounded-md px-3 py-2">
-                ⚠ 總數 {product.limit} 比已售 {product.sold} 還少，前端會顯示「已售完」。請把總數調高（≥ {product.sold}）。
+                ⚠ 總數 {product.limit} 比已售 {product.sold} 還少，前端會顯示「已售完」。建議用「再開放」追加，或直接調高總數（≥ {product.sold}）。
               </div>
             )}
             <textarea
