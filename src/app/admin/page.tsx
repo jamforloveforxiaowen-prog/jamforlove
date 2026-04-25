@@ -1508,13 +1508,19 @@ function OrderManager() {
     : orders.filter((o) => o.campaignId === filterCampaignId);
 
   // 取得訂單的品項列表（新格式 items 或 legacy combos+addons）
-  function getOrderItems(o: Order): { name: string; quantity: number; price: number }[] {
-    if (o.items && o.items.length > 0) return o.items;
-    const legacy = [
-      ...o.combos.map((c) => ({ name: `${c.name}（${c.items.join("、")}）`, quantity: c.quantity, price: c.price })),
-      ...o.addons.map((a) => ({ name: a.name, quantity: a.quantity, price: a.price })),
+  function getOrderItems(o: Order): { productId: number | null; name: string; quantity: number; price: number }[] {
+    if (o.items && o.items.length > 0) {
+      return o.items.map((i) => ({
+        productId: i.productId || null,
+        name: i.name,
+        quantity: i.quantity,
+        price: i.price,
+      }));
+    }
+    return [
+      ...o.combos.map((c) => ({ productId: null, name: `${c.name}（${c.items.join("、")}）`, quantity: c.quantity, price: c.price })),
+      ...o.addons.map((a) => ({ productId: null, name: a.name, quantity: a.quantity, price: a.price })),
     ];
-    return legacy;
   }
 
   function exportToExcel() {
@@ -1536,17 +1542,30 @@ function OrderManager() {
     const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
     const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
 
-    const itemStats: Record<string, number> = {};
+    // 各品項銷量：以 productId 為主彙總（避免「草莓果醬」「草莓果醬（限量）」等同商品分裂）
+    const qtyByKey: Record<string, number> = {};
+    const nameCountByKey: Record<string, Record<string, number>> = {};
     data.forEach((o) => getOrderItems(o).forEach((i) => {
-      itemStats[i.name] = (itemStats[i.name] || 0) + i.quantity;
+      const key = i.productId != null ? `id:${i.productId}` : `name:${i.name}`;
+      qtyByKey[key] = (qtyByKey[key] || 0) + i.quantity;
+      if (!nameCountByKey[key]) nameCountByKey[key] = {};
+      nameCountByKey[key][i.name] = (nameCountByKey[key][i.name] || 0) + i.quantity;
     }));
+    const itemStats = Object.entries(qtyByKey).map(([key, qty]) => {
+      const counts = nameCountByKey[key] || {};
+      const displayName = Object.entries(counts).sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return a[0].length - b[0].length;
+      })[0]?.[0] || key;
+      return [displayName, qty] as [string, number];
+    }).sort((a, b) => b[1] - a[1]);
 
     const statsRows = [
       [], ["═══ 統計摘要 ═══"],
       ["總訂單數", data.length], ["總金額", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
       [], ["═══ 各品項銷量 ═══"],
-      ...Object.entries(itemStats).map(([name, qty]) => [name, qty]),
+      ...itemStats,
     ];
 
     const allRows = [header, ...rows, ...statsRows];

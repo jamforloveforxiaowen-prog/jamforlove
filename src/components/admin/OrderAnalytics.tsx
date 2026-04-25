@@ -40,11 +40,20 @@ interface CampaignInfo {
 
 /* ─── 工具 ─── */
 
-function getOrderItems(o: Order): { name: string; quantity: number; price: number }[] {
-  if (o.items && o.items.length > 0) return o.items;
+type NormalizedItem = { productId: number | null; name: string; quantity: number; price: number };
+
+function getOrderItems(o: Order): NormalizedItem[] {
+  if (o.items && o.items.length > 0) {
+    return o.items.map((i) => ({
+      productId: i.productId || null,
+      name: i.name,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+  }
   return [
-    ...o.combos.map((c) => ({ name: `${c.name}（${c.items.join("、")}）`, quantity: c.quantity, price: c.price })),
-    ...o.addons.map((a) => ({ name: a.name, quantity: a.quantity, price: a.price })),
+    ...o.combos.map((c) => ({ productId: null, name: `${c.name}（${c.items.join("、")}）`, quantity: c.quantity, price: c.price })),
+    ...o.addons.map((a) => ({ productId: null, name: a.name, quantity: a.quantity, price: a.price })),
   ];
 }
 
@@ -67,18 +76,36 @@ export default function OrderAnalytics({
   const analysis = useMemo(() => {
     if (orders.length === 0) return null;
 
-    // 品項銷量排行
-    const itemSales: Record<string, number> = {};
-    const itemRevenue: Record<string, number> = {};
+    // 品項銷量排行：以 productId 為彙總鍵（legacy 無 productId 才退回 name）
+    // 顯示名稱使用該 key 出現次數最多的 name（避免「草莓果醬（限量）」「草莓果醬（50）」分裂）
+    const salesByKey: Record<string, number> = {};
+    const revenueByKey: Record<string, number> = {};
+    const nameCountByKey: Record<string, Record<string, number>> = {};
     orders.forEach((o) =>
       getOrderItems(o).forEach((i) => {
-        itemSales[i.name] = (itemSales[i.name] || 0) + i.quantity;
-        itemRevenue[i.name] = (itemRevenue[i.name] || 0) + i.price * i.quantity;
+        const key = i.productId != null ? `id:${i.productId}` : `name:${i.name}`;
+        salesByKey[key] = (salesByKey[key] || 0) + i.quantity;
+        revenueByKey[key] = (revenueByKey[key] || 0) + i.price * i.quantity;
+        if (!nameCountByKey[key]) nameCountByKey[key] = {};
+        nameCountByKey[key][i.name] = (nameCountByKey[key][i.name] || 0) + i.quantity;
       })
     );
-    const topItems = Object.entries(itemSales)
-      .sort((a, b) => b[1] - a[1]);
+    const displayName = (key: string): string => {
+      const counts = nameCountByKey[key];
+      if (!counts) return key;
+      // 取出現次數最多的 name；數量相同時取最短（通常是 canonical 名稱）
+      return Object.entries(counts).sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return a[0].length - b[0].length;
+      })[0][0];
+    };
+    const topItems: [string, number][] = Object.entries(salesByKey)
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, qty]) => [displayName(key), qty]);
     const maxItemQty = Math.max(...topItems.map(([, q]) => q), 1);
+    const itemRevenue: [string, number][] = Object.entries(revenueByKey)
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, rev]) => [displayName(key), rev]);
 
     // 每日訂單趨勢
     const dailyOrders: Record<string, number> = {};
@@ -194,7 +221,7 @@ export default function OrderAnalytics({
           <h4 className={titleClass}>品項銷量排行</h4>
           <div className="space-y-2">
             {topItems.map(([name, qty], i) => (
-              <div key={name} className="flex items-center gap-3">
+              <div key={`${name}-${i}`} className="flex items-center gap-3">
                 <span className="text-xs text-espresso-light/40 w-5 text-right shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -350,25 +377,23 @@ export default function OrderAnalytics({
         <div className={cardClass}>
           <h4 className={titleClass}>品項營收排行</h4>
           <div className="space-y-2">
-            {Object.entries(itemRevenue)
-              .sort((a, b) => b[1] - a[1])
-              .map(([name, revenue], i) => {
-                const maxRev = Math.max(...Object.values(itemRevenue), 1);
-                return (
-                  <div key={name} className="flex items-center gap-3">
-                    <span className="text-xs text-espresso-light/40 w-5 text-right shrink-0">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-espresso truncate">{name}</span>
-                        <span className="text-sm font-bold text-honey tabular-nums shrink-0">NT$ {revenue.toLocaleString()}</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-linen-dark/30 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${(revenue / maxRev) * 100}%`, background: "#c89530" }} />
-                      </div>
+            {itemRevenue.map(([name, revenue], i) => {
+              const maxRev = Math.max(...itemRevenue.map(([, r]) => r), 1);
+              return (
+                <div key={`${name}-${i}`} className="flex items-center gap-3">
+                  <span className="text-xs text-espresso-light/40 w-5 text-right shrink-0">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-espresso truncate">{name}</span>
+                      <span className="text-sm font-bold text-honey tabular-nums shrink-0">NT$ {revenue.toLocaleString()}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-linen-dark/30 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${(revenue / maxRev) * 100}%`, background: "#c89530" }} />
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
           </div>
         </div>
 
