@@ -54,19 +54,44 @@ export async function GET() {
     .where(and(eq(campaignProducts.campaignId, campaign.id), eq(campaignProducts.isActive, true)))
     .orderBy(asc(campaignProducts.sortOrder));
 
-  // 統計已售數量（依商品名稱彙總，避免歷史 productId 分裂造成的誤算）
+  // 統計已售數量：以 productId 為主（同商品改名不分裂），name fallback 救歷史孤兒
   const allOrders = await db
     .select({ items: fundraiseOrders.items })
     .from(fundraiseOrders)
     .where(eq(fundraiseOrders.campaignId, campaign.id));
 
-  const soldByName: Record<string, number> = {};
+  // 載入此活動所有商品（含已軟刪除）做為合法 productId 集合
+  const allCampaignProducts = await db
+    .select()
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaign.id));
+  const validProductIds = new Set(allCampaignProducts.map((p) => p.id));
+
+  // 當前 active 商品的 name → id 對應，用於 productId 對不到時的 fallback
+  const activeNameToId = new Map<string, number>();
+  for (const p of products) {
+    activeNameToId.set(p.name.trim(), p.id);
+  }
+
+  const soldById: Record<number, number> = {};
   for (const order of allOrders) {
-    const items = JSON.parse(order.items || "[]") as { productId: number; name?: string; quantity: number }[];
+    const items = JSON.parse(order.items || "[]") as {
+      productId: number;
+      name?: string;
+      quantity: number;
+    }[];
     for (const item of items) {
-      const key = (item.name || "").trim();
-      if (!key) continue;
-      soldByName[key] = (soldByName[key] || 0) + item.quantity;
+      let pid: number | undefined;
+      if (item.productId && validProductIds.has(item.productId)) {
+        pid = item.productId;
+      } else {
+        const trimmed = (item.name || "").trim();
+        const fallback = trimmed ? activeNameToId.get(trimmed) : undefined;
+        if (fallback) pid = fallback;
+      }
+      if (pid != null) {
+        soldById[pid] = (soldById[pid] || 0) + item.quantity;
+      }
     }
   }
 
@@ -77,7 +102,7 @@ export async function GET() {
     products: products
       .filter((p) => p.groupId === g.id)
       .map((p) => {
-        const sold = soldByName[p.name.trim()] || 0;
+        const sold = soldById[p.id] || 0;
         return {
           ...p,
           sold,

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { campaigns, campaignGroups, campaignProducts } from "@/lib/db/schema";
+import {
+  campaigns,
+  campaignGroups,
+  campaignProducts,
+  fundraiseOrders,
+} from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, asc, sql, and, inArray } from "drizzle-orm";
 
@@ -43,9 +48,49 @@ export async function GET(
     )
     .orderBy(asc(campaignProducts.sortOrder));
 
+  // 計算每個商品的售出數量（以 productId 為主，name fallback 救歷史孤兒）
+  const allCampaignProducts = await db
+    .select()
+    .from(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaign.id));
+  const validProductIds = new Set(allCampaignProducts.map((p) => p.id));
+  const activeNameToId = new Map<string, number>();
+  for (const p of products) {
+    activeNameToId.set(p.name.trim(), p.id);
+  }
+
+  const allOrders = await db
+    .select({ items: fundraiseOrders.items })
+    .from(fundraiseOrders)
+    .where(eq(fundraiseOrders.campaignId, campaign.id));
+
+  const soldById: Record<number, number> = {};
+  for (const order of allOrders) {
+    const items = JSON.parse(order.items || "[]") as {
+      productId: number;
+      name?: string;
+      quantity: number;
+    }[];
+    for (const item of items) {
+      let pid: number | undefined;
+      if (item.productId && validProductIds.has(item.productId)) {
+        pid = item.productId;
+      } else {
+        const trimmed = (item.name || "").trim();
+        const fallback = trimmed ? activeNameToId.get(trimmed) : undefined;
+        if (fallback) pid = fallback;
+      }
+      if (pid != null) {
+        soldById[pid] = (soldById[pid] || 0) + item.quantity;
+      }
+    }
+  }
+
   const groupsWithProducts = groups.map((g) => ({
     ...g,
-    products: products.filter((p) => p.groupId === g.id),
+    products: products
+      .filter((p) => p.groupId === g.id)
+      .map((p) => ({ ...p, sold: soldById[p.id] || 0 })),
   }));
 
   return NextResponse.json({ ...campaign, groups: groupsWithProducts });

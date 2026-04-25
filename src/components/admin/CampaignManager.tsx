@@ -16,6 +16,7 @@ interface ProductEntry {
   imageUrl: string;
   price: number;
   limit: number | null;
+  sold?: number;
 }
 
 interface Campaign {
@@ -38,7 +39,7 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null }[] }[];
+  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null; sold?: number }[] }[];
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -128,10 +129,28 @@ function ProductCard({
                 <input type="number" value={product.price || ""} onChange={(e) => onUpdate("price", Number(e.target.value))} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="價格" min="0" />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-sm text-espresso-light/50">限量</span>
+                <span className="text-sm text-espresso-light/50">總數</span>
                 <input type="number" value={product.limit ?? ""} onChange={(e) => onUpdate("limit", e.target.value ? Number(e.target.value) : null)} className="w-20 py-1 px-2 text-base text-espresso bg-linen rounded-md ring-1 ring-linen-dark/40 outline-none focus:ring-rose" placeholder="不限" min="0" />
               </div>
+              {(product.sold ?? 0) > 0 && (
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-espresso-light/50">已售</span>
+                  <span className="font-semibold text-espresso">{product.sold}</span>
+                  {product.limit != null && (
+                    <>
+                      <span className="text-espresso-light/40">/</span>
+                      <span className="text-espresso-light/60">{product.limit}</span>
+                      <span className="text-espresso-light/40">（剩 {Math.max(0, product.limit - (product.sold ?? 0))}）</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+            {product.limit != null && (product.sold ?? 0) > product.limit && (
+              <div className="text-xs text-rose bg-rose/5 border border-rose/20 rounded-md px-3 py-2">
+                ⚠ 總數 {product.limit} 比已售 {product.sold} 還少，前端會顯示「已售完」。請把總數調高（≥ {product.sold}）。
+              </div>
+            )}
             <textarea
               value={product.description || ""}
               onChange={(e) => onUpdate("description", e.target.value)}
@@ -150,9 +169,17 @@ function ProductCard({
 
         {!isFocused && product.name && (
           <div className="mt-1 space-y-1">
-            <div className="flex items-center gap-3 text-sm text-espresso-light/40">
+            <div className="flex items-center gap-3 text-sm text-espresso-light/40 flex-wrap">
               <span>NT$ {product.price}</span>
-              {product.limit != null && <span>· 限量 {product.limit}</span>}
+              {(product.sold ?? 0) > 0 && product.limit != null ? (
+                <span className={product.sold! > product.limit ? "text-rose font-semibold" : ""}>
+                  · 已售 {product.sold} / 總數 {product.limit}
+                </span>
+              ) : (product.sold ?? 0) > 0 ? (
+                <span>· 已售 {product.sold}（總數不限）</span>
+              ) : product.limit != null ? (
+                <span>· 總數 {product.limit}</span>
+              ) : null}
             </div>
             {product.description && (
               <p className="text-sm text-espresso-light/50 line-clamp-2">{product.description}</p>
@@ -241,10 +268,10 @@ export default function CampaignManager() {
     const rawAddons = addonGroup?.products || [];
 
     setProducts(rawMain.length > 0
-      ? rawMain.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit }))
+      ? rawMain.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0 }))
       : [{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
 
-    setAddons(rawAddons.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit })));
+    setAddons(rawAddons.map((p) => ({ id: p.id, name: p.name, description: p.description || "", imageUrl: p.imageUrl || "", price: p.price, limit: p.limit, sold: p.sold ?? 0 })));
   }
 
   async function startEdit(id: number) {
@@ -266,9 +293,24 @@ export default function CampaignManager() {
     if (!name || !startDate || !endDate) { setError("請填寫表單名稱和日期"); return; }
     const validProducts = products.filter((p) => p.name.trim());
     if (validProducts.length === 0) { setError("請至少新增一項商品"); return; }
-    setSubmitting(true); setError("");
 
     const validAddons = addons.filter((p) => p.name.trim());
+
+    // 防呆：總數比已售還少的商品
+    const oversold = [...validProducts, ...validAddons].filter(
+      (p) => p.limit != null && (p.sold ?? 0) > p.limit
+    );
+    if (oversold.length > 0) {
+      const list = oversold
+        .map((p) => `・${p.name}：總數 ${p.limit} < 已售 ${p.sold}`)
+        .join("\n");
+      const ok = window.confirm(
+        `以下商品的「總數」設得比「已售」還少，前端會顯示「已售完」：\n\n${list}\n\n仍要儲存嗎？`
+      );
+      if (!ok) return;
+    }
+
+    setSubmitting(true); setError("");
 
     const groups: Array<{
       name: string; description: string; sortOrder: number; isRequired: boolean;
