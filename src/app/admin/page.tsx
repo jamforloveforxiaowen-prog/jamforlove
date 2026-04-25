@@ -1523,60 +1523,116 @@ function OrderManager() {
     ];
   }
 
-  function exportToExcel() {
+  async function exportToExcel() {
+    const XLSX = await import("xlsx");
     const data = filteredOrders;
-    const header = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "品項明細", "品項數量", "備註", "總金額", "建立時間"];
-    const rows = data.map((o) => {
+    const orderHeader = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "取貨地點", "品項明細", "品項數量", "備註", "總金額", "建立時間"];
+
+    const sheetForOrder = (o: Order) =>
+      o.deliveryMethod === "shipping" ? "郵寄訂單" : `面交-${(o.address || "").trim() || "未指定"}`;
+
+    const orderRow = (o: Order): (string | number)[] => {
       const items = getOrderItems(o);
+      const pickupPoint = o.deliveryMethod === "pickup" ? (o.address || "").trim() : "";
       return [
-        o.id, o.customerName, o.phone, o.email, o.address,
+        o.displayNumber || o.id, o.customerName, o.phone, o.email, o.address,
         o.deliveryMethod === "pickup" ? "面交" : "郵寄",
+        pickupPoint,
         items.map((i) => `${i.name} ×${i.quantity} $${i.price}`).join("; "),
         items.reduce((s, i) => s + i.quantity, 0),
         o.notes, o.total,
         formatDateTimeTW(o.createdAt),
       ];
-    });
+    };
 
     const totalAmount = data.reduce((s, o) => s + o.total, 0);
     const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
     const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
 
     // 各品項銷量：以 productId 為主彙總（避免「草莓果醬」「草莓果醬（限量）」等同商品分裂）
-    const qtyByKey: Record<string, number> = {};
-    const nameCountByKey: Record<string, Record<string, number>> = {};
-    data.forEach((o) => getOrderItems(o).forEach((i) => {
-      const key = i.productId != null ? `id:${i.productId}` : `name:${i.name}`;
-      qtyByKey[key] = (qtyByKey[key] || 0) + i.quantity;
-      if (!nameCountByKey[key]) nameCountByKey[key] = {};
-      nameCountByKey[key][i.name] = (nameCountByKey[key][i.name] || 0) + i.quantity;
-    }));
-    const itemStats = Object.entries(qtyByKey).map(([key, qty]) => {
-      const counts = nameCountByKey[key] || {};
-      const displayName = Object.entries(counts).sort((a, b) => {
-        if (b[1] !== a[1]) return b[1] - a[1];
-        return a[0].length - b[0].length;
-      })[0]?.[0] || key;
-      return [displayName, qty] as [string, number];
-    }).sort((a, b) => b[1] - a[1]);
+    type ItemAgg = { qty: number; revenue: number; nameCounts: Record<string, number> };
+    const aggregateItems = (orders: Order[]) => {
+      const acc: Record<string, ItemAgg> = {};
+      orders.forEach((o) => getOrderItems(o).forEach((i) => {
+        const key = i.productId != null ? `id:${i.productId}` : `name:${i.name}`;
+        if (!acc[key]) acc[key] = { qty: 0, revenue: 0, nameCounts: {} };
+        acc[key].qty += i.quantity;
+        acc[key].revenue += i.price * i.quantity;
+        acc[key].nameCounts[i.name] = (acc[key].nameCounts[i.name] || 0) + i.quantity;
+      }));
+      return Object.entries(acc).map(([key, v]) => {
+        const displayName = Object.entries(v.nameCounts).sort((a, b) => {
+          if (b[1] !== a[1]) return b[1] - a[1];
+          return a[0].length - b[0].length;
+        })[0]?.[0] || key;
+        return { name: displayName, qty: v.qty, revenue: v.revenue };
+      }).sort((a, b) => b.qty - a.qty);
+    };
 
-    const statsRows = [
-      [], ["═══ 統計摘要 ═══"],
-      ["總訂單數", data.length], ["總金額", `NT$ ${totalAmount}`],
+    const itemStats = aggregateItems(data);
+
+    const wb = XLSX.utils.book_new();
+
+    // 工作表 1：訂單總覽
+    const overviewRows: (string | number)[][] = [
+      ["═══ 統計摘要 ═══"],
+      ["總訂單數", data.length],
+      ["總金額", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
-      [], ["═══ 各品項銷量 ═══"],
-      ...itemStats,
+      [],
+      orderHeader,
+      ...data.map(orderRow),
     ];
+    const overviewSheet = XLSX.utils.aoa_to_sheet(overviewRows);
+    XLSX.utils.book_append_sheet(wb, overviewSheet, "訂單總覽");
 
-    const allRows = [header, ...rows, ...statsRows];
-    const csv = allRows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `訂單_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // 工作表 2：各品項銷量（獨立列出，方便看數量和金額）
+    const itemSheetRows: (string | number)[][] = [
+      ["品項名稱", "數量", "金額"],
+      ...itemStats.map((s) => [s.name, s.qty, s.revenue]),
+      [],
+      ["合計", itemStats.reduce((sum, s) => sum + s.qty, 0), itemStats.reduce((sum, s) => sum + s.revenue, 0)],
+    ];
+    const itemSheet = XLSX.utils.aoa_to_sheet(itemSheetRows);
+    XLSX.utils.book_append_sheet(wb, itemSheet, "各品項銷量");
+
+    // 工作表 3+：每個出貨選項一張獨立工作表（含該組的品項彙總 + 訂單明細）
+    const ordersByGroup = new Map<string, Order[]>();
+    for (const o of data) {
+      const key = sheetForOrder(o);
+      if (!ordersByGroup.has(key)) ordersByGroup.set(key, []);
+      ordersByGroup.get(key)!.push(o);
+    }
+    const sortedGroups = Array.from(ordersByGroup.keys()).sort((a, b) => {
+      if (a === "郵寄訂單") return -1;
+      if (b === "郵寄訂單") return 1;
+      return a.localeCompare(b, "zh-Hant");
+    });
+    for (const groupName of sortedGroups) {
+      const groupOrders = ordersByGroup.get(groupName)!;
+      const groupItemStats = aggregateItems(groupOrders);
+      const groupTotal = groupOrders.reduce((s, o) => s + o.total, 0);
+
+      const groupRows: (string | number)[][] = [
+        [`═══ ${groupName} ═══`],
+        ["訂單數", groupOrders.length],
+        ["總金額", `NT$ ${groupTotal}`],
+        [],
+        ["─── 品項彙總 ───"],
+        ["品項名稱", "數量"],
+        ...groupItemStats.map((s) => [s.name, s.qty]),
+        [],
+        ["─── 訂單明細 ───"],
+        orderHeader,
+        ...groupOrders.map(orderRow),
+      ];
+      const groupSheet = XLSX.utils.aoa_to_sheet(groupRows);
+      // sheet 名稱限制：31 字元，且不能含 :\/?*[]
+      const safeName = groupName.replace(/[:\\/?*[\]]/g, "_").slice(0, 31);
+      XLSX.utils.book_append_sheet(wb, groupSheet, safeName);
+    }
+
+    XLSX.writeFile(wb, `訂單_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   if (loading) return <p className="text-espresso-light/50 py-8 text-center">載入中...</p>;
