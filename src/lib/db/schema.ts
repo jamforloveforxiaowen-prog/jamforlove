@@ -127,6 +127,9 @@ export const campaigns = sqliteTable("campaigns", {
     .default("draft"),
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
+  // 開放/結束時間（HH:MM 格式），預設整天開放
+  startTime: text("start_time").notNull().default("00:00"),
+  endTime: text("end_time").notNull().default("23:59"),
   bannerUrl: text("banner_url").notNull().default(""),
   description: text("description").notNull().default(""),
   formStyle: text("form_style").notNull().default("classic"),

@@ -166,6 +166,8 @@ export async function PUT(
     name,
     startDate,
     endDate,
+    startTime,
+    endTime,
     bannerUrl,
     description,
     formStyle,
@@ -182,6 +184,8 @@ export async function PUT(
   if (name !== undefined) baseUpdate.name = name;
   if (startDate !== undefined) baseUpdate.startDate = startDate;
   if (endDate !== undefined) baseUpdate.endDate = endDate;
+  if (startTime !== undefined) baseUpdate.startTime = startTime || "00:00";
+  if (endTime !== undefined) baseUpdate.endTime = endTime || "23:59";
   if (bannerUrl !== undefined) baseUpdate.bannerUrl = bannerUrl || "";
   if (description !== undefined) baseUpdate.description = description || "";
   if (formStyle !== undefined) baseUpdate.formStyle = formStyle || "classic";

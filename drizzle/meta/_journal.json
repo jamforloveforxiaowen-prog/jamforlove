@@ -57,6 +57,13 @@
       "when": 1777884800000,
       "tag": "0007_draft_publish",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1777971200000,
+      "tag": "0008_campaign_time",
+      "breakpoints": true
     }
   ]
 }

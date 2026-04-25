@@ -3,40 +3,87 @@ import { db } from "@/lib/db";
 import { campaigns, campaignGroups, campaignProducts, fundraiseOrders } from "@/lib/db/schema";
 import { eq, asc, desc, sql, and, lte, gte } from "drizzle-orm";
 
-export async function GET() {
-  const now = new Date().toISOString().slice(0, 10);
+// 用台灣時區計算現在的 YYYY-MM-DDTHH:MM 字串
+function nowTaiwanIso(): string {
+  const fmt = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  // sv-SE 格式：YYYY-MM-DD HH:MM
+  return fmt.format(new Date()).replace(" ", "T");
+}
 
-  // 優先找 active 且在日期範圍內的活動（最新的優先）
-  let campaign = await db
+function isWithinDateTime(
+  startDate: string,
+  startTime: string,
+  endDate: string,
+  endTime: string,
+  nowIso: string
+): boolean {
+  const startIso = `${startDate}T${(startTime || "00:00").slice(0, 5)}`;
+  const endIso = `${endDate}T${(endTime || "23:59").slice(0, 5)}`;
+  return nowIso >= startIso && nowIso <= endIso;
+}
+
+export async function GET() {
+  const nowIso = nowTaiwanIso(); // "2026-04-25T14:30"
+  const today = nowIso.slice(0, 10);
+
+  // 候選：所有日期範圍內的 campaigns（含 active / draft / closed）
+  const candidates = await db
     .select()
     .from(campaigns)
-    .where(and(eq(campaigns.status, "active"), lte(campaigns.startDate, now), gte(campaigns.endDate, now)))
-    .orderBy(desc(campaigns.startDate))
-    .get();
+    .where(and(lte(campaigns.startDate, today), gte(campaigns.endDate, today)))
+    .orderBy(desc(campaigns.startDate));
 
-  // 沒有 active 活動時，看看是否有「日期範圍內但被暫停（draft/closed）」的活動
-  // 有的話回傳 paused 狀態，避免前端 fallback 到 legacy 寫死商品
+  // 在 datetime 範圍內 + active 的活動
+  const activeInRange = candidates.find(
+    (c) =>
+      c.status === "active" &&
+      isWithinDateTime(c.startDate, c.startTime, c.endDate, c.endTime, nowIso)
+  );
+
+  let campaign = activeInRange;
+
+  // 沒有 active in range，但有「日期範圍內但暫停」→ 回傳 paused
   if (!campaign) {
-    const pausedCampaign = await db
-      .select()
-      .from(campaigns)
-      .where(and(lte(campaigns.startDate, now), gte(campaigns.endDate, now)))
-      .orderBy(desc(campaigns.startDate))
-      .get();
-    if (pausedCampaign) {
+    const pausedCampaign = candidates[0];
+    if (pausedCampaign && pausedCampaign.status !== "active") {
       return NextResponse.json({
         campaign: {
           id: pausedCampaign.id,
           name: pausedCampaign.name,
           startDate: pausedCampaign.startDate,
           endDate: pausedCampaign.endDate,
+          startTime: pausedCampaign.startTime,
+          endTime: pausedCampaign.endTime,
           status: "paused",
+        },
+      });
+    }
+    // 日期範圍內但 active 還沒到時間（太早）或已過時間（太晚）→ out_of_range
+    const outOfTimeActive = candidates.find((c) => c.status === "active");
+    if (outOfTimeActive) {
+      return NextResponse.json({
+        campaign: {
+          id: outOfTimeActive.id,
+          name: outOfTimeActive.name,
+          startDate: outOfTimeActive.startDate,
+          endDate: outOfTimeActive.endDate,
+          startTime: outOfTimeActive.startTime,
+          endTime: outOfTimeActive.endTime,
+          status: "out_of_range",
         },
       });
     }
   }
 
-  // 如果沒有在範圍內的，找任何 active 活動（顯示 out_of_range）
+  // 沒有日期範圍內的活動 → 找任何 active 活動（顯示 out_of_range）
   if (!campaign) {
     campaign = await db
       .select()
@@ -50,14 +97,24 @@ export async function GET() {
     return NextResponse.json({ campaign: null });
   }
 
-  // 檢查日期
-  if (now < campaign.startDate || now > campaign.endDate) {
+  // 範圍外（雖然極少發生 —— 上面 isWithinDateTime 已處理）
+  if (
+    !isWithinDateTime(
+      campaign.startDate,
+      campaign.startTime,
+      campaign.endDate,
+      campaign.endTime,
+      nowIso
+    )
+  ) {
     return NextResponse.json({
       campaign: {
         id: campaign.id,
         name: campaign.name,
         startDate: campaign.startDate,
         endDate: campaign.endDate,
+        startTime: campaign.startTime,
+        endTime: campaign.endTime,
         status: "out_of_range",
       },
     });

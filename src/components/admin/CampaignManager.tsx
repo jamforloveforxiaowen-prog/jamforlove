@@ -35,6 +35,8 @@ interface Campaign {
   status: string;
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
   bannerUrl: string;
   description: string;
   formStyle: string;
@@ -332,6 +334,8 @@ export default function CampaignManager() {
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("00:00");
+  const [endTime, setEndTime] = useState("23:59");
   const [bannerUrls, setBannerUrls] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [formStyle, setFormStyle] = useState("classic");
@@ -367,7 +371,7 @@ export default function CampaignManager() {
   useEffect(() => { loadCampaigns(); }, []);
 
   function resetForm() {
-    setName(""); setStartDate(""); setEndDate(""); setBannerUrls([]); setDescription("");
+    setName(""); setStartDate(""); setEndDate(""); setStartTime("00:00"); setEndTime("23:59"); setBannerUrls([]); setDescription("");
     setFormStyle("classic"); setSupporterDiscount(0); setSupportOptions([]); setPickupOptions([...DEFAULT_PICKUP]); setNewPickup("");
     setProducts([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
     setAddons([]);
@@ -478,6 +482,8 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name); setStartDate(data.startDate); setEndDate(data.endDate);
+    setStartTime((data.startTime || "00:00").slice(0, 5));
+    setEndTime((data.endTime || "23:59").slice(0, 5));
     setBannerUrls(parseBannerUrls(data.bannerUrl)); setDescription(data.description || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
@@ -535,6 +541,7 @@ export default function CampaignManager() {
 
     const payload = {
       name, startDate, endDate,
+      startTime, endTime,
       bannerUrl: serializeBannerUrls(bannerUrls),
       description,
       formStyle,
@@ -584,6 +591,8 @@ export default function CampaignManager() {
     const res = await fetch(`/api/admin/campaigns/${c.id}`);
     const data: CampaignDetail = await res.json();
     setName(data.name + "（複製）"); setStartDate(""); setEndDate("");
+    setStartTime((data.startTime || "00:00").slice(0, 5));
+    setEndTime((data.endTime || "23:59").slice(0, 5));
     setBannerUrls(parseBannerUrls(data.bannerUrl)); setDescription(data.description || ""); setFormStyle(data.formStyle || "classic");
     setSupporterDiscount(data.supporterDiscount || 0);
     const sOpts = typeof data.supportOptions === "string" ? JSON.parse(data.supportOptions) : data.supportOptions;
@@ -657,16 +666,25 @@ export default function CampaignManager() {
               <label className="block text-sm font-medium text-espresso mb-1">表單名稱 *</label>
               <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} required placeholder="例：2026 母親節預購" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-espresso mb-1">開始日期 *</label>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+                <label className="block text-sm font-medium text-espresso mb-1">開始日期 / 時間 *</label>
+                <div className="flex gap-2">
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={`${inputClass} flex-1`} required />
+                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className={`${inputClass} w-28`} required />
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-espresso mb-1">結束日期 *</label>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} required />
+                <label className="block text-sm font-medium text-espresso mb-1">結束日期 / 時間 *</label>
+                <div className="flex gap-2">
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={`${inputClass} flex-1`} required />
+                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className={`${inputClass} w-28`} required />
+                </div>
               </div>
             </div>
+            <p className="text-xs text-espresso-light/50 -mt-2">
+              預設整天開放（00:00 ～ 23:59）。表單只在「開放時間 ～ 結束時間」之間會顯示在網站上。
+            </p>
             {/* 支持者折扣選項 */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -983,7 +1001,7 @@ export default function CampaignManager() {
                       <span className={`px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${STATUS_STYLES[c.status]}`}>{STATUS_LABELS[c.status]}</span>
                     </div>
                     <p className="text-espresso-light/50 text-sm">
-                      {c.startDate} ~ {c.endDate} · {c.orderCount} 筆訂單
+                      {c.startDate} {(c.startTime || "00:00").slice(0, 5)} ~ {c.endDate} {(c.endTime || "23:59").slice(0, 5)} · {c.orderCount} 筆訂單
                     </p>
                   </div>
                   {thumbUrls.length > 0 && (
