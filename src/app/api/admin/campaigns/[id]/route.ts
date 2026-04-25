@@ -16,8 +16,9 @@ import {
 } from "@/lib/campaign-publish";
 
 // 取得單一活動完整資料（含分組和品項；有草稿時回傳草稿合併後的結構）
+// 加上 ?source=live 可強制回傳目前已發佈版本（用於訂單匯出等需要 live 商品順序的場合）
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSession();
@@ -76,9 +77,11 @@ export async function GET(
     logsByProduct[log.productId].push(log);
   }
 
-  const draft: DraftPayload | null = campaign.draftPayload
-    ? JSON.parse(campaign.draftPayload)
-    : null;
+  const sourceLive = new URL(req.url).searchParams.get("source") === "live";
+  const draft: DraftPayload | null =
+    !sourceLive && campaign.draftPayload
+      ? JSON.parse(campaign.draftPayload)
+      : null;
 
   // 編輯表單預設顯示草稿（若有），讓 admin 編輯尚未發佈的內容
   // 用 draft 的 product.id 對應到 live product，沿用 sold/limitHistory

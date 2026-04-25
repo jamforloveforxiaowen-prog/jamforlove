@@ -1526,67 +1526,171 @@ function OrderManager() {
   async function exportToExcel() {
     const XLSX = await import("xlsx");
     const data = filteredOrders;
-    const orderHeader = ["訂單編號", "姓名", "電話", "Email", "地址", "取貨方式", "取貨地點", "品項明細", "品項數量", "備註", "總金額", "建立時間"];
 
+    // ─── 取得各活動的「表單商品順序」(避開 draft，用 live 順序) ───
+    const campaignIds = Array.from(new Set(data.map((o) => o.campaignId).filter((x): x is number => x != null)));
+    type ProductMeta = { productId: number; name: string; campaignId: number; orderKey: number };
+    const productOrder: ProductMeta[] = [];
+    const productMetaById = new Map<number, ProductMeta>();
+    for (const cid of campaignIds) {
+      try {
+        const res = await fetch(`/api/admin/campaigns/${cid}?source=live`);
+        if (!res.ok) continue;
+        const detail = await res.json();
+        const groups = (detail.groups || []) as { isRequired: boolean; sortOrder: number; products: { id: number; name: string; sortOrder: number }[] }[];
+        // 必填群組（商品）優先，再加購群組；同群組內依 sortOrder
+        const sortedGroups = [...groups].sort((a, b) => {
+          if (a.isRequired !== b.isRequired) return a.isRequired ? -1 : 1;
+          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+        });
+        let idx = 0;
+        for (const g of sortedGroups) {
+          const sortedProducts = [...(g.products || [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+          for (const p of sortedProducts) {
+            const meta: ProductMeta = {
+              productId: p.id,
+              name: p.name,
+              campaignId: cid,
+              orderKey: cid * 10000 + idx++,
+            };
+            productOrder.push(meta);
+            productMetaById.set(p.id, meta);
+          }
+        }
+      } catch { /* 忽略單一活動 fetch 失敗 */ }
+    }
+
+    // 收集訂單裡有出現、但不在表單裡的孤兒商品（已下架/legacy）→ 排在最後
+    const orphanByKey = new Map<string, { name: string; orderKey: number }>();
+    let orphanIdx = 0;
+    for (const o of data) {
+      for (const it of getOrderItems(o)) {
+        const key = it.productId != null && productMetaById.has(it.productId)
+          ? `id:${it.productId}`
+          : it.productId != null
+            ? `id:${it.productId}`
+            : `name:${it.name}`;
+        if (it.productId != null && productMetaById.has(it.productId)) continue;
+        if (!orphanByKey.has(key)) {
+          orphanByKey.set(key, { name: it.name, orderKey: 999_999_999 + orphanIdx++ });
+        }
+      }
+    }
+
+    // 排好順序的商品欄位（訂單裡出現過的）
+    type ColMeta = { key: string; name: string; orderKey: number; productId?: number };
+    const colKeyForItem = (it: { productId: number | null; name: string }) =>
+      it.productId != null && productMetaById.has(it.productId)
+        ? `id:${it.productId}`
+        : it.productId != null
+          ? `id:${it.productId}`
+          : `name:${it.name}`;
+
+    function buildColumnsForOrders(orders: Order[]): ColMeta[] {
+      const seen = new Set<string>();
+      for (const o of orders) for (const it of getOrderItems(o)) seen.add(colKeyForItem(it));
+      const cols: ColMeta[] = [];
+      for (const m of productOrder) {
+        const k = `id:${m.productId}`;
+        if (seen.has(k)) cols.push({ key: k, name: m.name, orderKey: m.orderKey, productId: m.productId });
+      }
+      // 孤兒（表單裡沒有的）排在最後
+      for (const [k, v] of orphanByKey.entries()) {
+        if (seen.has(k)) cols.push({ key: k, name: v.name, orderKey: v.orderKey });
+      }
+      return cols;
+    }
+
+    // 訂單在哪一個 sheet：郵寄訂單 / 面交-{pickup}
     const sheetForOrder = (o: Order) =>
       o.deliveryMethod === "shipping" ? "郵寄訂單" : `面交-${(o.address || "").trim() || "未指定"}`;
 
-    const orderRow = (o: Order): (string | number)[] => {
-      const items = getOrderItems(o);
-      const pickupPoint = o.deliveryMethod === "pickup" ? (o.address || "").trim() : "";
-      return [
-        o.displayNumber || o.id, o.customerName, o.phone, o.email, o.address,
-        o.deliveryMethod === "pickup" ? "面交" : "郵寄",
-        pickupPoint,
-        items.map((i) => `${i.name} ×${i.quantity} $${i.price}`).join("; "),
-        items.reduce((s, i) => s + i.quantity, 0),
-        o.notes, o.total,
-        formatDateTimeTW(o.createdAt),
+    // 把訂單轉成 pivot 列：每個商品一欄，內容為該訂購數量
+    function buildOrderRow(o: Order, cols: ColMeta[], includeMethod: boolean, includeAddress: boolean): (string | number)[] {
+      const qtyByCol: Record<string, number> = {};
+      for (const it of getOrderItems(o)) {
+        const k = colKeyForItem(it);
+        qtyByCol[k] = (qtyByCol[k] || 0) + it.quantity;
+      }
+      const totalQty = Object.values(qtyByCol).reduce((s, n) => s + n, 0);
+      const row: (string | number)[] = [
+        o.displayNumber || o.id,
+        o.customerName,
+        o.phone,
+        o.email,
       ];
-    };
+      if (includeMethod) row.push(o.deliveryMethod === "pickup" ? "面交" : "郵寄");
+      if (includeAddress) row.push(o.address);
+      for (const c of cols) row.push(qtyByCol[c.key] || "");
+      row.push(totalQty, o.total, o.notes);
+      return row;
+    }
 
-    const totalAmount = data.reduce((s, o) => s + o.total, 0);
-    const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
-    const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
+    function buildHeader(cols: ColMeta[], includeMethod: boolean, includeAddress: boolean): string[] {
+      const h: string[] = ["訂單編號", "姓名", "電話", "Email"];
+      if (includeMethod) h.push("取貨方式");
+      if (includeAddress) h.push("地址");
+      for (const c of cols) h.push(c.name);
+      h.push("總件數", "總金額", "備註");
+      return h;
+    }
 
-    // 各品項銷量：以 productId 為主彙總（避免「草莓果醬」「草莓果醬（限量）」等同商品分裂）
+    // ─── 各品項銷量（按表單順序）───
     type ItemAgg = { qty: number; revenue: number; nameCounts: Record<string, number> };
-    const aggregateItems = (orders: Order[]) => {
+    function buildItemStats(orders: Order[]) {
       const acc: Record<string, ItemAgg> = {};
       orders.forEach((o) => getOrderItems(o).forEach((i) => {
-        const key = i.productId != null ? `id:${i.productId}` : `name:${i.name}`;
+        const key = colKeyForItem(i);
         if (!acc[key]) acc[key] = { qty: 0, revenue: 0, nameCounts: {} };
         acc[key].qty += i.quantity;
         acc[key].revenue += i.price * i.quantity;
         acc[key].nameCounts[i.name] = (acc[key].nameCounts[i.name] || 0) + i.quantity;
       }));
-      return Object.entries(acc).map(([key, v]) => {
-        const displayName = Object.entries(v.nameCounts).sort((a, b) => {
-          if (b[1] !== a[1]) return b[1] - a[1];
-          return a[0].length - b[0].length;
-        })[0]?.[0] || key;
-        return { name: displayName, qty: v.qty, revenue: v.revenue };
-      }).sort((a, b) => b.qty - a.qty);
-    };
+      // 合併按表單順序排序
+      const result: { name: string; qty: number; revenue: number; orderKey: number }[] = [];
+      for (const m of productOrder) {
+        const k = `id:${m.productId}`;
+        if (acc[k]) {
+          result.push({ name: m.name, qty: acc[k].qty, revenue: acc[k].revenue, orderKey: m.orderKey });
+        }
+      }
+      // 加進孤兒
+      for (const [k, v] of orphanByKey.entries()) {
+        if (acc[k]) {
+          // 取出現次數最多的 name 當顯示名稱
+          const counts = acc[k].nameCounts;
+          const displayName = Object.entries(counts).sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            return a[0].length - b[0].length;
+          })[0]?.[0] || v.name;
+          result.push({ name: displayName, qty: acc[k].qty, revenue: acc[k].revenue, orderKey: v.orderKey });
+        }
+      }
+      return result.sort((a, b) => a.orderKey - b.orderKey);
+    }
 
-    const itemStats = aggregateItems(data);
+    const totalAmount = data.reduce((s, o) => s + o.total, 0);
+    const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
+    const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
 
     const wb = XLSX.utils.book_new();
 
-    // 工作表 1：訂單總覽
+    // ─── 工作表 1：訂單總覽（含 取貨方式 + 地址） ───
+    const overviewCols = buildColumnsForOrders(data);
     const overviewRows: (string | number)[][] = [
       ["═══ 統計摘要 ═══"],
       ["總訂單數", data.length],
       ["總金額", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
       [],
-      orderHeader,
-      ...data.map(orderRow),
+      buildHeader(overviewCols, true, true),
+      ...data.map((o) => buildOrderRow(o, overviewCols, true, true)),
     ];
     const overviewSheet = XLSX.utils.aoa_to_sheet(overviewRows);
     XLSX.utils.book_append_sheet(wb, overviewSheet, "訂單總覽");
 
-    // 工作表 2：各品項銷量（獨立列出，方便看數量和金額）
+    // ─── 工作表 2：各品項銷量（按表單商品順序） ───
+    const itemStats = buildItemStats(data);
     const itemSheetRows: (string | number)[][] = [
       ["品項名稱", "數量", "金額"],
       ...itemStats.map((s) => [s.name, s.qty, s.revenue]),
@@ -1596,7 +1700,7 @@ function OrderManager() {
     const itemSheet = XLSX.utils.aoa_to_sheet(itemSheetRows);
     XLSX.utils.book_append_sheet(wb, itemSheet, "各品項銷量");
 
-    // 工作表 3+：每個出貨選項一張獨立工作表（含該組的品項彙總 + 訂單明細）
+    // ─── 工作表 3+：每個出貨選項一張獨立工作表 ───
     const ordersByGroup = new Map<string, Order[]>();
     for (const o of data) {
       const key = sheetForOrder(o);
@@ -1610,24 +1714,27 @@ function OrderManager() {
     });
     for (const groupName of sortedGroups) {
       const groupOrders = ordersByGroup.get(groupName)!;
-      const groupItemStats = aggregateItems(groupOrders);
+      const groupCols = buildColumnsForOrders(groupOrders);
+      const groupItemStats = buildItemStats(groupOrders);
       const groupTotal = groupOrders.reduce((s, o) => s + o.total, 0);
+      const isShipping = groupName === "郵寄訂單";
+      // 郵寄：保留地址欄；面交：地址=取貨點(=sheet 名稱)，省略地址欄
+      const includeAddress = isShipping;
 
       const groupRows: (string | number)[][] = [
         [`═══ ${groupName} ═══`],
         ["訂單數", groupOrders.length],
         ["總金額", `NT$ ${groupTotal}`],
         [],
-        ["─── 品項彙總 ───"],
+        ["─── 品項彙總（按表單順序）───"],
         ["品項名稱", "數量"],
         ...groupItemStats.map((s) => [s.name, s.qty]),
         [],
-        ["─── 訂單明細 ───"],
-        orderHeader,
-        ...groupOrders.map(orderRow),
+        ["─── 訂單明細（每位客戶各品項數量）───"],
+        buildHeader(groupCols, false, includeAddress),
+        ...groupOrders.map((o) => buildOrderRow(o, groupCols, false, includeAddress)),
       ];
       const groupSheet = XLSX.utils.aoa_to_sheet(groupRows);
-      // sheet 名稱限制：31 字元，且不能含 :\/?*[]
       const safeName = groupName.replace(/[:\\/?*[\]]/g, "_").slice(0, 31);
       XLSX.utils.book_append_sheet(wb, groupSheet, safeName);
     }
