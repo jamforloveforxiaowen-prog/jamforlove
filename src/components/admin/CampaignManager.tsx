@@ -914,16 +914,18 @@ export default function CampaignManager() {
             {editingId && (
               <>
                 <div className="w-px h-7 bg-linen-dark/40 mx-1" />
-                {editingStatus === "active" && (
-                  <button
-                    type="button"
-                    onClick={pausePublish}
-                    disabled={submitting || publishing}
-                    className="px-4 py-2 rounded-md text-sm font-bold bg-honey/15 text-espresso ring-1 ring-honey/40 hover:bg-honey/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {publishing ? "處理中..." : "⏸ 暫停表單發佈"}
-                  </button>
-                )}
+                <span className="text-xs text-espresso-light/50">
+                  {editingStatus === "active" ? "目前狀態：發佈中" : editingStatus === "closed" ? "目前狀態：已結束" : "目前狀態：未發佈"}
+                </span>
+                <button
+                  type="button"
+                  onClick={pausePublish}
+                  disabled={submitting || publishing || editingStatus !== "active"}
+                  className="px-4 py-2 rounded-md text-sm font-bold bg-honey/15 text-espresso ring-1 ring-honey/40 hover:bg-honey/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={editingStatus === "active" ? "從網站撤下此表單" : "目前未發佈，無需暫停"}
+                >
+                  {publishing ? "處理中..." : "⏸ 暫停表單發佈"}
+                </button>
                 <button
                   type="button"
                   onClick={publishDraft}
@@ -945,9 +947,7 @@ export default function CampaignManager() {
                     ? "發佈中..."
                     : editingStatus === "active" && !hasDraft
                       ? "已發佈"
-                      : hasDraft
-                        ? "🚀 發佈"
-                        : "🚀 發佈"}
+                      : "🚀 發佈"}
                 </button>
                 {hasDraft && (
                   <button type="button" onClick={discardDraft} disabled={submitting || publishing} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/80 hover:text-rose hover:ring-rose transition-all">
