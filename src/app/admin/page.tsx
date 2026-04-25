@@ -1614,10 +1614,11 @@ function OrderManager() {
         const k = colKeyForItem(it);
         qtyByCol[k] = (qtyByCol[k] || 0) + it.quantity;
       }
-      const totalQty = Object.values(qtyByCol).reduce((s, n) => s + n, 0);
       const subtotal = getOrderItems(o).reduce((s, i) => s + i.price * i.quantity, 0);
       const supporter = o.isSupporter && o.supportType ? o.supportType : "";
       const singleQty = buildSingleItemQty(o);
+      // 總件數依照拆解後的單品加總（組合會展開計算）
+      const totalQty = Object.values(singleQty).reduce((s, n) => s + n, 0);
       const row: (string | number)[] = [
         o.displayNumber || o.id,
         o.customerName,
