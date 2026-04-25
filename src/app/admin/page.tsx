@@ -1670,6 +1670,9 @@ function OrderManager() {
     }
 
     const totalAmount = data.reduce((s, o) => s + o.total, 0);
+    const totalDiscount = data.reduce((s, o) => s + (o.discountAmount ?? 0), 0);
+    const totalShipping = data.reduce((s, o) => s + (o.shippingFee ?? 0), 0);
+    const totalSubtotal = totalAmount + totalDiscount - totalShipping;
     const shippingCount = data.filter((o) => o.deliveryMethod === "shipping").length;
     const pickupCount = data.filter((o) => o.deliveryMethod === "pickup").length;
 
@@ -1680,7 +1683,10 @@ function OrderManager() {
     const overviewRows: (string | number)[][] = [
       ["═══ 統計摘要 ═══"],
       ["總訂單數", data.length],
-      ["總金額", `NT$ ${totalAmount}`],
+      ["品項小計（未扣折扣、未加運費）", `NT$ ${totalSubtotal}`],
+      ["折扣合計", `- NT$ ${totalDiscount}`],
+      ["運費合計", `+ NT$ ${totalShipping}`],
+      ["實收金額（=後台總金額）", `NT$ ${totalAmount}`],
       ["郵寄", shippingCount, "面交", pickupCount],
       [],
       buildHeader(overviewCols, true, true),
@@ -1690,12 +1696,16 @@ function OrderManager() {
     XLSX.utils.book_append_sheet(wb, overviewSheet, "訂單總覽");
 
     // ─── 工作表 2：各品項銷量（按表單商品順序） ───
+    // 「金額」欄位 = 該品項 price × 數量（品項小計，不含折扣/運費）
     const itemStats = buildItemStats(data);
     const itemSheetRows: (string | number)[][] = [
-      ["品項名稱", "數量", "金額"],
+      ["品項名稱", "數量", "品項小計"],
       ...itemStats.map((s) => [s.name, s.qty, s.revenue]),
       [],
-      ["合計", itemStats.reduce((sum, s) => sum + s.qty, 0), itemStats.reduce((sum, s) => sum + s.revenue, 0)],
+      ["品項小計合計", itemStats.reduce((sum, s) => sum + s.qty, 0), itemStats.reduce((sum, s) => sum + s.revenue, 0)],
+      ["折扣合計", "", -totalDiscount],
+      ["運費合計", "", totalShipping],
+      ["實收金額（=後台總金額）", "", totalAmount],
     ];
     const itemSheet = XLSX.utils.aoa_to_sheet(itemSheetRows);
     XLSX.utils.book_append_sheet(wb, itemSheet, "各品項銷量");
@@ -1717,6 +1727,9 @@ function OrderManager() {
       const groupCols = buildColumnsForOrders(groupOrders);
       const groupItemStats = buildItemStats(groupOrders);
       const groupTotal = groupOrders.reduce((s, o) => s + o.total, 0);
+      const groupDiscount = groupOrders.reduce((s, o) => s + (o.discountAmount ?? 0), 0);
+      const groupShipping = groupOrders.reduce((s, o) => s + (o.shippingFee ?? 0), 0);
+      const groupSubtotal = groupTotal + groupDiscount - groupShipping;
       const isShipping = groupName === "郵寄訂單";
       // 郵寄：保留地址欄；面交：地址=取貨點(=sheet 名稱)，省略地址欄
       const includeAddress = isShipping;
@@ -1724,7 +1737,10 @@ function OrderManager() {
       const groupRows: (string | number)[][] = [
         [`═══ ${groupName} ═══`],
         ["訂單數", groupOrders.length],
-        ["總金額", `NT$ ${groupTotal}`],
+        ["品項小計（未扣折扣、未加運費）", `NT$ ${groupSubtotal}`],
+        ["折扣合計", `- NT$ ${groupDiscount}`],
+        ["運費合計", `+ NT$ ${groupShipping}`],
+        ["實收金額", `NT$ ${groupTotal}`],
         [],
         ["─── 品項彙總（按表單順序）───"],
         ["品項名稱", "數量"],
