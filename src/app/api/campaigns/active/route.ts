@@ -14,6 +14,28 @@ export async function GET() {
     .orderBy(desc(campaigns.startDate))
     .get();
 
+  // 沒有 active 活動時，看看是否有「日期範圍內但被暫停（draft/closed）」的活動
+  // 有的話回傳 paused 狀態，避免前端 fallback 到 legacy 寫死商品
+  if (!campaign) {
+    const pausedCampaign = await db
+      .select()
+      .from(campaigns)
+      .where(and(lte(campaigns.startDate, now), gte(campaigns.endDate, now)))
+      .orderBy(desc(campaigns.startDate))
+      .get();
+    if (pausedCampaign) {
+      return NextResponse.json({
+        campaign: {
+          id: pausedCampaign.id,
+          name: pausedCampaign.name,
+          startDate: pausedCampaign.startDate,
+          endDate: pausedCampaign.endDate,
+          status: "paused",
+        },
+      });
+    }
+  }
+
   // 如果沒有在範圍內的，找任何 active 活動（顯示 out_of_range）
   if (!campaign) {
     campaign = await db

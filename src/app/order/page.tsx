@@ -477,7 +477,7 @@ export default function OrderPage() {
 
   // 活動資料
   const [campaign, setCampaign] = useState<ActiveCampaign | null>(null);
-  const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "active">("loading");
+  const [campaignStatus, setCampaignStatus] = useState<"loading" | "none" | "out_of_range" | "paused" | "active">("loading");
   const [outOfRangeInfo, setOutOfRangeInfo] = useState<{ startDate: string; endDate: string; name: string } | null>(null);
   const [zoomImage, setZoomImage] = useState<{ src: string; alt: string } | null>(null);
 
@@ -604,7 +604,10 @@ export default function OrderPage() {
           setCampaignStatus("active");
         })
       : fetch(campaignUrl).then((r) => r.json()).then(async (data) => {
-      if (data.campaign && data.campaign.status !== "out_of_range") {
+      if (data.campaign && data.campaign.status === "paused") {
+        // 後台暫停發佈 → 不顯示表單，也不 fallback 到 legacy
+        setCampaignStatus("paused");
+      } else if (data.campaign && data.campaign.status !== "out_of_range") {
         setCampaign(data.campaign);
         setCampaignStatus("active");
       } else if (data.campaign?.status === "out_of_range") {
@@ -857,6 +860,26 @@ export default function OrderPage() {
         <div className="text-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
           <div className="w-8 h-8 border-2 border-rose/30 border-t-rose rounded-full animate-spin mx-auto mb-3" />
           <p className="text-espresso-light/40 text-sm">載入中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── 表單暫停發佈 ─── */
+  if (campaignStatus === "paused") {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-6 animate-[bakeBounce_0.6s_cubic-bezier(0.34,1.56,0.64,1)_both]">⏸</div>
+          <h1 className="font-serif text-2xl md:text-3xl font-bold text-espresso mb-4 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.15s_both]">
+            預購表單暫停中
+          </h1>
+          <p className="text-espresso-light/60 text-base leading-relaxed mb-8 animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.25s_both]">
+            目前正在調整內容，稍後再試！
+          </p>
+          <div className="animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_0.4s_both]">
+            <button onClick={() => router.push("/")} className="btn-primary">回到首頁</button>
+          </div>
         </div>
       </div>
     );
