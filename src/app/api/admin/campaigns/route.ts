@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { campaigns, campaignGroups, campaignProducts, fundraiseOrders } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
 import { desc, eq, sql } from "drizzle-orm";
+import { generatePreviewToken } from "@/lib/campaign-publish";
 
 export async function GET() {
   const session = await getSession();
@@ -51,6 +52,8 @@ export async function POST(req: NextRequest) {
       supporterDiscount: supporterDiscount ?? 0,
       supportOptions: typeof supportOptions === "string" ? supportOptions : JSON.stringify(supportOptions || []),
       pickupOptions: typeof pickupOptions === "string" ? pickupOptions : JSON.stringify(pickupOptions || []),
+      previewToken: generatePreviewToken(),
+      publishedAt: sql`(datetime('now'))`,
     })
     .returning()
     .get();

@@ -136,6 +136,13 @@ export const campaigns = sqliteTable("campaigns", {
   supportOptions: text("support_options").notNull().default("[]"),
   // JSON 陣列：取貨選項，例 ["小川阿姨","台大面交","宜蘭面交"]
   pickupOptions: text("pickup_options").notNull().default("[]"),
+  // 草稿商品結構（編輯中尚未發佈），結構為 [{ name, isRequired, products: [...] }]
+  // null 表示沒有未發佈變更
+  draftPayload: text("draft_payload"),
+  // 預覽連結用的 token（隨機字串）
+  previewToken: text("preview_token"),
+  // 上次發佈商品結構的時間
+  publishedAt: text("published_at"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

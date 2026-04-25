@@ -564,17 +564,27 @@ export default function OrderPage() {
     }).catch(() => setIsLoggedIn(false));
   }
 
-  // 預覽模式
+  // 預覽模式：?preview={id}（admin 用，讀 admin endpoint）或 ?previewToken=xxx（公開分享連結）
   const [searchParams] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams());
   const previewCampaignId = searchParams.get("preview");
+  const previewToken = searchParams.get("previewToken");
+  const isPreviewMode = !!(previewCampaignId || previewToken);
 
   // 載入活動與既有訂單
   useEffect(() => {
-    const campaignUrl = previewCampaignId
+    const campaignUrl = previewToken
+      ? `/api/campaigns/preview/${encodeURIComponent(previewToken)}`
+      : previewCampaignId
       ? `/api/admin/campaigns/${previewCampaignId}`
       : "/api/campaigns/active";
 
-    const loadCampaign = previewCampaignId
+    const loadCampaign = previewToken
+      ? fetch(campaignUrl).then((r) => r.json()).then((data) => {
+          if (!data?.campaign) { setCampaignStatus("none"); return; }
+          setCampaign(data.campaign);
+          setCampaignStatus("active");
+        })
+      : previewCampaignId
       ? fetch(campaignUrl).then((r) => r.json()).then((detail) => {
           if (!detail || detail.error) { setCampaignStatus("none"); return; }
           const pickupOpts = typeof detail.pickupOptions === "string" ? JSON.parse(detail.pickupOptions) : detail.pickupOptions || [];
@@ -623,7 +633,7 @@ export default function OrderPage() {
 
     loadCampaign.catch(() => setCampaignStatus("none"));
 
-    if (!previewCampaignId) loadProfile();
+    if (!isPreviewMode) loadProfile();
   }, []);
 
   // 從 sessionStorage 恢復
@@ -754,6 +764,10 @@ export default function OrderPage() {
   // 送出訂單
   async function handleSubmitOrder() {
     if (!campaign) return;
+    if (isPreviewMode) {
+      window.alert("預覽模式無法送出訂單");
+      return;
+    }
     setError("");
     setLoading(true);
 
@@ -1011,7 +1025,7 @@ export default function OrderPage() {
   );
 
   /* ─── 登入狀態尚未確認：先顯示載入，避免訪客閃見 wizard ─── */
-  if (isLoggedIn === null && !previewCampaignId) {
+  if (isLoggedIn === null && !isPreviewMode) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center animate-[bakeSwing_0.7s_cubic-bezier(0.34,1.56,0.64,1)_both]">
@@ -1023,7 +1037,7 @@ export default function OrderPage() {
   }
 
   /* ─── 未註冊/未登入：擋下訂單流程，引導先註冊 ─── */
-  if (isLoggedIn === false && !previewCampaignId) {
+  if (isLoggedIn === false && !isPreviewMode) {
     return (
       <div
         className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative"
@@ -1087,6 +1101,11 @@ export default function OrderPage() {
       className="max-w-2xl mx-auto px-5 py-10 md:py-16 relative"
       style={{ background: theme.bg, backgroundImage: theme.bgPattern }}
     >
+      {isPreviewMode && (
+        <div className="sticky top-0 z-50 -mx-5 mb-4 px-5 py-2.5 bg-honey/95 text-espresso text-center text-sm font-bold backdrop-blur shadow-md">
+          ⚠️ 預覽模式 · 此頁僅供確認版面，無法送出訂單
+        </div>
+      )}
       {pageHeader}
 
       {/* 步驟指示器 */}

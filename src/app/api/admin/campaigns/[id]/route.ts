@@ -5,12 +5,17 @@ import {
   campaignGroups,
   campaignProducts,
   campaignProductLimitLogs,
-  fundraiseOrders,
 } from "@/lib/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, asc, desc, sql, and, inArray } from "drizzle-orm";
+import { eq, asc, desc, sql, and } from "drizzle-orm";
+import {
+  computeDiff,
+  generatePreviewToken,
+  loadSoldByProductId,
+  type DraftPayload,
+} from "@/lib/campaign-publish";
 
-// 取得單一活動完整資料（含分組和品項）
+// 取得單一活動完整資料（含分組和品項；有草稿時回傳草稿合併後的結構）
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,7 +26,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const campaign = await db
+  let campaign = await db
     .select()
     .from(campaigns)
     .where(eq(campaigns.id, Number(id)))
@@ -31,14 +36,23 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const groups = await db
+  // 舊活動沒有 previewToken，補上一個讓預覽連結可用
+  if (!campaign.previewToken) {
+    const newToken = generatePreviewToken();
+    await db
+      .update(campaigns)
+      .set({ previewToken: newToken })
+      .where(eq(campaigns.id, campaign.id));
+    campaign = { ...campaign, previewToken: newToken };
+  }
+
+  const liveGroups = await db
     .select()
     .from(campaignGroups)
     .where(eq(campaignGroups.campaignId, campaign.id))
     .orderBy(asc(campaignGroups.sortOrder));
 
-  // 僅回傳啟用中的商品（被移除的商品標為 isActive=false，只保留歷史訂單引用）
-  const products = await db
+  const liveProducts = await db
     .select()
     .from(campaignProducts)
     .where(
@@ -49,45 +63,8 @@ export async function GET(
     )
     .orderBy(asc(campaignProducts.sortOrder));
 
-  // 計算每個商品的售出數量（以 productId 為主，name fallback 救歷史孤兒）
-  const allCampaignProducts = await db
-    .select()
-    .from(campaignProducts)
-    .where(eq(campaignProducts.campaignId, campaign.id));
-  const validProductIds = new Set(allCampaignProducts.map((p) => p.id));
-  const activeNameToId = new Map<string, number>();
-  for (const p of products) {
-    activeNameToId.set(p.name.trim(), p.id);
-  }
+  const soldById = await loadSoldByProductId(campaign.id);
 
-  const allOrders = await db
-    .select({ items: fundraiseOrders.items })
-    .from(fundraiseOrders)
-    .where(eq(fundraiseOrders.campaignId, campaign.id));
-
-  const soldById: Record<number, number> = {};
-  for (const order of allOrders) {
-    const items = JSON.parse(order.items || "[]") as {
-      productId: number;
-      name?: string;
-      quantity: number;
-    }[];
-    for (const item of items) {
-      let pid: number | undefined;
-      if (item.productId && validProductIds.has(item.productId)) {
-        pid = item.productId;
-      } else {
-        const trimmed = (item.name || "").trim();
-        const fallback = trimmed ? activeNameToId.get(trimmed) : undefined;
-        if (fallback) pid = fallback;
-      }
-      if (pid != null) {
-        soldById[pid] = (soldById[pid] || 0) + item.quantity;
-      }
-    }
-  }
-
-  // 載入 limit 變動歷史（按時間倒序）
   const allLogs = await db
     .select()
     .from(campaignProductLimitLogs)
@@ -99,21 +76,70 @@ export async function GET(
     logsByProduct[log.productId].push(log);
   }
 
-  const groupsWithProducts = groups.map((g) => ({
-    ...g,
-    products: products
-      .filter((p) => p.groupId === g.id)
-      .map((p) => ({
-        ...p,
-        sold: soldById[p.id] || 0,
-        limitHistory: logsByProduct[p.id] || [],
-      })),
-  }));
+  const draft: DraftPayload | null = campaign.draftPayload
+    ? JSON.parse(campaign.draftPayload)
+    : null;
 
-  return NextResponse.json({ ...campaign, groups: groupsWithProducts });
+  // 編輯表單預設顯示草稿（若有），讓 admin 編輯尚未發佈的內容
+  // 用 draft 的 product.id 對應到 live product，沿用 sold/limitHistory
+  let groupsForUI: Array<{
+    id?: number;
+    name: string;
+    description: string;
+    sortOrder: number;
+    isRequired: boolean;
+    products: Array<Record<string, unknown>>;
+  }>;
+
+  if (draft) {
+    const liveById = new Map(liveProducts.map((p) => [p.id, p]));
+    groupsForUI = (draft.groups || []).map((g, gi) => ({
+      name: g.name,
+      description: g.description || "",
+      sortOrder: g.sortOrder ?? gi,
+      isRequired: g.isRequired ?? false,
+      products: (g.products || []).map((p, pi) => {
+        const live = typeof p.id === "number" ? liveById.get(p.id) : undefined;
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description || "",
+          imageUrl: p.imageUrl || "",
+          price: p.price,
+          limit: p.limit ?? null,
+          unit: p.unit || "份",
+          sortOrder: p.sortOrder ?? pi,
+          note: p.note || "",
+          isActive: true,
+          sold: live ? soldById[live.id] || 0 : 0,
+          limitHistory: live ? logsByProduct[live.id] || [] : [],
+        };
+      }),
+    }));
+  } else {
+    groupsForUI = liveGroups.map((g) => ({
+      ...g,
+      products: liveProducts
+        .filter((p) => p.groupId === g.id)
+        .map((p) => ({
+          ...p,
+          sold: soldById[p.id] || 0,
+          limitHistory: logsByProduct[p.id] || [],
+        })),
+    }));
+  }
+
+  const diff = await computeDiff(campaign.id, draft);
+
+  return NextResponse.json({
+    ...campaign,
+    groups: groupsForUI,
+    hasDraft: draft != null,
+    diff,
+  });
 }
 
-// 更新活動
+// 更新活動（基本欄位直接套用；商品結構（groups）寫入 draftPayload，等發佈才生效）
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -136,152 +162,59 @@ export async function PUT(
     return NextResponse.json({ success: true });
   }
 
-  const { name, startDate, endDate, bannerUrl, description, formStyle, pickupOptions, supporterDiscount, supportOptions, groups } = body;
+  const {
+    name,
+    startDate,
+    endDate,
+    bannerUrl,
+    description,
+    formStyle,
+    pickupOptions,
+    supporterDiscount,
+    supportOptions,
+    groups,
+  } = body;
+
+  // 基本欄位直接套用（per requirement: 只有商品結構走草稿流程）
+  const baseUpdate: Record<string, unknown> = {
+    updatedAt: sql`(datetime('now'))`,
+  };
+  if (name !== undefined) baseUpdate.name = name;
+  if (startDate !== undefined) baseUpdate.startDate = startDate;
+  if (endDate !== undefined) baseUpdate.endDate = endDate;
+  if (bannerUrl !== undefined) baseUpdate.bannerUrl = bannerUrl || "";
+  if (description !== undefined) baseUpdate.description = description || "";
+  if (formStyle !== undefined) baseUpdate.formStyle = formStyle || "classic";
+  if (supporterDiscount !== undefined)
+    baseUpdate.supporterDiscount = supporterDiscount ?? 0;
+  if (supportOptions !== undefined)
+    baseUpdate.supportOptions =
+      typeof supportOptions === "string"
+        ? supportOptions
+        : JSON.stringify(supportOptions || []);
+  if (pickupOptions !== undefined)
+    baseUpdate.pickupOptions =
+      typeof pickupOptions === "string"
+        ? pickupOptions
+        : JSON.stringify(pickupOptions || []);
+
+  // 商品結構：存到 draftPayload，並確保 previewToken 存在
+  if (Array.isArray(groups)) {
+    baseUpdate.draftPayload = JSON.stringify({ groups });
+    const current = await db
+      .select({ previewToken: campaigns.previewToken })
+      .from(campaigns)
+      .where(eq(campaigns.id, campaignId))
+      .get();
+    if (!current?.previewToken) {
+      baseUpdate.previewToken = generatePreviewToken();
+    }
+  }
 
   await db
     .update(campaigns)
-    .set({
-      name,
-      startDate,
-      endDate,
-      bannerUrl: bannerUrl || "",
-      description: description || "",
-      formStyle: formStyle || "classic",
-      supporterDiscount: supporterDiscount ?? 0,
-      supportOptions: typeof supportOptions === "string" ? supportOptions : JSON.stringify(supportOptions || []),
-      pickupOptions: typeof pickupOptions === "string" ? pickupOptions : JSON.stringify(pickupOptions || []),
-      updatedAt: sql`(datetime('now'))`,
-    })
+    .set(baseUpdate)
     .where(eq(campaigns.id, campaignId));
-
-  // Upsert 分組和商品：
-  // - 商品依 id 保留 → 舊訂單的 productId 永遠指向正確的商品
-  // - 被使用者移除的商品標記為 isActive=false（軟刪除，保留歷史）
-  // - 群組依 isRequired 標誌配對（每個活動最多一個「商品」群組 + 一個「加購商品」群組）
-  if (Array.isArray(groups)) {
-    const existingGroups = await db
-      .select()
-      .from(campaignGroups)
-      .where(eq(campaignGroups.campaignId, campaignId));
-    const existingProducts = await db
-      .select()
-      .from(campaignProducts)
-      .where(eq(campaignProducts.campaignId, campaignId));
-    const existingProductMap = new Map(existingProducts.map((p) => [p.id, p]));
-
-    const keptProductIds = new Set<number>();
-
-    for (const group of groups) {
-      const isRequired = group.isRequired ?? false;
-      // 依 isRequired 找已存在的群組
-      const existingGroup = existingGroups.find((g) => g.isRequired === isRequired);
-
-      let groupId: number;
-      if (existingGroup) {
-        await db
-          .update(campaignGroups)
-          .set({
-            name: group.name,
-            description: group.description || "",
-            sortOrder: group.sortOrder ?? 0,
-            isRequired,
-          })
-          .where(eq(campaignGroups.id, existingGroup.id));
-        groupId = existingGroup.id;
-      } else {
-        const g = await db
-          .insert(campaignGroups)
-          .values({
-            campaignId,
-            name: group.name,
-            description: group.description || "",
-            sortOrder: group.sortOrder ?? 0,
-            isRequired,
-          })
-          .returning()
-          .get();
-        groupId = g.id;
-      }
-
-      if (!Array.isArray(group.products)) continue;
-
-      for (const product of group.products) {
-        const productPayload = {
-          campaignId,
-          groupId,
-          name: product.name,
-          description: product.description || "",
-          imageUrl: product.imageUrl || "",
-          price: product.price,
-          limit: product.limit || null,
-          unit: product.unit || "份",
-          sortOrder: product.sortOrder ?? 0,
-          note: product.note || "",
-          isActive: product.isActive ?? true,
-        };
-
-        const existingProduct =
-          typeof product.id === "number" ? existingProductMap.get(product.id) : undefined;
-
-        if (existingProduct) {
-          await db
-            .update(campaignProducts)
-            .set(productPayload)
-            .where(eq(campaignProducts.id, existingProduct.id));
-          keptProductIds.add(existingProduct.id);
-
-          // 記錄 limit 變動
-          const oldLimit = existingProduct.limit;
-          const newLimit = productPayload.limit;
-          if (oldLimit !== newLimit) {
-            const oldVal = oldLimit ?? 0;
-            const newVal = newLimit ?? 0;
-            await db.insert(campaignProductLimitLogs).values({
-              campaignId,
-              productId: existingProduct.id,
-              delta: newVal - oldVal,
-              prevLimit: oldLimit,
-              newLimit: newLimit,
-              note: "",
-            });
-          }
-        } else {
-          const inserted = await db
-            .insert(campaignProducts)
-            .values(productPayload)
-            .returning()
-            .get();
-          // 新建商品也記一筆（從 0 → limit）
-          if (inserted.limit != null) {
-            await db.insert(campaignProductLimitLogs).values({
-              campaignId,
-              productId: inserted.id,
-              delta: inserted.limit,
-              prevLimit: null,
-              newLimit: inserted.limit,
-              note: "新增商品",
-            });
-          }
-        }
-      }
-    }
-
-    // 沒出現在 payload 裡的舊商品 → 軟刪除（歷史訂單還需要它的 id 和 price）
-    const orphanIds = existingProducts
-      .map((p) => p.id)
-      .filter((id) => !keptProductIds.has(id));
-    if (orphanIds.length > 0) {
-      await db
-        .update(campaignProducts)
-        .set({ isActive: false })
-        .where(
-          and(
-            eq(campaignProducts.campaignId, campaignId),
-            inArray(campaignProducts.id, orphanIds)
-          )
-        );
-    }
-  }
 
   return NextResponse.json({ success: true });
 }
@@ -299,8 +232,15 @@ export async function DELETE(
   const { id } = await params;
   const campaignId = Number(id);
 
-  await db.delete(campaignProducts).where(eq(campaignProducts.campaignId, campaignId));
-  await db.delete(campaignGroups).where(eq(campaignGroups.campaignId, campaignId));
+  await db
+    .delete(campaignProductLimitLogs)
+    .where(eq(campaignProductLimitLogs.campaignId, campaignId));
+  await db
+    .delete(campaignProducts)
+    .where(eq(campaignProducts.campaignId, campaignId));
+  await db
+    .delete(campaignGroups)
+    .where(eq(campaignGroups.campaignId, campaignId));
   await db.delete(campaigns).where(eq(campaigns.id, campaignId));
 
   return NextResponse.json({ success: true });

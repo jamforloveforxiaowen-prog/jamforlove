@@ -49,7 +49,23 @@ interface CampaignDetail extends Omit<Campaign, "orderCount" | "pickupOptions" |
   pickupOptions: string;
   supporterDiscount: number;
   supportOptions: string;
-  groups: { id: number; name: string; description?: string; isRequired: boolean; products: { id: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null; sold?: number; limitHistory?: LimitLog[] }[] }[];
+  groups: { id?: number; name: string; description?: string; isRequired: boolean; products: { id?: number; name: string; description?: string; imageUrl?: string; price: number; limit: number | null; sold?: number; limitHistory?: LimitLog[] }[] }[];
+  hasDraft?: boolean;
+  diff?: DiffEntry[];
+  previewToken?: string | null;
+  publishedAt?: string | null;
+}
+
+interface DiffEntry {
+  type: "rename" | "remove" | "add" | "price" | "limit" | "unchanged";
+  productId?: number;
+  beforeName?: string;
+  afterName?: string;
+  beforePrice?: number;
+  afterPrice?: number;
+  beforeLimit?: number | null;
+  afterLimit?: number | null;
+  sold?: number;
 }
 
 const STATUS_LABELS: Record<string, string> = { draft: "草稿", active: "進行中", closed: "已結束" };
@@ -326,6 +342,14 @@ export default function CampaignManager() {
   const [products, setProducts] = useState<ProductEntry[]>([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
   const [addons, setAddons] = useState<ProductEntry[]>([]);
 
+  // 草稿狀態（編輯中活動的）
+  const [hasDraft, setHasDraft] = useState(false);
+  const [diff, setDiff] = useState<DiffEntry[]>([]);
+  const [previewToken, setPreviewToken] = useState<string | null>(null);
+  const [publishedAt, setPublishedAt] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [copyHint, setCopyHint] = useState(false);
+
   async function loadCampaigns() {
     try {
       const res = await fetch("/api/admin/campaigns");
@@ -347,6 +371,53 @@ export default function CampaignManager() {
     setProducts([{ name: "", description: "", imageUrl: "", price: 0, limit: null }]);
     setAddons([]);
     setEditingId(null); setShowForm(false); setError(""); setFocusedProduct(null); setFocusedAddon(null);
+    setHasDraft(false); setDiff([]); setPreviewToken(null); setPublishedAt(null);
+  }
+
+  async function refreshEditDetail(id: number) {
+    const res = await fetch(`/api/admin/campaigns/${id}`);
+    const data: CampaignDetail = await res.json();
+    setHasDraft(!!data.hasDraft);
+    setDiff(data.diff || []);
+    setPreviewToken(data.previewToken || null);
+    setPublishedAt(data.publishedAt || null);
+    return data;
+  }
+
+  async function publishDraft() {
+    if (!editingId) return;
+    if (!window.confirm("確定要發佈嗎？發佈後消費者看到的就是現在的草稿內容，且無法回復。")) return;
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/admin/campaigns/${editingId}/publish`, { method: "POST" });
+      const result = await res.json();
+      if (!res.ok) { setError(result.error || "發佈失敗"); return; }
+      await refreshEditDetail(editingId);
+      loadCampaigns();
+    } catch { setError("網路連線失敗"); }
+    finally { setPublishing(false); }
+  }
+
+  async function discardDraft() {
+    if (!editingId) return;
+    if (!window.confirm("捨棄目前的草稿變更，回到上次發佈的版本？")) return;
+    try {
+      await fetch(`/api/admin/campaigns/${editingId}/publish`, { method: "DELETE" });
+      const data = await refreshEditDetail(editingId);
+      loadGroupsFromDetail(data);
+    } catch { setError("網路連線失敗"); }
+  }
+
+  async function copyPreviewLink() {
+    if (!previewToken) return;
+    const url = `${window.location.origin}/order?previewToken=${encodeURIComponent(previewToken)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyHint(true);
+      setTimeout(() => setCopyHint(false), 1500);
+    } catch {
+      window.prompt("複製此預覽連結：", url);
+    }
   }
 
   function loadGroupsFromDetail(data: CampaignDetail) {
@@ -376,6 +447,10 @@ export default function CampaignManager() {
     const opts = typeof data.pickupOptions === "string" ? JSON.parse(data.pickupOptions) : data.pickupOptions;
     setPickupOptions(Array.isArray(opts) && opts.length > 0 ? opts : [...DEFAULT_PICKUP]);
     loadGroupsFromDetail(data);
+    setHasDraft(!!data.hasDraft);
+    setDiff(data.diff || []);
+    setPreviewToken(data.previewToken || null);
+    setPublishedAt(data.publishedAt || null);
     setEditingId(id); setShowForm(true);
   }
 
@@ -438,8 +513,17 @@ export default function CampaignManager() {
 
       setSubmitting(false);
       const savedId = editingId || result.id;
-      resetForm(); loadCampaigns();
-      if (openPreview && savedId) setPreviewId(savedId);
+      // 編輯既有活動：保留表單開啟，更新草稿狀態（顯示變更摘要）
+      // 新建活動：關閉表單回列表
+      if (editingId) {
+        await refreshEditDetail(editingId);
+        loadCampaigns();
+        if (openPreview) setPreviewId(editingId);
+      } else {
+        resetForm();
+        loadCampaigns();
+        if (openPreview && savedId) setPreviewId(savedId);
+      }
     } catch { setError("網路連線失敗"); setSubmitting(false); }
   }
 
@@ -515,18 +599,8 @@ export default function CampaignManager() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center pt-8 px-4 overflow-y-auto" onClick={() => setPreviewId(null)}>
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-linen-dark/30 px-6 py-3 flex items-center justify-between z-10">
-              <span className="font-serif font-bold text-espresso">預覽表單</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={async () => {
-                    if (!window.confirm("確定要發佈嗎？發佈後消費者即可看到。")) return;
-                    await fetch(`/api/admin/campaigns/${previewId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "active" }) });
-                    setPreviewId(null); loadCampaigns();
-                  }}
-                  className="px-4 py-1.5 rounded-md text-sm font-medium bg-sage text-white hover:bg-sage/80 transition-colors"
-                >確認發佈</button>
-                <button onClick={() => setPreviewId(null)} className="px-4 py-1.5 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all">關閉</button>
-              </div>
+              <span className="font-serif font-bold text-espresso">預覽表單{hasDraft ? "（含未發佈草稿）" : ""}</span>
+              <button onClick={() => setPreviewId(null)} className="px-4 py-1.5 rounded-md text-sm font-medium ring-1 ring-linen-dark text-espresso-light hover:text-espresso transition-all">關閉</button>
             </div>
             <iframe src={`/order?preview=${previewId}`} className="w-full border-0" style={{ height: "80vh" }} />
           </div>
@@ -732,14 +806,91 @@ export default function CampaignManager() {
             </div>
           </div>
 
+          {/* 變更摘要（編輯既有活動，且有未發佈草稿時顯示）*/}
+          {editingId && hasDraft && diff.length > 0 && (
+            <div className="bg-honey/5 ring-1 ring-honey/30 rounded-lg p-5 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h4 className="font-serif font-bold text-espresso text-base flex items-center gap-2">
+                  ⚠️ 待發佈變更摘要 <span className="text-xs font-normal text-espresso-light/60">(共 {diff.length} 項)</span>
+                </h4>
+                <span className="text-xs text-espresso-light/50">
+                  {publishedAt ? `上次發佈：${publishedAt}` : "尚未發佈過"}
+                </span>
+              </div>
+              <ul className="space-y-1.5 text-sm">
+                {diff.map((d, i) => {
+                  const dot =
+                    d.type === "add" ? "🟢" :
+                    d.type === "remove" ? "🔴" :
+                    d.type === "rename" ? "🟡" :
+                    d.type === "price" ? "💰" :
+                    d.type === "limit" ? "📦" : "・";
+                  let text = "";
+                  if (d.type === "add") text = `新增商品「${d.afterName}」（NT$${d.afterPrice}，無歷史銷售）`;
+                  else if (d.type === "remove") text = `下架商品「${d.beforeName}」（保留 ${d.sold ?? 0} 筆歷史銷售，後台排行榜會消失）`;
+                  else if (d.type === "rename") text = `改名：「${d.beforeName}」→「${d.afterName}」（保留 ${d.sold ?? 0} 筆歷史銷售）`;
+                  else if (d.type === "price") text = `「${d.afterName}」金額：NT$${d.beforePrice} → NT$${d.afterPrice}`;
+                  else if (d.type === "limit") text = `「${d.afterName}」總數：${d.beforeLimit ?? "不限"} → ${d.afterLimit ?? "不限"}`;
+                  return <li key={i} className="text-espresso-light"><span className="mr-1.5">{dot}</span>{text}</li>;
+                })}
+              </ul>
+              <div className="text-xs text-espresso-light/50 leading-relaxed pt-2 border-t border-honey/20">
+                💡 <strong>下架</strong>會讓商品在訂單頁消失，但歷史銷售數仍記在原 ID 上、後台排行榜不再顯示。<strong>改名</strong>則保留同一個商品，銷售統計延續。
+              </div>
+            </div>
+          )}
+
+          {/* 預覽連結（有 token 時顯示）*/}
+          {editingId && previewToken && (
+            <div className="bg-sage/5 ring-1 ring-sage/30 rounded-lg p-4 space-y-2">
+              <h4 className="font-serif font-bold text-espresso text-sm">分享預覽連結</h4>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  readOnly
+                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/order?previewToken=${previewToken}`}
+                  className="flex-1 min-w-[260px] px-3 py-2 rounded-md text-sm text-espresso-light bg-white ring-1 ring-linen-dark/60 font-mono"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                <button type="button" onClick={copyPreviewLink} className="px-4 py-2 rounded-md text-sm font-medium bg-sage text-white hover:bg-sage/80 transition-colors whitespace-nowrap">
+                  {copyHint ? "✓ 已複製" : "複製連結"}
+                </button>
+              </div>
+              <p className="text-xs text-espresso-light/50">
+                此連結反映目前儲存的草稿內容，可傳給夥伴確認。發佈後仍可使用，會切回最新發佈版本。
+              </p>
+            </div>
+          )}
+
           {/* 送出 */}
-          <div className="flex gap-3 flex-wrap">
-            <button type="submit" disabled={submitting} className="btn-primary-sm">
-              {submitting ? "儲存中..." : "儲存"}
+          <div className="flex gap-3 flex-wrap items-center">
+            <button type="submit" disabled={submitting || publishing} className="btn-primary-sm">
+              {submitting ? "儲存中..." : editingId ? "儲存草稿" : "儲存"}
             </button>
-            <button type="button" disabled={submitting} onClick={() => saveCampaign(true)} className="btn-primary-sm">
-              預覽
-            </button>
+            {editingId && (
+              <>
+                <button type="button" disabled={submitting || publishing} onClick={() => saveCampaign(true)} className="btn-primary-sm">
+                  儲存並預覽
+                </button>
+                <button
+                  type="button"
+                  onClick={publishDraft}
+                  disabled={!hasDraft || submitting || publishing}
+                  className="px-4 py-2 rounded-md text-sm font-bold bg-rose text-white hover:bg-rose/80 transition-colors disabled:bg-espresso-light/20 disabled:text-espresso-light/40 disabled:cursor-not-allowed"
+                >
+                  {publishing ? "發佈中..." : hasDraft ? "🚀 發佈草稿" : "已是最新發佈版"}
+                </button>
+                {hasDraft && (
+                  <button type="button" onClick={discardDraft} disabled={submitting || publishing} className="text-xs px-3 py-1.5 rounded-md ring-1 ring-rose/30 text-rose/80 hover:text-rose hover:ring-rose transition-all">
+                    捨棄草稿
+                  </button>
+                )}
+              </>
+            )}
+            {!editingId && (
+              <button type="button" disabled={submitting} onClick={() => saveCampaign(true)} className="btn-primary-sm">
+                預覽
+              </button>
+            )}
             <button type="button" onClick={resetForm} className="btn-secondary">取消</button>
           </div>
         </form>
