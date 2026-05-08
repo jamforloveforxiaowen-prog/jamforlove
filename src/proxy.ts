@@ -47,7 +47,7 @@ function checkRateLimit(ip: string, path: string): boolean {
   return true;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   // M1: 對特定 API 路徑套用速率限制
